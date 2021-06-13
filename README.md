@@ -1,5 +1,8 @@
 # An International Common Mechanism for DNA Synthesis Screening
 
+## User survey
+https://docs.google.com/forms/d/1LqzEH3XkFHBtMHNzGW9i4vRU7TyabBnNIDOFQBXa-4s/edit?usp=sharing
+
 ## Reading
 Search acceleration:
 * Data structures based on k-mers for querying large collections of sequencing datasets: https://www.biorxiv.org/content/10.1101/866756v3

@@ -1,7 +1,7 @@
 # An International Common Mechanism for DNA Synthesis Screening
 
 ## Workflow design
-
+Link to edit: https://docs.google.com/drawings/d/1WTmkvCcyxSCV_KjzTuiacVrUScOpcHy6C59grtiGvTU/edit?usp=sharing
 ![resources](https://docs.google.com/drawings/d/e/2PACX-1vRQ8uJzbXDgQi68p_S-f6EssH-QgRfuqDhV9QFI4eZRn_CLJJrPbYB8U1n6CWl873G9y-R-q1FdrnNf/pub?w=2570&h=2360)
 
 ## User survey

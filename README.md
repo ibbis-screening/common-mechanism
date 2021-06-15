@@ -1,5 +1,7 @@
 # An International Common Mechanism for DNA Synthesis Screening
 
+From https://www.frontiersin.org/articles/10.3389/fbioe.2019.00086/full: "As scale drives down cost per base pair, the relatively fixed cost of screening plays a more direct role in overall price. These costs are driven by both customer and sequence screening—commercially-available customer screening solutions still require a great deal of manual review of false positive findings. These false positives create a floor on the possible reduction in labor cost of new customer onboarding. Current sequence screening algorithms are computationally expensive and, given the high false positive rate, the results of sequence screening can be complicated to interpret. These generally require a PhD in bioinformatics both for implementation as well as day to day interpretation of hits. This makes scaling interpretation, in the absence of high-quality sequence annotation, a very expensive proposition."
+
 ## Workflow design
 Link to edit: https://docs.google.com/drawings/d/1WTmkvCcyxSCV_KjzTuiacVrUScOpcHy6C59grtiGvTU/edit?usp=sharing
 ![resources](https://docs.google.com/drawings/d/e/2PACX-1vRQ8uJzbXDgQi68p_S-f6EssH-QgRfuqDhV9QFI4eZRn_CLJJrPbYB8U1n6CWl873G9y-R-q1FdrnNf/pub?w=2570&h=2360)

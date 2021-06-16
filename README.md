@@ -3,7 +3,7 @@
 ## Databases folder
 https://www.dropbox.com/sh/mcxl72godli722i/AACV6x01djjPuLFeTNlQfzAHa?dl=0
 
-## Biorisk database inclusion criteria (minimum)
+## Biorisk database inclusion criteria
 * Found in a regulated pathogen
 * Known to endow or enhance pathogenicity
 

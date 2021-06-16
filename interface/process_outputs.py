@@ -25,7 +25,8 @@ def plot_tax(query, reg_ids, suffix="nr.blastn"):
         plot_pie(blast, query, suffix)
         # plot_sankey(blast, query, suffix)
         # plot_sunburst(blast, query, suffix)
-    
+
+# donut chart of taxon hits
 def plot_pie(blast, query, suffix):
     levels = ['superkingdom', 'phylum', 'class', 'genus', 'species']
     traces = []
@@ -55,6 +56,7 @@ def plot_pie(blast, query, suffix):
     fig.update_layout(showlegend=False)
     fig.write_image("figures/" + query + "." + suffix + "_tax_pie.png", width=700, height=700, scale=2)
 
+# Sankey diagram of taxon hits
 def plot_sankey(blast, query, suffix):
     blast['count'] = 1
     sourceTargetDf, colorList, labelList = genSankey(blast, cat_cols=['superkingdom', 'phylum', 'class', 'genus', 'species_simplified'], value_cols='count', colour_col='log evalue', title='Taxonomic distribution of hits')
@@ -83,8 +85,7 @@ def plot_sankey(blast, query, suffix):
     fig.update_layout(title_text="Taxonomic distribution of hits", font_size=20, autosize=False, width=1500, height=700)
     fig.write_image("figures/" + query + "." + suffix + "_tax_sankey.png", width=1500, height=700, scale=2)
 
-
-# VFDB hits
+# processing VFDB hits
 def vfdb(query, nhits=20):
     # file = "blast/" + query + ".vfdb.blastp"
     file = "blast/" + query + ".vfdb.blastx"
@@ -134,7 +135,7 @@ def vfdb(query, nhits=20):
     
     return blast
 
-# blacklist hits
+# processing blacklist hits
 def biorisk(query, nhits=5):
     file = "blast/" + query + ".biorisk.tblastx"
     if checkfile(file) == 0:
@@ -161,7 +162,7 @@ def biorisk(query, nhits=5):
     
     return blast
 
-# Swissprot results
+# processing Swissprot results
 def sprot(query, nhits=5):
     file = 'blast/' + query + ".sprot.blastx"
     if checkfile(file) == 0:
@@ -229,6 +230,7 @@ def sprot(query, nhits=5):
     fig.write_image("figures/" + query + "_sprotfunsocs.png", width=1000, height=60*nhits+60, scale=2)
     
     return blast
+
 # TrEMBL results
 def trembl(query, nhits=5):
     file = 'blast/' + query + ".trembl.blastx.pool"
@@ -288,6 +290,7 @@ def trembl(query, nhits=5):
     
     return blast
 
+# functions to add annotations to BLAST hit plots
 def add_keys(keylist, record):
     keywords = record.keywords
     f=open("keywords.txt", "a+")
@@ -337,6 +340,7 @@ def add_funsocs(funlist, sprotid):
     funlist.append(sep.join(funsocs))
     return funlist
 
+# read in queries mapped to sequence database
 def readmap(query):
     mapping = pd.read_csv("../queries/" + query + ".trim", sep=" ", comment='@', header=None)
     mapped = mapping[mapping[2]!="*"]
@@ -360,6 +364,7 @@ def readmap(query):
         fig.update_layout(xaxis_title=name, showlegend=False, margin=dict(l=0, r=0, t=0, b=0),font=dict(size=10))
         fig.write_image("figures/" + query + "_map.png", width=500, height=200, scale=2)
 
+# create a summary figure of pipeline results
 from PIL import Image
 import cv2
 import os

@@ -24,6 +24,7 @@ Search acceleration:
 Protein design:
 * Discovery, Design, and Structural Characterization of AlkaneProducing Enzymes across the Ferritin-like Superfamily: http://tagkopouloslab.ucdavis.edu/wp-content/uploads/2021/01/discoverydesign.pdf
 * Adaptive machine learning for protein engineering: https://arxiv.org/pdf/2106.05466.pdf
+* AlphaFold2 free version: https://www.biorxiv.org/content/10.1101/2021.06.14.448402v1
 
 AI-assisted litereature search:
 * Prioritising references for systematic reviews with RobotAnalyst: A user study: https://onlinelibrary.wiley.com/doi/full/10.1002/jrsm.1311 ; http://nactem.ac.uk/robotanalyst/

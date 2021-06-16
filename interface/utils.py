@@ -13,6 +13,7 @@ from Bio import ExPASy
 from Bio import SwissProt
 import taxoniq
 
+# check BLAST output files for each query to see if they exist and have any hits
 def checkfile(filename):
     if os.path.isfile(filename) == False:
         print(filename, "does not exist")
@@ -30,7 +31,8 @@ def checkfile(filename):
         return 0
     else:
         return 1
-    
+
+# read in BLAST files and pre-format the data frame with essential info
 def readblast(file):
     blast = pd.read_csv(file, sep='\t', comment='#', header=None)
     file = open(file, "r")
@@ -48,6 +50,7 @@ def readblast(file):
     blast = blast.reset_index(drop=True)
     return blast
 
+# trim BLAST results to the most interesting ones
 def trimblast(blast):
     blast = blast.sort_values(by='% identity', ascending=False)
     blast = blast.drop_duplicates(subset=['q. start', 'q. end'], keep='first', ignore_index=True)
@@ -62,6 +65,7 @@ def trimblast(blast):
     blast2 = blast2.reset_index(drop=True)
     return blast2
 
+# basic plotting of BLAST hits
 def plothits(starts, ends, qlen, names, colours, nhits):
     if nhits <5:
         yax = 6
@@ -83,12 +87,14 @@ def plothits(starts, ends, qlen, names, colours, nhits):
     fig.update_layout(margin=dict(l=10, r=20, t=30, b=0))
     return fig
 
+# plot a sunburst chart of taxonomic distribution of hits
 def plot_sunburst(blast, query, suffix):
     # visualisation  
     fig = px.sunburst(blast, path=['superkingdom', 'phylum', 'class', 'genus', 'species', 'subject title'], color_continuous_scale=px.colors.sequential.YlOrRd, title="Taxonomic distribution of hits", color=-np.log10(pd.to_numeric(blast['evalue'])+1e-300), labels={"color": "-log10(E-value)"})
     fig.update_layout(margin=dict(l=20, r=20, t=30, b=0))
     fig.write_image("figures/" + query + "." + suffix + "_tax.png", width=900, height=700, scale=2)
 
+# script to pull together key data for plotting a Sankey diagram of taxon hits
 def genSankey(df, cat_cols=[], value_cols='count', colour_col='evalue', title='Sankey Diagram'):
     # maximum of 6 value cols -> 6 colors
     colorPalette = ['#4B8BBE','#306998','#FFE873','#FFD43B','#646464', "yellow", "green", "blue"]
@@ -144,6 +150,7 @@ def genSankey(df, cat_cols=[], value_cols='count', colour_col='evalue', title='S
 # import taxonomy as tax
 # taxa = tax.Taxonomy.from_ncbi(nodes_path='nodes.dmp', names_path='names.dmp')
 
+# old way of processing taxon ids of BLAST hits
 def taxdist_old(query, suffix, reg_ids):
     file = 'blast/' + query + "." + suffix
     if checkfile(file) == 0:
@@ -207,6 +214,7 @@ def taxdist_old(query, suffix, reg_ids):
     
     return blast
 
+# new way of processing taxon ids of BLAST hits
 def taxdist(query, suffix, reg_ids):
     file = 'blast/' + query + "." + suffix
     if checkfile(file) == 0:
@@ -256,7 +264,7 @@ def taxdist(query, suffix, reg_ids):
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import taxoniq
+import taxoniq # this is a new package which looks good, but has some issues with missing taxon IDs
 
 def get_reg_ids():
     # use creds to create a client to interact with the Google Drive API
@@ -305,6 +313,7 @@ def get_reg_ids():
             
     return reg_ids
 
+# assign a nice colour scale to numeric values associated with taxon bins - one colour for regulated orgs, another for non-regulated
 def colourscale(reg_status, counts, averages):
     rmap = cm.get_cmap('OrRd', 100)
     nrmap = cm.get_cmap('Blues', 100)

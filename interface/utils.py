@@ -52,16 +52,21 @@ def readblast(file):
 
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
-    blast = blast.sort_values(by='% identity', ascending=False)
-    blast = blast.drop_duplicates(subset=['q. start', 'q. end'], keep='first', ignore_index=True)
+    # rank hits by PID
+    blast = blast.sort_values(by=['% identity', 'evalue'], ascending=False)
+    blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     
     drop = []
     blast2 = blast
-    for i in range(blast.shape[0]):
-        for j in blast.index[(i+1):]:
-            if (blast.loc[i,'q. start'] <= blast.loc[j,'q. start'] and blast.loc[i,'q. end'] >= blast.loc[j,'q. end']) | (blast.loc[i,'q. start'] >= blast.loc[j,'q. start'] and blast.loc[i,'q. end'] <= blast.loc[j,'q. end']):
-                if j in blast2.index:
-                    blast2 = blast2.drop([j])
+    # only keep  top ranked hits that don't overlap
+    for query in blast['query acc.'].unique():
+        df = blast[blast['query acc.'] == query]
+#         for i in range(df.shape[0]):
+        for i in df.index:
+            for j in df.index[(i+1):]:
+                if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']) | (df.loc[i,'q. start'] >= df.loc[j,'q. start'] and df.loc[i,'q. end'] <= df.loc[j,'q. end']):
+                    if j in blast2.index:
+                        blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
     return blast2
 

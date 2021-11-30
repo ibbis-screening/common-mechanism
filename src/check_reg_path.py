@@ -1,6 +1,7 @@
 from utils import *
 import os, sys
 import pandas as pd
+import taxoniq
 
 # check for any best matches to a regulated pathogen in the BLAST results, and if so, print their coordinates
 
@@ -10,7 +11,7 @@ if len(sys.argv) < 1:
     exit(1)
 
 file = sys.argv[1] + ".nr.blastx"
-reg_ids = pd.read_csv('databases/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
 # read in BLAST output and label with regulated pathogens
 def taxdist(file, reg_ids):
@@ -48,7 +49,7 @@ def taxdist(file, reg_ids):
                     blast[level.rank.name] = ""
                     blast.loc[x,level.rank.name] = level.scientific_name
         except:
-            print('FYI: Taxon id', blast['subject tax ids'][x], 'is missing (if this is a concern, contact taxoniq developers)')
+            print('FYI: Taxon id', blast['subject tax ids'][x], 'is missing from taxoniq records (if this is a concern, contact taxoniq developers)')
         
     blast = blast.reset_index(drop=True)
     
@@ -60,6 +61,6 @@ blast = trimblast(blast)
 if blast['regulated'].sum():
     print("Regulated pathogens: FLAG")
     hits = blast[blast['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
-    hits.to_csv(sys.argv[1] + "reg_path_coords.csv")
+    hits.to_csv(sys.argv[1] + ".reg_path_coords.csv")
 else:
 	print("Regulated pathogens: PASS")

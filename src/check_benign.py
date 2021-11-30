@@ -38,4 +38,4 @@ else:
 		htrim = blastn[~((blastn['ali from'] > coords['q. end'][region]) & (blastn['ali to'] > coords['q. end'][region])) & ~((blastn['ali from'] < coords['q. start'][region]) & (blastn['ali to'] < coords['q. start'][region]))]
 		htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
 		if any(htrim['coverage'] > 0.90):
-			print("Housekeeping genes - >90% coverage achieved")
+			print("Housekeeping genes - >90% coverage achieved - PASS")

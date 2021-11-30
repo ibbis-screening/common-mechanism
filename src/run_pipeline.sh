@@ -25,4 +25,4 @@ python src/check_benign.py ${name} ${query} # added the original file path here 
 
 # functional characterization
 
-#rm ${name}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn
+rm ${name}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn

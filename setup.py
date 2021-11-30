@@ -15,7 +15,7 @@ setup(
     keywords = "",
     url = "https://github.com/nwheeler443/CommonMechanism",
     packages=setuptools.find_packages(where="src", exclude=("tests",)),
-    install_requires=["pandas", "taxoniq"],
+    install_requires=["pandas", "taxoniq", "gdown"],
     long_description=read('README.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -23,3 +23,6 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
 )
+
+print("Almost done! Please run: gdown https://drive.google.com/uc?id=1INLOrC_vLMxEmtFCW4rzyZe5z6hWD1Qu and decompress")
+print("Now, please run: export $PFAMDB=[wherever you are storing your HMM databases] and $BLASTDB=[wherever you are storing your FASTA databases]")

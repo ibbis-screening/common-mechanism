@@ -49,7 +49,7 @@ def taxdist(file, reg_ids):
                     blast[level.rank.name] = ""
                     blast.loc[x,level.rank.name] = level.scientific_name
         except:
-            print('FYI: Taxon id', blast['subject tax ids'][x], 'is missing (if this is a concern, contact taxoniq developers)')
+            print('FYI: Taxon id', blast['subject tax ids'][x], 'is missing from taxoniq records (if this is a concern, contact taxoniq developers)')
         
     blast = blast.reset_index(drop=True)
     

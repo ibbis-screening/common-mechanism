@@ -1,6 +1,7 @@
 from utils import *
 import os, sys
 import pandas as pd
+import taxoniq
 
 # check for any best matches to a regulated pathogen in the BLAST results, and if so, print their coordinates
 
@@ -10,7 +11,7 @@ if len(sys.argv) < 1:
     exit(1)
 
 file = sys.argv[1] + ".nr.blastx"
-reg_ids = pd.read_csv('databases/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/reg_taxids', header=None)
 
 # read in BLAST output and label with regulated pathogens
 def taxdist(file, reg_ids):

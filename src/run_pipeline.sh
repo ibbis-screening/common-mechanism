@@ -19,7 +19,7 @@ python src/check_reg_path.py ${name}
 
 # benign DB scan
 hmmscan --domtblout ${name}.benign.hmmsearch benign.hmm ${name}.faa &>/dev/null
-blastn -db databases/benign/benign.fasta -query $query -out ${name}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
+blastn -db benign.fasta -query $query -out ${name}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
 python src/check_biorisk.py ${name} ${query} # added the original file path here to fetch sequence length, can tidy this
 

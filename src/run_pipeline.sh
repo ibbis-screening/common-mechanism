@@ -14,7 +14,7 @@ blastx -db nr -query $query -out ${name}.nr.blastx -outfmt "7 qacc stitle sacc s
 # not enough room on computer
 #blastx -db nr -query $query -out ${name}.nr.blastx -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -evalue 1e-5 -num_threads 8
 
-### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE FINISH HERE ####
+### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 python src/check_reg_path.py ${name}
 
 # benign DB scan

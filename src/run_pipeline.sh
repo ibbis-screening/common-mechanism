@@ -2,7 +2,7 @@
 
 # usage: src/run_pipeline.sh test_sequences/[$name].fasta
 
-export PFAMDB=$PFAMDB:./databases
+export PFAMDB=./databases
 export BLASTDB=$BLASTDB:./databases
 
 query=$1 # the file name

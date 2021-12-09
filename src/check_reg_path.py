@@ -11,7 +11,7 @@ if len(sys.argv) < 1:
     exit(1)
 
 file = sys.argv[1] + ".nr.blastx"
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
 # read in BLAST output and label with regulated pathogens
 def taxdist(file, reg_ids):

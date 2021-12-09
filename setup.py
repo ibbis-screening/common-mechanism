@@ -25,4 +25,3 @@ setup(
 )
 
 print("Almost done! Please run: gdown https://drive.google.com/uc?id=1INLOrC_vLMxEmtFCW4rzyZe5z6hWD1Qu and decompress")
-print("Now, please run: export $PFAMDB=[wherever you are storing your HMM databases] and $BLASTDB=[wherever you are storing your FASTA databases]")

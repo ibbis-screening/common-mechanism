@@ -15,7 +15,7 @@ setup(
     keywords = "",
     url = "https://github.com/nwheeler443/CommonMechanism",
     packages=setuptools.find_packages(where="src", exclude=("tests",)),
-    install_requires=["pandas", "taxoniq", "gdown"],
+    install_requires=["pandas", "taxoniq", "gdown", "plotly", "matplotlib", "kaleido"],
     long_description=read('README.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",

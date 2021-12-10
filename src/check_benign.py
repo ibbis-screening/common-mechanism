@@ -8,7 +8,7 @@ if len(sys.argv) < 2:
     sys.stdout.write("\tERROR: Please provide two files: one sequence name, one FASTA for the sequence\n")
     exit(1)
 
-coords = pd.read_csv(sys.argv[1] + "reg_path_coords.csv", index_col=0)
+coords = pd.read_csv(sys.argv[1] + ".nr.blastx.reg_path_coords.csv", index_col=0)
 
 # for each set of hits, need to pull out the coordinates covered by benign entries
 # overall the majority (?) of regulated pathogen coordinates must be covered with benign content

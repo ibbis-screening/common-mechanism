@@ -17,7 +17,7 @@ for rec in SeqIO.parse(f_open, "fasta"):
    id_file = open(file_id+".fasta", "w")
    id_file.write(">"+str(id)+"\n"+str(seq))
    id_file.close()
-#   os.system("src/run_pipeline.sh " + file_id + ".fasta > " + file_id + ".screen.txt")
+   os.system("src/run_pipeline.sh " + file_id + ".fasta > " + file_id + ".screen.txt")
 
 f_open.close()
 

@@ -24,9 +24,12 @@ if os.path.exists(sys.argv[1] + ".reg_path_coords.csv"):
     for region in range(0, coords.shape[0]): # for each regulated pathogen region
         # look at only the hmmer hits that overlap with it
         htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region]) & (hmmer['ali to'] > coords['q. end'][region])) & ~((hmmer['ali from'] < coords['q. start'][region]) & (hmmer['ali to'] < coords['q. start'][region]))]
-        htrim.loc['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
-        if any(htrim['coverage'] > 0.90):
-            print("Housekeeping genes - >90% coverage achieved")
+        if htrim.shape[0] > 0:
+            htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
+            if any(htrim['coverage'] > 0.90):
+                print("Housekeeping genes - >90% coverage achieved")
+        else:
+            print("Regulated region failed to clear")
 
     # annotate (and clear?) synbio parts
     blast = sys.argv[1] + ".benign.blastn"
@@ -37,7 +40,7 @@ if os.path.exists(sys.argv[1] + ".reg_path_coords.csv"):
         for region in range(0, coords.shape[0]): # for each regulated pathogen region
             # look at only the hits that overlap with it
             htrim2 = blastn[~((blastn['q.start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q.start'] < coords['q. start'][region]) & (blastn['q. from'] < coords['q. start'][region]))]
-            htrim2.loc['coverage'] = abs(htrim['q. end'] - htrim['q. start']) / htrim['qlen'][0]
+            htrim2['coverage'] = abs(htrim['q. end'] - htrim['q. start']) / htrim['qlen'][0]
             if any(htrim2['coverage'] > 0.90):
                 print("Housekeeping genes - >90% coverage achieved - PASS")
 else:

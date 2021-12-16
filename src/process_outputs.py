@@ -26,7 +26,7 @@ def plot_tax(query, reg_ids):
 
 # donut chart of taxon hits
 def plot_pie(blast, query):
-    levels = ['superkingdom', 'phylum', 'class', 'genus', 'species']
+    levels = ['superkingdom', 'phylum', 'order', 'genus', 'species']
     traces = []
     sizes = [1,3.5,9,16,25,34]
     holes = [0,0.5,0.62,0.74,0.8,0.85]

@@ -77,7 +77,7 @@ def taxdist(query, reg_ids):
     blast.loc[blast.species.isin(singletons), 'species_simplified'] = 'other'
     
     blast = blast.reset_index(drop=True)
-    blast.to_csv(query + ".reg_path_coords.csv", columns=["q. start", "q. end"], header=None)
+#    blast.to_csv(query + ".reg_path_coords.csv", columns=["q. start", "q. end"], header=None)
     
     return blast
 

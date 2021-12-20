@@ -15,6 +15,8 @@ from Bio import SwissProt
 from utils import *
 # pio.renderers.default = "browser"
 
+reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+
 
 # taxonomic distribution plots
 def plot_tax(query, reg_ids):
@@ -54,35 +56,6 @@ def plot_pie(blast, query):
     fig.update_layout(showlegend=False)
     fig.write_image("figures/" + query + "_tax_pie.png", width=700, height=700, scale=2)
 
-# Sankey diagram of taxon hits
-def plot_sankey(blast, query, suffix):
-    blast['count'] = 1
-    sourceTargetDf, colorList, labelList = genSankey(blast, cat_cols=['superkingdom', 'phylum', 'class', 'genus', 'species_simplified'], value_cols='count', colour_col='log evalue', title='Taxonomic distribution of hits')
-    
-    norm = matplotlib.colors.Normalize(vmin=10, vmax=300)
-    cmap = cm.YlOrRd
-    m = cm.ScalarMappable(cmap=cmap)
-    
-    sourceTargetDf = sourceTargetDf[sourceTargetDf['count']>3]
-    
-    fig = go.Figure(data=[go.Sankey(
-        node = dict(
-          pad = 15,
-          thickness = 20,
-          line = dict(color = "black", width = 0.5),
-          label = labelList,
-          color = "white" # colorList # colours of the nodes
-        ),
-        link = dict(
-            source = sourceTargetDf['sourceID'],
-            target = sourceTargetDf['targetID'],
-            value = sourceTargetDf['count'],
-            color = [matplotlib.colors.rgb2hex(x) for x in m.to_rgba(sourceTargetDf['colour'])]
-      ))])
-    # plotly.offline.plot(fig, validate=False)
-    fig.update_layout(title_text="Taxonomic distribution of hits", font_size=20, autosize=False, width=1500, height=700)
-    fig.write_image("figures/" + query + "_tax_sankey.png", width=1500, height=700, scale=2)
-
 ##### plotting sequence alignments
 
 # basic plotting of alignments of hits
@@ -99,7 +72,7 @@ def plothits(starts, ends, qlen, names, colours, nhits):
         end = ends[i]
         hit_description = names[i]
         colour = colours[i]
-        fig.add_shape(type="rect", name = hit_description, x0 = start, x1 = end, y0=0.5+i+1, y1=1.3+i+1, line=dict(color="white"), fillcolor=matplotlib.colors.rgb2hex(cm.YlOrRd(colour/100)))
+        fig.add_shape(type="rect", name = hit_description, x0 = start, x1 = end, y0=0.5+i+1, y1=1.3+i+1, line=dict(color="white"), fillcolor=colour)
         fig.add_trace(go.Scatter(text = str(colour), x = [start, end, end, start, start], y=[0.5+i+1, 0.5+i+1, 1.3+i+1, 1.3+i+1, 0.5+i+1], fill="toself", line=dict(color="white")))
         fig.add_annotation(xanchor='left', text=hit_description, x=qlen, y=(0.5+i+1+1.3+i+1)/2,font=dict(family="Arial Narrow", size=int(100/yax), color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
     fig.update_xaxes(range=[0, qlen*2+3000])
@@ -127,7 +100,12 @@ def plot_hmmer(file, nhits=10):
     if hmmer.shape[0] < nhits:
         nhits = hmmer.shape[0]
     
-    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['tlen'][0], hmmer["query name"], pd.to_numeric(hmmer['score']), nhits)
+    if re.search("biorisk", file):
+        colours = colourscale([1.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
+    else:
+        colours = colourscale([0.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
+
+    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["query name"], colours, nhits)
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     fig.write_image("figures/" + file + ".png", width=1000, height=60*nhits+60, scale=2)
 
@@ -145,7 +123,12 @@ def plot_blast(file, nhits=10):
         fig.savefig("figures/" + file + ".png")
         return
 	
-    blast = readblast(file)
+    if re.search(".nr.blastx", file):
+        blast = taxdist(file, reg_ids)
+    else:
+        blast = readblast(file)
+    blast = trimblast(blast)
+    
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name
     blast = blast.reset_index()
     blast = blast.iloc[0:nhits,:]
@@ -153,8 +136,14 @@ def plot_blast(file, nhits=10):
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
     
-    fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], blast['subject title'], pd.to_numeric(blast['% identity']), nhits)
-    fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
+    if re.search(".nr.blastx", file):
+        colours = colourscale(blast['regulated'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+#        print(colours)
+    else:
+        colours = colourscale([0.0] * blast.shape[0], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+#        print(colours)
+    fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], blast['subject title'], colours, nhits)
+    fig.update_layout(showlegend=False, title={'text': 'BLAST Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     fig.write_image("figures/" + file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 

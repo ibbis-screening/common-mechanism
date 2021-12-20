@@ -23,6 +23,7 @@ def checkfile(filename):
     else:
         return 1
 
+# assign a nice colour scale to numeric values associated with taxon bins - one colour for regulated orgs, another for non-regulated
 def colourscale(reg_status, counts, averages):
     rmap = cm.get_cmap('OrRd', 100)
     nrmap = cm.get_cmap('Blues', 100)

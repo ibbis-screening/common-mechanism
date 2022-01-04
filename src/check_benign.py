@@ -28,7 +28,9 @@ if os.path.exists(sys.argv[1] + ".reg_path_coords.csv"):
             htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0])
 #            htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
             if any(htrim['coverage'] > 0.90):
-                print("Housekeeping genes - >90% coverage achieved")
+                print("Housekeeping genes - >90% coverage achieved = PASS")
+            else:
+                print("Housekeeping genes - <90% coverage achieved = FAIL")
         else:
             print("Regulated region failed to clear")
 

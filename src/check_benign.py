@@ -9,7 +9,7 @@ if len(sys.argv) < 2:
     exit(1)
 
 if os.path.exists(sys.argv[1] + ".reg_path_coords.csv"):
-    coords = pd.read_csv(sys.argv[1] + ".reg_path_coords.csv", index_col=0)
+    coords = pd.read_csv(sys.argv[1] + ".reg_path_coords.csv")
     
     # for each set of hits, need to pull out the coordinates covered by benign entries
     # overall the majority (?) of regulated pathogen coordinates must be covered with benign content

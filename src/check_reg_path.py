@@ -20,6 +20,8 @@ blast = trimblast(blast)
 
 if blast['regulated'].sum():
     print("Regulated pathogens: FLAG")
+    if "Virus" in blast['superkingdom'][blast['regulated'] == True]:
+        print("Regulated virus")
     hits = blast[blast['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
 #    print(hits)
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv")

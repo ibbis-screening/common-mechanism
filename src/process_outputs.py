@@ -105,7 +105,7 @@ def plot_hmmer(file, nhits=10):
     else:
         colours = colourscale([0.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
 
-    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["query name"], colours, nhits)
+    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["target name"], colours, nhits)
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     fig.write_image("figures/" + file + ".png", width=1000, height=60*nhits+60, scale=2)
 

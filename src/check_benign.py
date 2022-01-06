@@ -25,7 +25,7 @@ if os.path.exists(sys.argv[1] + ".reg_path_coords.csv"):
         # look at only the hmmer hits that overlap with it
         htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region]) & (hmmer['ali to'] > coords['q. end'][region])) & ~((hmmer['ali from'] < coords['q. start'][region]) & (hmmer['ali to'] < coords['q. start'][region]))]
         if htrim.shape[0] > 0:
-            htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0])
+            htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
 #            htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
             if any(htrim['coverage'] > 0.90):
                 print("Housekeeping genes - >90% coverage achieved = PASS")

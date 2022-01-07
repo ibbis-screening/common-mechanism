@@ -14,7 +14,7 @@ from Bio import ExPASy
 from Bio import SwissProt
 from utils import *
 
-pio.kaleido.scope.mathjax = None
+#pio.kaleido.scope.mathjax = None
 
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
@@ -92,7 +92,7 @@ def plot_hmmer(file, nhits=10):
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
         ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
-        fig.savefig(os.path.abspath(file + ".png"))
+        fig.savefig(os.path.abspath(file + ".png"), engine='kaleido')
         return
     
     hmmer = readhmmer(file)

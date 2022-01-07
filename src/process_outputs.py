@@ -107,7 +107,7 @@ def plot_hmmer(file, nhits=10):
 
     fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["target name"], colours, nhits)
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
-    fig.write_image("figures/" + file + ".png", width=1000, height=60*nhits+60, scale=2)
+    fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 # plot BLAST results from --domtblout
 def plot_blast(file, nhits=10):
@@ -120,7 +120,7 @@ def plot_blast(file, nhits=10):
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
         ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
-        fig.savefig("figures/" + file + ".png")
+        fig.savefig(file + ".png")
         return
 	
     if re.search(".nr.blastx", file):
@@ -144,7 +144,7 @@ def plot_blast(file, nhits=10):
 #        print(colours)
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], blast['subject title'], colours, nhits)
     fig.update_layout(showlegend=False, title={'text': 'BLAST Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
-    fig.write_image("figures/" + file + ".png", width=1000, height=60*nhits+60, scale=2)
+    fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 
 

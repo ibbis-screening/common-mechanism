@@ -13,7 +13,8 @@ import subprocess
 from Bio import ExPASy
 from Bio import SwissProt
 from utils import *
-# pio.renderers.default = "browser"
+
+pio.kaleido.scope.mathjax = None
 
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 

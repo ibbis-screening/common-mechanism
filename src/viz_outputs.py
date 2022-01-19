@@ -23,5 +23,5 @@ plot_blast(synbio)
 
 # viz taxon IDs
 plot_blast(taxid, 10)
-plot_tax(taxid, reg_ids) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queeries earlier in the pipeline
+plot_tax(taxid, reg_ids) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
 

@@ -55,7 +55,7 @@ def plot_pie(blast, query):
     fig = go.Figure(data=traces)
     fig.update_traces(textposition='inside', textinfo='label')
     fig.update_layout(showlegend=False)
-    fig.write_image("figures/" + query + "_tax_pie.png", width=700, height=700, scale=2)
+    fig.write_image(query + "_tax_pie.png", width=700, height=700, scale=2)
 
 ##### plotting sequence alignments
 
@@ -92,7 +92,7 @@ def plot_hmmer(file, nhits=10):
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
         ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
-        fig.savefig(os.path.abspath(file + ".png"), engine='kaleido')
+        fig.savefig(os.path.abspath(file + ".png"))
         return
     
     hmmer = readhmmer(file)

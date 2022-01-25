@@ -145,8 +145,8 @@ def readblast(fileh):
 
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
-    # rank hits by PID
-    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
+    # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
+    blast = blast.sort_values(by=['% identity', 'bit score', 'regulated'], ascending=False)
     blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     
     drop = []

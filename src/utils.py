@@ -59,6 +59,9 @@ def taxdist(query, reg_ids):
     for x in range(0, blast.shape[0]):
         try:
             t = taxoniq.Taxon(blast['subject tax ids'][x])
+            # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
+            if blast['subject tax ids'][x] in set(reg_ids[0]):
+                                    blast.loc[x,'regulated'] = True
             for level in t.ranked_lineage:
                 if int(level.tax_id) in set(reg_ids[0]):
                     blast.loc[x,'regulated'] = True

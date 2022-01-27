@@ -60,7 +60,7 @@ def taxdist(query, reg_ids):
         try:
             t = taxoniq.Taxon(blast['subject tax ids'][x])
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
-            if blast['subject tax ids'][x] in set(reg_ids[0]):
+            if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
                                     blast.loc[x,'regulated'] = True
             for level in t.ranked_lineage:
                 if int(level.tax_id) in set(reg_ids[0]):
@@ -98,7 +98,7 @@ def readhmmer(fileh):
 #             columns = list(filter(None, lines))
 #         if columns == []:
 #             print("ERROR: Failed to parse column IDs")
-    columns = ['target name', 'accession','tlen', 'query name',' accession','qlen',' E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
+    columns = ['target name', 'accession','tlen', 'query name',' accession','qlen','E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
 
     hmmer = pd.read_csv(fileh, sep="\s+", comment='#', header=None, engine='python', index_col=None)
     hmmer.columns = columns

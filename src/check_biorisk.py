@@ -11,7 +11,12 @@ file = sys.argv[1] + ".biorisk.hmmsearch"
 
 # read in HMMER output and check for valid hits
 if checkfile(file) == 1:
-    print("Biorisks: FLAG")
+    hmmer = readhmmer(file)
+#    hmmer = hmmer[hmmer['E-value']<1e-10]
+    if hmmer.shape[0] > 0:
+        print("Biorisks: FLAG")
+    else:
+        print("Biorisks: PASS")
 elif checkfile(file) == 2:
 	print("Biorisks: PASS")
 else:

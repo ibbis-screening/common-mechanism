@@ -9,7 +9,7 @@ export PFAMDB=./databases
 export BLASTDB=$BLASTDB:./databases
 
 query=$1 # the file name
-name=${query//*\//}
+name=${query//*\//} # strip out any directory info
 name=${name//.fasta/} # the prefix detailing the name of the sequence
 
 # biorisk DB scan

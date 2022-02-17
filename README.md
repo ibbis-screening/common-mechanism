@@ -4,7 +4,7 @@
 https://docs.google.com/spreadsheets/d/1uajF5-piJjHX04zEB-wis9HWTMHrgNpbilwYip96jqY/edit?usp=sharing
 
 ## Databases folder
-https://www.dropbox.com/sh/mcxl72godli722i/AACV6x01djjPuLFeTNlQfzAHa?dl=0
+https://drive.google.com/uc?id=1INLOrC_vLMxEmtFCW4rzyZe5z6hWD1Qu
 
 ## Biorisk database inclusion criteria
 * Found in a regulated pathogen

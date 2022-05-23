@@ -33,10 +33,10 @@ def colourscale(reg_status, counts, averages):
     return colours
 
 
-def taxdist(query, reg_ids):
-    if checkfile(query) == 0:
-        return
-    blast = readblast(query)
+def taxdist(blast, reg_ids):
+#    if checkfile(query) == 0:
+#        return
+#    blast = readblast(query)
     
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     blast2 = blast
@@ -149,7 +149,8 @@ def readblast(fileh):
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
-    blast = blast.sort_values(by=['% identity', 'bit score', 'regulated'], ascending=False)
+#    blast = blast.sort_values(by=['% identity', 'bit score', 'regulated'], ascending=False)
+    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     
     drop = []

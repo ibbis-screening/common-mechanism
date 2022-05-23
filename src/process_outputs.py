@@ -16,7 +16,7 @@ from utils import *
 
 #pio.kaleido.scope.mathjax = None
 
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv('databases/biorisk/reg_taxids', header=None)
 
 
 # taxonomic distribution plots
@@ -128,6 +128,7 @@ def plot_blast(file, nhits=10):
         blast = taxdist(file, reg_ids)
     else:
         blast = readblast(file)
+        blast['regulated'] = False
     blast = trimblast(blast)
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name

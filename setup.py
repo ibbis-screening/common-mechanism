@@ -15,9 +15,7 @@ setup(
     keywords = "",
     url = "https://github.com/nwheeler443/CommonMechanism",
     packages = setuptools.find_packages(where="common_mechanism", exclude=("tests",)),
-    package_data = {
-        'src/databases': ['*']
-      }
+    package_data = { 'src/databases': ['*'] },
     install_requires=["Biopython", "pandas", "taxoniq", "gdown", "plotly", "matplotlib", "kaleido"],
     long_description=read('README.md'),
     classifiers=[

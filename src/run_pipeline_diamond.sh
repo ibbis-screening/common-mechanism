@@ -28,7 +28,7 @@ fi
 # currently running this as a step in check_reg_path
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
-python -m check_reg_path_diamond ${name}
+python src/check_reg_path_diamond.py ${name}
 
 # Step 3: benign DB scan
 hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null

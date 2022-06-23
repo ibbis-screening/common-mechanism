@@ -2,8 +2,6 @@
 
 # usage: src/run_pipeline.sh test_folder/[$name].fasta
 
-#PKG_HOME=`which run_pipeline.sh | sed 's/\/src\/run_pipeline.sh//g'`
-
 # need to make this flexible re: where people store their databases
 export PYTHONPATH=$PYTHONPATH/src
 export PFAMDB=./databases
@@ -19,16 +17,15 @@ hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>
 python -m check_biorisk ${name}
 
 # Step 2: taxon ID
-if ! [ -e "${name}.uniref90.blastx" ];
-#then blastx -db nr -query $query -out ${name}.nr.blastx -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 1e-10 -word_size 6 -threshold 21 -window_size 40 -matrix BLOSUM62 -gapopen 11 -gapextend 1 -seg yes
-#then blastx -db uniref90 -query $query -out ${name}.nr.blastx -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -culling_limit 5 -evalue 1e-10 -word_size 6 -threshold 21 -window_size 40 -matrix BLOSUM62 -gapopen 11 -gapextend 1 -seg yes -remote
-then ls ./databases/nr.*.dmnd | parallel --will-cite -j 4 'diamond blastx -d ~/Dropbox/databases/uniref90.{#}  --fast --threads 6 --query tests/test_sequences/gfp.fasta --out $name.{#}.tsv --outfmt 6 qseqid stitle sseqid evalue bitscore pident qlen qstart qend slen sstart send'
-cat $name.*.tsv > $name.nr.diamond
+if ! [ -e "${name}.nr.blastx" ];
+then src/run_diamond.sh -d ../databases -i ${name}.faa -o ${name}.diamond -t 4 -p 4
+# then ls ../databases/nr.*.dmnd | parallel --will-cite -j 4 'diamond blastx -d ~/Dropbox/databases/uniref90.{#}  --fast --threads 6 --query tests/test_sequences/gfp.fasta --out $name.{#}.tsv --outfmt 6 qseqid stitle sseqid evalue bitscore pident qlen qstart qend slen sstart send
+cat $name.*.tsv > $name.nr.blastx
 # script that fetches other IDs
 fi
 
 # here need to flag any uncovered regions >200 bp and blastn them
-#currently running this as a step in check_reg_path
+# currently running this as a step in check_reg_path
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 python -m check_reg_path_diamond ${name}

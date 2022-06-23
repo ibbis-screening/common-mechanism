@@ -15,7 +15,8 @@ if len(sys.argv) < 1:
 file = sys.argv[1] + ".nr.blastx"
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
-blast = taxdist(file, reg_ids)
+blast = readblast(file)
+blast = taxdist(blast, reg_ids)
 #print(blast)
 blast = trimblast(blast)
 #print(blast)

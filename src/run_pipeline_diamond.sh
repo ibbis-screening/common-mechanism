@@ -18,7 +18,7 @@ python -m check_biorisk ${name}
 
 # Step 2: taxon ID
 if ! [ -e "${name}.nr.blastx" ];
-then src/run_diamond.sh -d ../databases -i ${name}.faa -o ${name}.diamond
+then src/run_diamond.sh -d ../databases -i ${name}.faa -o ${name}.diamond -t 4 -p 4
 # then ls ../databases/nr.*.dmnd | parallel --will-cite -j 4 'diamond blastx -d ~/Dropbox/databases/uniref90.{#}  --fast --threads 6 --query tests/test_sequences/gfp.fasta --out $name.{#}.tsv --outfmt 6 qseqid stitle sseqid evalue bitscore pident qlen qstart qend slen sstart send
 cat $name.*.tsv > $name.nr.blastx
 # script that fetches other IDs

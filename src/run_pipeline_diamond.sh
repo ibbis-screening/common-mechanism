@@ -14,7 +14,7 @@ name=${name//.fasta/} # the prefix detailing the name of the sequence
 # Step 1: biorisk DB scan
 transeq $query ${name}.faa -frame 6 -clean &>/dev/null
 hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>/dev/null
-python -m check_biorisk ${name}
+python src/check_biorisk.py ${name}
 
 # Step 2: taxon ID
 if ! [ -e "${name}.nr.blastx" ];
@@ -34,13 +34,13 @@ python src/check_reg_path_diamond.py ${name}
 hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null
 blastn -db benign/benign.fasta -query $query -out ${name}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
-python -m check_benign ${name} ${query} # added the original file path here to fetch sequence length, can tidy this
+python src/check_benign.py ${name} ${query} # added the original file path here to fetch sequence length, can tidy this
 
 # Visualising outputs; functional characterization
 
 if [ ! -d //figures ]; then
   mkdir -p figures;
 fi
-python -m viz_outputs ${name}
+python src/viz_outputs.py ${name}
 
 #rm ${query}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn

@@ -82,8 +82,9 @@ then
     exit
 fi      
   
-ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv 
-cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv 
+ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d {} --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{/}.tsv
+#ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv
+cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv
 #rm ${OUTPUT}.*.tsv
 
 

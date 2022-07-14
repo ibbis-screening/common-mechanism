@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
 #####################################################################
 #run_diamond.sh runs DIAMOND against a specified NCBI nr database. 

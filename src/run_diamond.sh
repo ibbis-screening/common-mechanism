@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
 #####################################################################
 #run_diamond.sh runs DIAMOND against a specified database.
@@ -9,6 +9,7 @@
 #Script Author: Jennifer Lu, jennifer.lu717@gmail.com
 #Updated: 05/25/2022 
 ##################################################################### 
+#Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS] 
 
 #set -eux #debug mode
 set -eu

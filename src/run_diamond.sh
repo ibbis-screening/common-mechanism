@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #####################################################################
-#run_diamond.sh runs DIAMOND against a specified NCBI nr database. 
+#run_diamond.sh runs DIAMOND against a specified database.
 #   Buchfink B, Reuter K, Drost HG, "Sensitive protein alignments at 
 #   tree-of-life scale using DIAMOND", 
 #   Nature Methods 18, 366–368 (2021). 
@@ -39,7 +39,7 @@ while getopts "p:t:d:i:o:" OPTION
                 ;;
             \?)
                 echo "Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
-                echo "  MY_DB           location of NCBI nr database (required)"
+                echo "  MY_DB           location of database (required)"
                 echo "  INPUT_FILE      input file to align to each database (required)" 
                 echo "  OUTPUT_FILE     output prefix for alignments (default: out)" 
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -53,7 +53,7 @@ while getopts "p:t:d:i:o:" OPTION
 if [ "$DB_PATH" == "" ] && [ "$INPUT" == "" ]
 then
     echo "Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
-    echo "  MY_DB           location of NCBI nr database (required)"
+    echo "  MY_DB           location of database (required)"
     echo "  INPUT_FILE      input file to align to each database (required)" 
     echo "  OUTPUT_FILE     output prefix for alignments (default: out)" 
     echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -65,9 +65,9 @@ echo " >> Checking for Valid Options..."
 if [ -d $DB_PATH ]
 then 
     #Directory exists, check for at least one diamond db file 
-    if [ ! -f $DB_PATH/nr.1.dmnd ] 
+    if [ ! -f $DB_PATH/*.1.dmnd ]
     then 
-        echo " ERROR: nr diamond database $DB_PATH/nr.1.dmnd does not exist"
+        echo " ERROR: diamond database $DB_PATH/nr.1.dmnd does not exist"
         exit
     fi
 else
@@ -82,9 +82,10 @@ then
     exit
 fi      
   
-ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d {} --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{/}.tsv
+ls ${DB_PATH}/*.dmnd | parallel --will-cite -j 5 diamond blastx -d {} --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{/}.tsv --outfmt 6 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send
+
 #ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv
-cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv
+#cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv
 #rm ${OUTPUT}.*.tsv
 
 

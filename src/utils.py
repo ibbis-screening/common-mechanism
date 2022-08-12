@@ -33,11 +33,7 @@ def colourscale(reg_status, counts, averages):
     return colours
 
 
-def taxdist(blast, reg_ids):
-#    if checkfile(query) == 0:
-#        return
-#    blast = readblast(query)
-    
+def taxdist(blast, reg_ids, query):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     blast2 = blast
     cutrows = []
@@ -75,6 +71,7 @@ def taxdist(blast, reg_ids):
             cut.append(x)
     
     blast.drop(cut)
+    blast = blast.sort_values(by=['% identity'], ascending=False)
     
     singletons = blast.species.value_counts().index[blast.species.value_counts()==1]
     blast['species_simplified'] = blast['species']
@@ -138,13 +135,29 @@ def readblast(fileh):
         print("ERROR: Failed to parse column IDs")
     
     blast.columns = columns
-    blast.sort_values(by=['% identity'])
+    blast = blast.sort_values(by=['% identity'])
     blast['log evalue'] = -np.log10(pd.to_numeric(blast['evalue'])+1e-300)
     blast['q. coverage'] = abs(blast['q. end']-blast['q. start'])/blast['query length'].max()
     blast['s. coverage'] = abs(blast['s. end']-blast['s. start'])/blast['subject length']
     blast = blast[blast['subject tax ids'].notna()]
     blast = blast.reset_index(drop=True)
     return blast
+
+# read in DIAMOND files and pre-format the data frame with essential info
+def readdmnd(fileh):
+    diamond = pd.read_csv(fileh, sep='\t', comment='#', header=None)
+    columns = ['query acc.', 'subject title', 'sseqid', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
+    
+    diamond.columns = columns
+    diamond = diamond.sort_values(by=['% identity'], ascending=False)
+    diamond['log evalue'] = -np.log10(pd.to_numeric(diamond['evalue'])+1e-300)
+    diamond['q. coverage'] = abs(diamond['q. end']-diamond['q. start'])/diamond['query length'].max()
+    diamond['s. coverage'] = abs(diamond['s. end']-diamond['s. start'])/diamond['subject length']
+    
+    diamond = diamond[diamond['subject tax ids'].notna()]
+    diamond = diamond.reset_index(drop=True)
+    
+    return diamond
 
 # trim BLAST results to the most interesting ones
 def trimblast(blast):

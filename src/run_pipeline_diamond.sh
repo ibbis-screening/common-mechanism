@@ -4,7 +4,7 @@
 
 # need to make this flexible re: where people store their databases
 export PYTHONPATH=$PYTHONPATH/src
-export PFAMDB=./databases
+export PFAMDB=databases
 export BLASTDB=$BLASTDB:./databases
 
 query=$1 # the file name
@@ -17,18 +17,19 @@ hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>
 python src/check_biorisk.py ${name}
 
 # Step 2: taxon ID
-if ! [ -e "${name}.nr.blastx" ];
-then src/run_diamond.sh -d ../databases/nr_dmnd/ -i ${name}.faa -o ${name}.diamond -t 4 -p 4
-# then ls ../databases/nr.*.dmnd | parallel --will-cite -j 4 'diamond blastx -d ~/Dropbox/databases/uniref90.{#}  --fast --threads 6 --query tests/test_sequences/gfp.fasta --out $name.{#}.tsv --outfmt 6 qseqid stitle sseqid evalue bitscore pident qlen qstart qend slen sstart send
-cat $name.*.tsv > $name.nr.blastx
-# script that fetches other IDs
+if ! [ -e "${name}.nr.diamond" ];
+then src/run_diamond.sh -d ../databases/nr_dmnd/ -i ${query}.fasta -o ${name}.nr.diamond -t 4 -p 4
+cat $name.*.tsv > $name.nr.diamond
+#rm $name.*.tsv
 fi
 
 # here need to flag any uncovered regions >200 bp and blastn them
 # currently running this as a step in check_reg_path
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
-python src/check_reg_path_diamond.py ${name}
+python src/check_reg_path_diamond_proteins.py ${name}
+
+# nucleotide screening
 
 # Step 3: benign DB scan
 hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null

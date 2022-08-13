@@ -160,7 +160,8 @@ def trimblast(blast):
         df = blast[blast['query acc.'] == query]
         for i in df.index:
             for j in df.index[(i+1):]:
-                if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']) | (df.loc[i,'q. start'] >= df.loc[j,'q. start'] and df.loc[i,'q. end'] <= df.loc[j,'q. end']):
+                # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
+                if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
                     if j in blast2.index:
                         blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)

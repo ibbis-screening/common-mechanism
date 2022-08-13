@@ -129,7 +129,7 @@ def plot_blast(file, query, nhits=10):
     else:
         blast = readdmnd(file)
         blast['regulated'] = False
-#    blast = trimblast(blast)
+    blast = trimblast(blast)
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name
     blast = blast.reset_index()

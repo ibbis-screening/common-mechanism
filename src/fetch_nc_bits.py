@@ -1,3 +1,5 @@
+# usage: fetch_nc_bits.py query_name fasta_file_path
+
 from utils import *
 import os, sys
 import pandas as pd
@@ -14,10 +16,10 @@ if len(sys.argv) < 1:
     exit(1)
     
 query = sys.argv[1]
-file = query + ".nr.diamond"
+dmnd_file = query + ".nr.diamond"
 
 # find noncoding bits
-diamond = readdmnd(file)
+diamond = readdmnd(dmnd_file)
 diamond = trimblast(diamond)
 # print(diamond)
 hits = []

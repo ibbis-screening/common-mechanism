@@ -18,7 +18,7 @@ python src/check_biorisk.py ${name}
 
 # Step 2: taxon ID
 if ! [ -e "${name}.nr.diamond" ];
-then src/run_diamond.sh -d ../databases/nr_dmnd/ -i ${query}.fasta -o ${name}.nr.diamond -t 4 -p 4
+then src/run_diamond.sh -d $PFAMDB/nr_dmnd/ -i ${query} -o ${name}.nr.diamond -t 4 -p 4
 cat $name.*.tsv > $name.nr.diamond
 rm $name.*.tsv
 fi

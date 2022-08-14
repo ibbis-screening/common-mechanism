@@ -54,7 +54,7 @@ for (start, stop) in nc_bits:
 a = pybedtools.BedTool(tofetch, from_string=True)
 fasta = f_file
 outfile = query + '_nc.fasta'
-a = a.sequence(fi=fasta, fo=query + "_nc.fa")
+a = a.sequence(fi=fasta, fo=outfile)
 # print(open(a.seqfn).read())
 
 

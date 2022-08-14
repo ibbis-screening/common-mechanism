@@ -85,8 +85,3 @@ fi
   
 ls ${DB_PATH}/*.dmnd | parallel --will-cite -j 5 diamond blastx -d {} --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{/}.tsv --frameshift 15 --range-culling --outfmt 6 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send
 
-#ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --fast --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv
-#cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv
-#rm ${OUTPUT}.*.tsv
-
-

@@ -31,8 +31,8 @@ python src/check_reg_path_diamond_proteins.py ${name}
 
 # nucleotide screening
 
-python src/fetch_nc_bits.py ${name} ${query}
-blastn -query ${name}_nr.fasta -db nt
+#python src/fetch_nc_bits.py ${name} ${query}
+#blastn -query ${name}_nc.fasta -db nt
 
 # Step 3: benign DB scan
 hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null

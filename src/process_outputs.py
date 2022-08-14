@@ -108,7 +108,10 @@ def plot_hmmer(file, nhits=10):
 
     fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["target name"], colours, nhits)
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
-    fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+60, scale=2)
+#    print("Path specified: ", os.path.abspath(file + ".png"))
+    print("Path specified: ", file + ".png")
+#    fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+60, scale=2)
+    fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 # plot BLAST results from --domtblout
 def plot_blast(file, nhits=10):

@@ -42,9 +42,6 @@ python src/check_benign.py ${name} ${query} # added the original file path here 
 
 # Visualising outputs; functional characterization
 
-if [ ! -d //figures ]; then
-  mkdir -p figures;
-fi
 python src/viz_outputs.py ${name}
 
 #rm ${query}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn

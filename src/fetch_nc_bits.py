@@ -16,6 +16,7 @@ if len(sys.argv) < 1:
     exit(1)
     
 query = sys.argv[1]
+f_file = sys.argv[2]
 dmnd_file = query + ".nr.diamond"
 
 # find noncoding bits
@@ -51,9 +52,9 @@ for (start, stop) in nc_bits:
     tofetch = tofetch + seqid + " " + str(start) + " " + str(stop) + "\n"
 
 a = pybedtools.BedTool(tofetch, from_string=True)
-fasta = query + '.fasta'
+fasta = f_file
 outfile = query + '_nc.fasta'
-a = a.sequence(fi=fasta, fo=query + "_nc.fa")
+a = a.sequence(fi=fasta, fo=outfile)
 # print(open(a.seqfn).read())
 
 

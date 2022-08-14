@@ -31,6 +31,9 @@ python src/check_reg_path_diamond_proteins.py ${name}
 
 # nucleotide screening
 
+python src/fetch_nc_bits.py ${name}
+blastn -query ${name}_nr.fasta -db nt
+
 # Step 3: benign DB scan
 hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null
 blastn -db benign/benign.fasta -query $query -out ${name}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5

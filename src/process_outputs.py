@@ -65,7 +65,7 @@ def plothits(starts, ends, qlen, names, colours, nhits):
         yax = 6
     else:
         yax=nhits+1
-    fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,100], colorscale="YlOrRd",colorbar=dict(title="% identity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white"))
+    fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,100], colorscale="YlOrRd",colorbar=dict(title="Similarity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white"))
     fig.add_shape(type="rect", name = 'Query', x0 = 1, x1 = qlen, y0=0.5, y1=1.3, line=dict(color="white"), fillcolor='grey')
     fig.add_annotation(xanchor='left', text='Query', x=qlen, y=(0.5+1.3)/2,font=dict(family="Arial Narrow", size=int(100/yax), color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
     for i in range(0, starts.shape[0]):

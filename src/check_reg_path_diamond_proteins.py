@@ -37,37 +37,48 @@ if diamond['regulated'].sum(): # if ANY of the hits are regulated
     hits = diamond[diamond['regulated']==True]  # print out the start and end coordinated on the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 else:
-	print("Regulated pathogens: PASS")
+	print("Regulated pathogen proteins: PASS")
+
+
+
+
+
+
+
+
+
+
+
 
 # specify which parts of the order aren't covered by a protein
 
 
 
-
-
-# read in nt screening
-
-file = sys.argv[1] + ".nt.blastn"
-
-blast = taxdist(file, reg_ids, query)
-#print(blast)
-blast = trimblast(blast)
-#print(blast)
-
-if blast['regulated'].sum():
-    print("Regulated pathogens (nt): FLAG")
-    if "Viruses" in set(blast['superkingdom'][blast['regulated'] == True]):
-        print("Regulated virus (nt)")
-    elif blast['regulated'][blast['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
-        print("Regulated bacteria top hit: FLAG")
-    hits = blast[blast['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
-#    print(hits)
-    hits.to_csv(sys.argv[1] + ".reg_path_coords_nt.csv", index=False)
-else:
-    print("Regulated pathogens (nt): PASS")
-
-# screen any nt regions of concern
-bedtools getfasta -fi query.fasta -bed test.bed -fo test.fa.out
-
-$ cat test.bed
-chr1 5 10
+#
+#
+## read in nt screening
+#
+#file = sys.argv[1] + ".nt.blastn"
+#
+#blast = taxdist(file, reg_ids, query)
+##print(blast)
+#blast = trimblast(blast)
+##print(blast)
+#
+#if blast['regulated'].sum():
+#    print("Regulated pathogens (nt): FLAG")
+#    if "Viruses" in set(blast['superkingdom'][blast['regulated'] == True]):
+#        print("Regulated virus (nt)")
+#    elif blast['regulated'][blast['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
+#        print("Regulated bacteria top hit: FLAG")
+#    hits = blast[blast['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
+##    print(hits)
+#    hits.to_csv(sys.argv[1] + ".reg_path_coords_nt.csv", index=False)
+#else:
+#    print("Regulated pathogens (nt): PASS")
+#
+## screen any nt regions of concern
+#bedtools getfasta -fi query.fasta -bed test.bed -fo test.fa.out
+#
+#$ cat test.bed
+#chr1 5 10

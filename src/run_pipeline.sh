@@ -118,11 +118,12 @@ python ${CM_DIR}/check_reg_path_proteins.py ${name}
 
 # nucleotide screening
 
-python src/fetch_nc_bits.py ${name} ${QUERY}
-blastn -query ${name}_nc.fasta -db ${DB_PATH}/../nt_blast/nt
+#python src/fetch_nc_bits.py ${name} ${QUERY}
+#blastn -query ${name}_nc.fasta -db ${DB_PATH}/../nt_blast/nt
+
 # .nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30 -word_size 7 -window_size 40 -gapopen 11 -gapextend 1'
 
-python ${CM_DIR}/check_reg_path_nt.py ${name}
+#python ${CM_DIR}/check_reg_path_nt.py ${name}
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 

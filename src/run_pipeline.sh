@@ -96,7 +96,7 @@ fi
 dirname="$( dirname "$0" )"
 
 export CM_DIR=$dirname
-export PYTHONPATH=$PYTHONPATH:$dirname
+export PYTHONPATH=$dirname
 
 source ${CM_DIR}/config
 

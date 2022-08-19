@@ -107,27 +107,27 @@ name=${QUERY//.fasta/} # the prefix detailing the name of the sequence
 echo " >> Running biorisk HMM scan..."
 transeq $QUERY ${name}.faa -frame 6 -clean &>tmp
 hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>tmp
-python ${CM_DIR}/check_biorisk ${name}
+python ${CM_DIR}/check_biorisk.py ${name}
 
 # Step 2: taxon ID
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_blastx.sh -d ${DB_PATH}/nr -q $QUERY -o ${name}.nr -t $THREADS
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
-python ${CM_DIR}/check_reg_path ${name}
+python ${CM_DIR}/check_reg_path.py ${name}
 
 # Step 3: benign DB scan
 echo " >> Checking any pathogen regions for benign components..."
 hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null
 blastn -db ${PFAMDB}/benign/benign.fasta -query $QUERY -out ${name}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
-python ${CM_DIR}/check_benign ${name} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
+python ${CM_DIR}/check_benign.py ${name} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
 
 echo " >> Done with screening!"
 
 # Visualising outputs; functional characterization
 
-#python ${CM_DIR}/viz_outputs ${name} # turning off until file write permissions are resolved
+#python ${CM_DIR}/viz_outputs.py ${name} # turning off until file write permissions are resolved
 
 if [ "$CLEANUP" == 1 ]
 then

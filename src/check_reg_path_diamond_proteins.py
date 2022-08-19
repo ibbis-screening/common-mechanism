@@ -21,7 +21,7 @@ reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 diamond = readdmnd(file)
 diamond = taxdist(diamond, reg_ids, query)
 #print(diamond.iloc[:,0:6])
-diamond = trimblast(diamond)
+diamond2 = trimblast(diamond)
 #print(diamond)
 
 # ignore synthetic constructs when deciding whether to flag
@@ -29,13 +29,31 @@ diamond = trimblast(diamond)
 
 if diamond['regulated'].sum(): # if ANY of the hits are regulated
     print("Regulated pathogen proteins: PRESENT")
-    if "Viruses" in set(diamond['superkingdom'][diamond['regulated'] == True]):
-        print("Regulated virus: FLAG")
-    elif diamond['regulated'][diamond['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
-        print("Regulated bacteria top hit: FLAG")
+    for gene in set(diamond['subject acc.'][diamond['regulated'] == True]):
+        
+        if "Viruses" in set(diamond['superkingdom'][diamond['subject acc.'] == gene]):
+            print("Regulated virus: FLAG")
+        elif diamond['regulated'][diamond['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
+            print("Regulated bacteria top hit: FLAG")
+        if True in diamond2['regulated'][diamond['subject acc.'] == gene] and False in diamond2['regulated'][diamond['subject acc.'] == gene]:
+        
 #    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
     hits = diamond[diamond['regulated']==True]  # print out the start and end coordinated on the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 else:
 	print("Regulated pathogen proteins: PASS")
+
+
+
+#if diamond['regulated'].sum(): # if ANY of the hits are regulated
+#    print("Regulated pathogen proteins: PRESENT")
+#    if "Viruses" in set(diamond['superkingdom'][diamond['regulated'] == True]):
+#        print("Regulated virus: FLAG")
+#    elif diamond['regulated'][diamond['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
+#        print("Regulated bacteria top hit: FLAG")
+##    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
+#    hits = diamond[diamond['regulated']==True]  # print out the start and end coordinated on the query sequence
+#    hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
+#else:
+#    print("Regulated pathogen proteins: PASS")
 

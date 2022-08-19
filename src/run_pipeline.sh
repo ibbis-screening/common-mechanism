@@ -65,26 +65,26 @@ then
 fi
 
 #Check for database
-echo " >> Checking for Valid Options..."
-if [ -d $DB_PATH ]
-then
-    #Directory exists, check for at least one blastx db file
-    if [ ! -f $DB_PATH/*.phr ]
-    then
-        echo " ERROR: no blast database in $DB_PATH"
-        exit
-    fi
-else
-    echo " ERROR: database folder $DB_PATH does not exist"
-    exit
-fi
-  
-#Check for input file
-if [ ! -f  $QUERY ]
-then
-    echo " ERROR: input file $QUERY does not exist"
-    exit
-fi
+#echo " >> Checking for Valid Options..."
+#if [ -d $DB_PATH ]
+#then
+#    #Directory exists, check for at least one blastx db file
+#    if [ ! -f $DB_PATH/*.phr ]
+#    then
+#        echo " ERROR: no blast database in $DB_PATH"
+#        exit
+#    fi
+#else
+#    echo " ERROR: database folder $DB_PATH does not exist"
+#    exit
+#fi
+#  
+##Check for input file
+#if [ ! -f  $QUERY ]
+#then
+#    echo " ERROR: input file $QUERY does not exist"
+#    exit
+#fi
 
 #################################################################
 

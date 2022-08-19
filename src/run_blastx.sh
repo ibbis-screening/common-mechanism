@@ -64,7 +64,7 @@ fi
 
 #Check for database
 echo " >> Checking for valid options..."
-#echo [ ! -f "$DB"*.phr ]
+echo [ ! -f "$DB"*.phr ]
 if [ ! -f "$DB"*.phr ]
 then
     echo " ERROR: blastx database $DB/* does not exist"

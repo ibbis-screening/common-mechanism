@@ -73,6 +73,7 @@ def taxdist(blast, reg_ids, query):
     blast.drop(cut)
     blast = blast.sort_values(by=['% identity'], ascending=False)
     
+    # simplify output by putting all single instances of a species in an 'other' category
     singletons = blast.species.value_counts().index[blast.species.value_counts()==1]
     blast['species_simplified'] = blast['species']
     blast.loc[blast.species.isin(singletons), 'species_simplified'] = 'other'

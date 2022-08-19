@@ -5,7 +5,7 @@
 #PKG_HOME=`which run_pipeline.sh | sed 's/\/src\/run_pipeline.sh//g'`
 
 # run a config file that sets relevant paths
-./config
+source config
 
 query=$1 # the file name
 name=${query//*\//} # strip out any directory info
@@ -35,9 +35,6 @@ python -m check_benign ${name} ${query} # added the original file path here to f
 
 # Visualising outputs; functional characterization
 
-if [ ! -d //figures ]; then
-  mkdir -p figures;
-fi
-python -m viz_outputs ${name}
+#python -m viz_outputs ${name} # turning off until file write permissions are resolved
 
 #rm ${query}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn

@@ -110,11 +110,21 @@ hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>
 python ${CM_DIR}/check_biorisk.py ${name}
 
 # Step 2: taxon ID
+# protein screening
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_blastx.sh -d ${DB_PATH}/nr -q $QUERY -o ${name}.nr -t $THREADS
 
+python ${CM_DIR}/check_reg_path_proteins.py ${name}
+
+# nucleotide screening
+
+python src/fetch_nc_bits.py ${name} ${QUERY}
+blastn -query ${name}_nc.fasta -db ${DB_PATH}/../nt_blast/nt
+# .nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30 -word_size 7 -window_size 40 -gapopen 11 -gapextend 1'
+
+python ${CM_DIR}/check_reg_path_nt.py ${name}
+
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
-python ${CM_DIR}/check_reg_path.py ${name}
 
 # Step 3: benign DB scan
 echo " >> Checking any pathogen regions for benign components..."
@@ -131,7 +141,11 @@ echo " >> Done with screening!"
 
 if [ "$CLEANUP" == 1 ]
 then
-    rm ${name}.reg_path_coords.csv ${name}.*hmmsearch ${name}.*blastx ${name}.*blastn
+    if [ -f "${name}".reg_path_coords.csv ]
+    then
+        rm ${name}.reg_path_coords.csv
+    fi
+    rm ${name}.*hmmsearch ${name}.*blastx ${name}.*blastn
 fi
 
 rm tmp

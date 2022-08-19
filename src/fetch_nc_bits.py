@@ -49,7 +49,7 @@ seqid = blast.iloc[0][0]
 
 tofetch = ""
 for (start, stop) in nc_bits:
-    tofetch = tofetch + seqid + " " + str(start) + " " + str(stop) + "\n"
+    tofetch = tofetch + str(seqid) + " " + str(start) + " " + str(stop) + "\n"
 
 a = pybedtools.BedTool(tofetch, from_string=True)
 fasta = f_file

@@ -55,13 +55,14 @@ def taxdist(blast, reg_ids):
     blast = blast.reset_index(drop=True)
     blast['regulated'] = False
     
+    # checks which individual lines contain regulated pathogens
     cut = []
     for x in range(0, blast.shape[0]):
         try:
             t = taxoniq.Taxon(blast['subject tax ids'][x])
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
-                                    blast.loc[x,'regulated'] = True
+                blast.loc[x,'regulated'] = True
             for level in t.ranked_lineage:
                 if int(level.tax_id) in set(reg_ids[0]):
                     blast.loc[x,'regulated'] = True
@@ -73,8 +74,27 @@ def taxdist(blast, reg_ids):
         except:
             print('Taxon id', blast['subject tax ids'][x], 'is missing')
             cut.append(x)
-    
+#
     blast.drop(cut)
+    
+    # identifies regulated status of each gene
+#    for gene in set(blast['subject acc.']):
+#        regulated = 0
+#        nonregulated = 0
+#        if (blast['regulated'][blast['subject acc.'] == gene] == True).any():
+#            print("Reg found")
+#            regulated = 1
+#        if (blast['regulated'][blast['subject acc.'] == gene] == False).any():
+#            print("Non-reg found")
+#            nonregulated = 1
+#        if (regulated == 1 & nonregulated == 0):
+#            blast['regulated'][blast['subject acc.'] == gene] = "Regulated"
+#        if (regulated == 1 & nonregulated == 1):
+#            blast['regulated'][blast['subject acc.'] == gene] = "Mixed"
+#        if (regulated == 0 & nonregulated == 0):
+#            blast['regulated'][blast['subject acc.'] == gene] = "Non-regulated"
+    
+    blast = blast.sort_values(by=['% identity'], ascending=False)
     
     # simplify output by putting all single instances of a species in an 'other' category
     singletons = blast.species.value_counts().index[blast.species.value_counts()==1]

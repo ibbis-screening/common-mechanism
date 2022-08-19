@@ -64,16 +64,9 @@ fi
 
 #Check for database
 echo " >> Checking for Valid Options..." 
-if [ -d $DB ]
-then 
-    #Directory exists, check for at least one blastx db file
-    if [ ! -f $DB/*.phr ]
-    then 
-        echo " ERROR: blastx database $DB/* does not exist"
-        exit
-    fi
-else
-    echo " ERROR: blast database folder $DB does not exist"
+if [ ! -f $DB*.phr ]
+then
+    echo " ERROR: blastx database $DB/* does not exist"
     exit
 fi
   

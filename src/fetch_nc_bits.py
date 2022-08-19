@@ -17,15 +17,15 @@ if len(sys.argv) < 1:
     
 query = sys.argv[1]
 f_file = sys.argv[2]
-dmnd_file = query + ".nr.diamond"
+blast_file = query + ".nr.blastx"
 
 # find noncoding bits
-diamond = readdmnd(dmnd_file)
-diamond = trimblast(diamond)
+blast = readblast(blast_file)
+blast = trimblast(blast)
 # print(diamond)
 hits = []
-for i in range(diamond.shape[0]):
-    pair = [diamond['q. start'][i], diamond['q. end'][i]]
+for i in range(blast.shape[0]):
+    pair = [blast['q. start'][i], blast['q. end'][i]]
     pair.sort
     # print(pair)
     hits.append(pair)
@@ -43,13 +43,13 @@ for i in range(len(hits)-1):
 # fetch noncoding sequences
 
 query="1_biorisk"
-seqid = diamond.iloc[0][0]
+seqid = blast.iloc[0][0]
 
 # nc_bits.append([2,4])
 
 tofetch = ""
 for (start, stop) in nc_bits:
-    tofetch = tofetch + seqid + " " + str(start) + " " + str(stop) + "\n"
+    tofetch = tofetch + str(seqid) + " " + str(start) + " " + str(stop) + "\n"
 
 a = pybedtools.BedTool(tofetch, from_string=True)
 fasta = f_file

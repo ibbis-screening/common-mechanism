@@ -98,7 +98,7 @@ dirname="$( dirname "$0" )"
 export CM_DIR=$dirname
 export PYTHONPATH=$PYTHONPATH:$dirname
 
-#source ${dirname}/config
+source ${CM_DIR}/config
 
 name=${QUERY//*\//} # strip out any directory info
 name=${QUERY//.fasta/} # the prefix detailing the name of the sequence

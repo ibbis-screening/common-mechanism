@@ -45,7 +45,7 @@ def check_for_benign(query, coords):
                 htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
                 htrim = htrim.assign(coverage = abs(htrim['q. end'] - htrim['q. start']) / htrim['query length'])
                 if any(htrim['coverage'] > 0.90):
-                    print("Synbio parts - >90% coverage achieved - PASS")
+                    print("Synbio parts - >90% coverage achieved = PASS")
                 else:
                     print("Synbio parts - <90% coverage achieved = FAIL")
     

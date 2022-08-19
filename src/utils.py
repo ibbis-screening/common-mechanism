@@ -127,6 +127,8 @@ def readblast(fileh):
     # read through the file with comments in to find column headers
     file = open(fileh, "r")
     columns = []
+    # query acc.ver, subject acc.ver, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score      in real title
+    # qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send      in command
     for line in file:
         if 'Fields' in line:
             fields = line.replace('# Fields: ', '').rstrip()

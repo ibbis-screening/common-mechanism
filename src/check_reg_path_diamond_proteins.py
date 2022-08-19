@@ -28,7 +28,7 @@ diamond = trimblast(diamond)
 #print(diamond)
 
 if diamond['regulated'].sum(): # if ANY of the hits are regulated
-    print("Regulated pathogens: PRESENT")
+    print("Regulated pathogen proteins: PRESENT")
     if "Viruses" in set(diamond['superkingdom'][diamond['regulated'] == True]):
         print("Regulated virus: FLAG")
     elif diamond['regulated'][diamond['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated

@@ -16,7 +16,7 @@ file = sys.argv[1] + ".nr.blastx"
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
 blast = readblast(file)
-blast = taxdist(blast, reg_ids)
+blast = taxdist(blast, reg_ids, sys.argv[1])
 #print(blast)
 blast = trimblast(blast)
 #print(blast)

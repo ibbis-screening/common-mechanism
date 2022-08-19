@@ -89,7 +89,7 @@ fi
 #################################################################
 
 # run a config file that sets relevant paths
-dirname = "$( dirname "$0" )"
+dirname="$( dirname "$0" )"
 
 #export CM_DIR=$dirname
 export PYTHONPATH=$PYTHONPATH:$dirname

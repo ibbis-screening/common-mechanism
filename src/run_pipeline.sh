@@ -108,7 +108,7 @@ python -m check_biorisk ${name}
 # Step 2: taxon ID
 echo " >> Running taxid screen for regulated pathogens..."
 #if ! [ -e "${name}.nr.blastx" ]; # if the file already exists, don't remake it - can remove this upon release (if added back, remember then before blastx command)
-${CM_DIR}/src/run_blastx.sh -d nr -q $QUERY -o ${name}.nr
+${CM_DIR}/run_blastx.sh -d nr -q $QUERY -o ${name}.nr
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 python -m check_reg_path ${name}

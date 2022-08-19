@@ -4,7 +4,7 @@
 
 # run the Common Mechanism on each test sequence
 
-for i in $1; do ../src/run_pipeline.sh $i; done
+for i in $1; do ../src/run_pipeline.sh $i > ${i//fasta/screen}; done
 
 # collate test results
 

@@ -38,7 +38,7 @@ while getopts "p:t:d:q:o:f:" OPTION
                 ;;
             \?)
                 echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
-                echo "  DB              location (folder) of database (required)"
+                echo "  DB              full path of database (required)"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: out)"
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -50,7 +50,7 @@ while getopts "p:t:d:q:o:f:" OPTION
     done
 
 #Check for values
-if [ "$DB_PATH" == "" ] && [ "$INPUT" == "" ]
+if [ "$DB" == "" ] && [ "$INPUT" == "" ]
 then
     echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  DB              location (folder) of database (required)"

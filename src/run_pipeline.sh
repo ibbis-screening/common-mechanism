@@ -4,10 +4,8 @@
 
 #PKG_HOME=`which run_pipeline.sh | sed 's/\/src\/run_pipeline.sh//g'`
 
-# need to make this flexible re: where people store their databases
-export PYTHONPATH=$PYTHONPATH/src
-export PFAMDB=./databases
-export BLASTDB=$BLASTDB:./databases
+# run a config file that sets relevant paths
+./config
 
 query=$1 # the file name
 name=${query//*\//} # strip out any directory info

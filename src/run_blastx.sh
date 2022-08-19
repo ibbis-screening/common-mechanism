@@ -7,11 +7,11 @@
 
 #set -eux #debug mode
 set -eu
-PROCESSES=5         #number of processes to run at once 
-THREADS=1           #threads per process  
 DB=""
 QUERY=""
 OUTPUT="out" 
+PROCESSES=5         #number of processes to run at once
+THREADS=1           #threads per process
 FURTHEROPT=""
 
 #Get options from user
@@ -38,7 +38,7 @@ while getopts "p:t:d:q:o:f:" OPTION
                 ;;
             \?)
                 echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
-                echo "  DB              location (folder) of database (required)"
+                echo "  DB              full path to database (required)"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: out)"
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -50,10 +50,10 @@ while getopts "p:t:d:q:o:f:" OPTION
     done
 
 #Check for values
-if [ "$DB_PATH" == "" ] && [ "$INPUT" == "" ]
+if [ "$DB" == "" ] && [ "$INPUT" == "" ]
 then
     echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
-        echo "  DB              location (folder) of database (required)"
+        echo "  DB              full path to database (required)"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: out)"
         echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -63,22 +63,15 @@ then
 fi
 
 #Check for database
-echo " >> Checking for Valid Options..." 
-if [ -d $DB ]
-then 
-    #Directory exists, check for at least one blastx db file
-    if [ ! -f $DB/*.phr ]
-    then 
-        echo " ERROR: blastx database $DB/* does not exist"
-        exit
-    fi
-else
-    echo " ERROR: blast database folder $DB does not exist"
+echo " >> Checking for valid options..."
+if [ ! -f "$DB".pal ] # this is v. blast specific
+then
+    echo " ERROR: blastx database $DB/* does not exist"
     exit
 fi
   
 #Check for input file 
-if [ ! -f  $QUERY ]
+if [ ! -f  "$QUERY" ]
 then
     echo " ERROR: input file $QUERY does not exist"
     exit

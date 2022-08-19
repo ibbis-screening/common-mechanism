@@ -65,7 +65,7 @@ then
 fi
 
 #Check for database
-#echo " >> Checking for Valid Options..."
+#echo " >> Checking for valid options..."
 #if [ -d $DB_PATH ]
 #then
 #    #Directory exists, check for at least one blastx db file
@@ -91,7 +91,7 @@ fi
 # run a config file that sets relevant paths
 dirname="$( dirname "$0" )"
 
-#export CM_DIR=$dirname
+export CM_DIR=$dirname
 export PYTHONPATH=$PYTHONPATH:$dirname
 
 #source ${dirname}/config
@@ -108,7 +108,7 @@ python -m check_biorisk ${name}
 # Step 2: taxon ID
 echo " >> Running taxid screen for regulated pathogens..."
 #if ! [ -e "${name}.nr.blastx" ]; # if the file already exists, don't remake it - can remove this upon release (if added back, remember then before blastx command)
-src/run_blastx.sh -d nr -q $QUERY -o ${name}.nr
+${CM_DIR}/run_blastx.sh -d ${DB_PATH}/nr -q $QUERY -o ${name}.nr
 
 ### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 python -m check_reg_path ${name}

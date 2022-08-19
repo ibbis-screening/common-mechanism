@@ -101,8 +101,8 @@ name=${QUERY//.fasta/} # the prefix detailing the name of the sequence
 
 # Step 1: biorisk DB scan
 echo " >> Running biorisk HMM scan..."
-transeq $QUERY ${name}.faa -frame 6 -clean &>/dev/null
-hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>/dev/null
+transeq $QUERY ${name}.faa -frame 6 -clean &>tmp
+hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>tmp
 python -m check_biorisk ${name}
 
 # Step 2: taxon ID
@@ -127,3 +127,4 @@ echo " >> Done with screening!"
 #python -m viz_outputs ${name} # turning off until file write permissions are resolved
 
 #rm ${QUERY}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn
+rm tmp

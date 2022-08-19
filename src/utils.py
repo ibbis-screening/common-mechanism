@@ -178,7 +178,8 @@ def trimblast(blast):
                 # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
                 if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
                     if j in blast2.index:
-                        blast2 = blast2.drop([j])
+                        if df.loc[i,'subject tax ids']!="32630": # don't trim a lower ranked hit if the higher ranked hit is a synthetic construct
+                            blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
     return blast2
 

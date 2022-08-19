@@ -6,6 +6,8 @@ import taxoniq
 # check for any best matches to a regulated pathogen in the BLAST results, and if so, print their coordinates
 # we have opted to ignore any "synthetic construct" hits
 
+# usage: python -m check_reg_path ${name}
+
 #Input parameter error checking 
 if len(sys.argv) < 1:
     sys.stdout.write("\tERROR: Please provide a query file\n")
@@ -18,6 +20,8 @@ reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, sys.argv[1])
 #print(blast)
+
+# trim down to the top hit for each region
 blast = trimblast(blast)
 #print(blast)
 

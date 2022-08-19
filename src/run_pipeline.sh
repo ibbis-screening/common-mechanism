@@ -47,7 +47,7 @@ while getopts "p:t:d:q:o:" OPTION
     done
 
 #Check for values
-if [ "$DB_PATH" == "" ] && [ "$INPUT" == "" ]
+if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
 then
     echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  DB_PATH         location (folder) of database (required)"

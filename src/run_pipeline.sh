@@ -103,7 +103,7 @@ source ${CM_DIR}/../config
 # Step 1: biorisk DB scan
 echo " >> Running biorisk HMM scan..."
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>${QUERY}_tmp
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>${OUTPUT}_tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch biorisk/biorisk.hmm ${OUTPUT}.faa &>${OUTPUT}_tmp
 python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID

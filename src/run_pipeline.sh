@@ -69,9 +69,9 @@ echo " >> Checking for Valid Options..."
 if [ -d $DB_PATH ]
 then
     #Directory exists, check for at least one blastx db file
-    if [ ! -f $DB_PATH/* ]
+    if [ ! -f $DB_PATH/*.phr ]
     then
-        echo " ERROR: no database in $DB_PATH"
+        echo " ERROR: no blast database in $DB_PATH"
         exit
     fi
 else

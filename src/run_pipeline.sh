@@ -131,7 +131,7 @@ echo " >> Done with screening!"
 
 if [ "$CLEANUP" == 1 ]
 then
-    rm ${QUERY}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn
+    rm ${name}.reg_path_coords.csv ${name}.*hmmsearch ${name}.*blastx ${name}.*blastn
 fi
 
 rm tmp

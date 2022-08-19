@@ -65,7 +65,7 @@ then
 fi
 
 #Check for database
-#echo " >> Checking for Valid Options..."
+#echo " >> Checking for valid options..."
 #if [ -d $DB_PATH ]
 #then
 #    #Directory exists, check for at least one blastx db file

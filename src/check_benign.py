@@ -19,7 +19,7 @@ def check_for_benign(query, coords):
             exit(1)
         
         hmmer = readhmmer(hmmsearch)
-        print(hmmer)
+#        print(hmmer)
         qlen = hmmer['qlen'][0]
         for region in range(0, coords.shape[0]): # for each regulated pathogen region
             # look at only the hmmer hits that overlap with it

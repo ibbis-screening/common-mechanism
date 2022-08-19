@@ -26,7 +26,7 @@ while getopts "p:t:d:q:o:" OPTION
                 THREADS=$OPTARG
                 ;;
             d)
-                DB=$OPTARG
+                DB_PATH=$OPTARG
                 ;;
             q)
                 QUERY=$OPTARG
@@ -36,7 +36,7 @@ while getopts "p:t:d:q:o:" OPTION
                 ;;
             \?)
                 echo "Usage: src/run_pipeline.sh -d DB_PATH -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
-                echo "  DB              location (folder) of database (required)"
+                echo "  DB_PATH              location (folder) of database (required)"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -49,7 +49,7 @@ while getopts "p:t:d:q:o:" OPTION
 #Check for values
 if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
 then
-    echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+    echo "Usage: run_blastx.sh -d DB_PATH -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  DB_PATH         location (folder) of database (required)"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: out)"

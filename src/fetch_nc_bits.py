@@ -25,6 +25,7 @@ for i in range(blast.shape[0]):
     pair.sort
     # print(pair)
     hits.append(pair)
+hits = sorted(hits, key=lambda x: x[0])
 #print(hits)
 
 nc_bits = []
@@ -33,7 +34,6 @@ if hits[0][0] != 1:
 for i in range(len(hits)-1):
     if hits[i][1] < (hits[i+1][0] - 19): # if there's a gap of >=20 between hits
         nc_bits.append([hits[i][1], hits[i+1][0]])
-hits = sorted(hits, key=lambda x: x[0])
 #print(nc_bits)
 
 

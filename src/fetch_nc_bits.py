@@ -4,10 +4,6 @@ from utils import *
 import os, sys
 import pandas as pd
 import taxoniq
-#from Bio import SeqIO
-#from Bio.Seq import Seq
-#from Bio.SeqRecord import SeqRecord
-#from collections import defaultdict
 import pybedtools
 
 #Input parameter error checking
@@ -35,14 +31,14 @@ nc_bits = []
 if hits[0][0] != 1:
     nc_bits.append([1,hits[0][0]])
 for i in range(len(hits)-1):
-    if hits[i][1] < hits[i+1][0]:
+    if hits[i][1] < (hits[i+1][0] - 19): # if there's a gap of >=20 between hits
         nc_bits.append([hits[i][1], hits[i+1][0]])
+hits = sorted(hits, key=lambda x: x[0])
 #print(nc_bits)
 
 
 # fetch noncoding sequences
 
-query="1_biorisk"
 seqid = blast.iloc[0][0]
 
 # nc_bits.append([2,4])

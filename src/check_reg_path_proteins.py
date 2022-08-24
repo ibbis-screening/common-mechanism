@@ -40,10 +40,10 @@ if blast2['regulated'].sum(): # if ANY of the hits are regulated
         n_total = len(blast['regulated'][blast['subject acc.'] == gene])
         if (n_reg < n_total):
             print("Gene " + gene + " found in both regulated and nonregulated organisms: COND FLAG")
-            print(" ".join(blast['species'][blast['subject acc.'] == gene]))
+            print(" ".join(set(blast['species'][blast['subject acc.'] == gene])))
         elif (n_reg == n_total):
             print("Gene " + gene + " found in only regulated organisms: FLAG")
-            print(" ".join(blast['species'][blast['subject acc.'] == gene]))
+            print(" ".join(set(blast['species'][blast['subject acc.'] == gene])))
         else:
             print("Gene: " + gene)
             print(blast['regulated'][blast['subject acc.'] == gene])

@@ -47,10 +47,11 @@ tofetch = ""
 for (start, stop) in nc_bits:
     tofetch = tofetch + str(seqid) + " " + str(start) + " " + str(stop) + "\n"
 
-a = pybedtools.BedTool(tofetch, from_string=True)
-fasta = f_file
-outfile = query + '_nc.fasta'
-a = a.sequence(fi=fasta, fo=outfile)
+if tofetch != "":
+    a = pybedtools.BedTool(tofetch, from_string=True)
+    fasta = f_file
+    outfile = query + '_nc.fasta'
+    a = a.sequence(fi=fasta, fo=outfile)
 # print(open(a.seqfn).read())
 
 

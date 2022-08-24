@@ -109,7 +109,7 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 # Step 2: taxon ID
 # protein screening
 echo " >> Running taxid screen for regulated pathogens..."
-${CM_DIR}/run_blastx.sh -d nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
+${CM_DIR}/run_blastx.sh -d $NR_DB -q $QUERY -o ${OUTPUT}.nr -t $THREADS
 
 python ${CM_DIR}/check_reg_path_proteins.py ${OUTPUT}
 
@@ -117,7 +117,7 @@ python ${CM_DIR}/check_reg_path_proteins.py ${OUTPUT}
 
 python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 if [ -f "${OUTPUT}"_nc.fasta ]
-then blastn -query ${OUTPUT}_nc.fasta -db nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30
+then blastn -query ${OUTPUT}_nc.fasta -db $NT_DB -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30
 python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
 fi
 
@@ -141,6 +141,10 @@ then
     if [ -f "${OUTPUT}".reg_path_coords.csv ]
     then
         rm ${OUTPUT}.reg_path_coords.csv
+    fi
+    if [ -f "${OUTPUT}".reg_path_coords_nt.csv ]
+    then
+        rm ${OUTPUT}.reg_path_coords_nt.csv
     fi
     rm ${OUTPUT}.*hmmsearch ${OUTPUT}.*blastx ${OUTPUT}.*blastn
 fi

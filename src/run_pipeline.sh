@@ -48,7 +48,7 @@ while getopts "p:t:q:o:c:" OPTION
     done
 
 #Check for values
-if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
+if [ "$QUERY" == "" ]
 then
     echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"

@@ -52,7 +52,7 @@ while getopts "p:t:d:q:o:c:" OPTION
 #Check for values
 if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
 then
-    echo "Usage: run_blastx.sh -d DB_PATH -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+    echo "Usage: src/run_pipeline.sh -d DB_PATH -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  DB_PATH         location (folder) of database (required)"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: out)"
@@ -70,18 +70,6 @@ fi
 
 #Check for database
 echo " >> Checking for valid options..."
-if [ -d "$DB_PATH" ]
-then
-    #Directory exists, check for at least one blastx db file
-    if [ ! -f "$DB_PATH"/*.pal ]
-    then
-        echo " ERROR: no blast database in $DB_PATH"
-        exit
-    fi
-else
-    echo " ERROR: database folder $DB_PATH does not exist"
-    exit
-fi
 
 #Check for input file
 if [ ! -f  $QUERY ]

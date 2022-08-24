@@ -9,13 +9,12 @@
 set -eu
 PROCESSES=5         #number of processes to run at once
 THREADS=1           #threads per process
-DB_PATH=""
 QUERY=""
 OUTPUT=""
-CLEANUP=1
+CLEANUP=0
 
 #Get options from user
-while getopts "p:t:d:q:o:c:" OPTION
+while getopts "p:t:q:o:c:" OPTION
     do
         case $OPTION in
             p)
@@ -37,8 +36,7 @@ while getopts "p:t:d:q:o:c:" OPTION
                 CLEANUP=$OPTARG
                 ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -d DB_PATH -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
-                echo "  DB_PATH              location (folder) of database (required)"
+                echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -52,10 +50,9 @@ while getopts "p:t:d:q:o:c:" OPTION
 #Check for values
 if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
 then
-    echo "Usage: src/run_pipeline.sh -d DB_PATH -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
-        echo "  DB_PATH         location (folder) of database (required)"
+    echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"
-        echo "  OUTPUT          output prefix for alignments (default: out)"
+        echo "  OUTPUT          output prefix for alignments (default: query prefix)"
         echo "  PROCESSES       number of databases to evaluate (default: 5)"
         echo "  THREADS         number of threads for each database run (default: 1)"
         echo "  CLEANUP         tidy up intermediate screening files afterward? 0 = no, 1 = y"

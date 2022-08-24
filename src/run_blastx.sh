@@ -66,7 +66,7 @@ fi
 echo " >> Checking for valid options..."
 if [ ! -f "$DB".pal ] # this is v. blast specific
 then
-    echo " ERROR: blastx database $DB/* does not exist"
+    echo " ERROR: blastx database $DB does not exist"
     exit
 fi
   

@@ -48,21 +48,9 @@ if blast2['regulated'].sum(): # if ANY of the hits are regulated
             print("Gene: " + gene)
             print(blast['regulated'][blast['subject acc.'] == gene])
 #    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
-    hits = blast[blast['regulated']==True]  # print out the start and end coordinated on the query sequence
+    hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates on the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 else:
     print("Regulated pathogen proteins: PASS")
 
 
-
-#if blast['regulated'].sum(): # if ANY of the hits are regulated
-#    print("Regulated pathogens: PRESENT")
-#    if "Viruses" in set(blast['superkingdom'][blast['regulated'] == True]):
-#        print("Regulated virus: FLAG")
-#    elif blast['regulated'][blast['subject tax ids']!="32630"][0] == True:
-#        print("Regulated bacteria top hit: FLAG")
-#    hits = blast[blast['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
-##    print(hits)
-#    hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
-#else:
-#    print("Regulated pathogens: PASS")

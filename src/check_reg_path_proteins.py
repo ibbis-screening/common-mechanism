@@ -32,9 +32,15 @@ blast2 = trimblast(blast)
 if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
     print("Regulated pathogen proteins: PRESENT")
     for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): # for each gene with at least one regulated hit
+        # go back to blast - the full set of hits
+        # if it's a viral protein
         if "Viruses" in set(blast['superkingdom'][blast['subject acc.'] == gene]):
-            if blast['superkingdom'][blast['subject tax ids']!="32630" & blast['subject acc.'] == gene][0] == "Viruses":
-                print("Regulated virus top hit: FLAG")
+            subset = blast[(blast['subject tax ids'] != "32630") & (blast['subject acc.'] == gene)]
+            subset = subset.reset_index(drop=True)
+            # if the top hit is both viral and regulated
+            if subset['superkingdom'][0] == "Viruses":
+                if subset['regulated'][0] == True:
+                    print("Regulated virus top hit: FLAG")
             else:
                 print("Regulated virus in hits: COND FLAG")
         elif blast['regulated'][blast['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
@@ -46,12 +52,12 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
             print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])))
         elif (n_reg == n_total):
             print("Gene " + gene + " found in only regulated organisms: FLAG")
-            print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])) + " (taxid: " + " ".join(set(blast['subject tax ids'][blast['subject acc.'] == gene])) + ")")
+            print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])) + " (taxid: " + " ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))) + ")")
         else:
             print("Gene: " + gene)
             print(blast['regulated'][blast['subject acc.'] == gene])
-#    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
-    hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates on the query sequence
+#    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinates of the query sequence
+    hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 else:
     print("Regulated pathogen proteins: PASS")

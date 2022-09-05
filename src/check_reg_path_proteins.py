@@ -29,11 +29,14 @@ blast2 = trimblast(blast)
 
 # ignore synthetic constructs when deciding whether to flag
 
-if blast2['regulated'].sum(): # if ANY of the hits are regulated
+if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
     print("Regulated pathogen proteins: PRESENT")
-    for gene in set(blast2['subject acc.'][blast2['regulated'] == True]):
+    for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): # for each gene with at least one regulated hit
         if "Viruses" in set(blast['superkingdom'][blast['subject acc.'] == gene]):
-            print("Regulated virus: FLAG")
+            if blast['superkingdom'][blast['subject tax ids']!="32630" & blast['subject acc.'] == gene][0] == "Viruses":
+                print("Regulated virus top hit: FLAG")
+            else:
+                print("Regulated virus in hits: COND FLAG")
         elif blast['regulated'][blast['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
             print("Regulated bacteria top hit: FLAG")
         n_reg = blast['regulated'][blast['subject acc.'] == gene].sum()
@@ -43,7 +46,7 @@ if blast2['regulated'].sum(): # if ANY of the hits are regulated
             print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])))
         elif (n_reg == n_total):
             print("Gene " + gene + " found in only regulated organisms: FLAG")
-            print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])))
+            print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])) + " (taxid: " + " ".join(set(blast['subject tax ids'][blast['subject acc.'] == gene])) + ")")
         else:
             print("Gene: " + gene)
             print(blast['regulated'][blast['subject acc.'] == gene])

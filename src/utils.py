@@ -35,9 +35,10 @@ def colourscale(reg_status, counts, averages):
 
 def taxdist(blast, reg_ids, query):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
+    # blast here is a dataframe of blast results
     blast2 = blast
     cutrows = []
-    lastrow = len(blast['subject tax ids'])
+    lastrow = blast.shape[0]
     for i in range(0, len(blast['subject tax ids'])):
         if str(blast.loc[i,'subject tax ids']).find(";") != -1:
             taxids = str(blast.loc[i,'subject tax ids']).split(";")
@@ -168,7 +169,7 @@ def readblast(fileh):
 # read in DIAMOND files and pre-format the data frame with essential info
 def readdmnd(fileh):
     diamond = pd.read_csv(fileh, sep='\t', comment='#', header=None)
-    columns = ['query acc.', 'subject title', 'sseqid', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
+    columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
     
     diamond.columns = columns
     diamond = diamond.sort_values(by=['% identity'], ascending=False)

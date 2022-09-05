@@ -11,7 +11,7 @@ if len(sys.argv) < 1:
 biorisk = sys.argv[1] + ".biorisk.hmmsearch"
 benign = sys.argv[1] + ".benign.hmmsearch"
 synbio = sys.argv[1] + ".benign.blastn"
-taxid = sys.argv[1] + ".nr.diamond"
+taxid = sys.argv[1] + ".nr.blastx"
 
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 

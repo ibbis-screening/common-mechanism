@@ -16,16 +16,18 @@ from utils import *
 
 #pio.kaleido.scope.mathjax = None
 
-reg_ids = pd.read_csv('databases/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
 
 # taxonomic distribution plots
-def plot_tax(query, reg_ids):
-    blast = taxdist(query, reg_ids)
-    if blast is not None:
-        plot_pie(blast, query)
-        # plot_sankey(blast, query, suffix)
-        # plot_sunburst(blast, query, suffix)
+def plot_tax(file, reg_ids, query):
+    if re.search(".nr.blastx", file):
+        blast = readblast(file)
+    else:
+        blast = readdmnd(file)
+    hits = taxdist(blast, reg_ids, query)
+    if hits is not None:
+        plot_pie(hits, query)
 
 # donut chart of taxon hits
 def plot_pie(blast, query):
@@ -113,8 +115,8 @@ def plot_hmmer(file, nhits=10):
 #    fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+60, scale=2)
     fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
-# plot BLAST results from --domtblout
-def plot_blast(file, nhits=10):
+# plot BLAST results
+def plot_blast(file, query, nhits=10):
     if checkfile(file) == 0:
         return
     if checkfile(file) == 2:
@@ -128,7 +130,8 @@ def plot_blast(file, nhits=10):
         return
 	
     if re.search(".nr.blastx", file):
-        blast = taxdist(file, reg_ids)
+        blast = readblast(file)
+        blast = taxdist(blast, reg_ids, query)
     else:
         blast = readblast(file)
         blast['regulated'] = False
@@ -137,7 +140,7 @@ def plot_blast(file, nhits=10):
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name
     blast = blast.reset_index()
     blast = blast.iloc[0:nhits,:]
-    
+        
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
     
@@ -147,8 +150,9 @@ def plot_blast(file, nhits=10):
     else:
         colours = colourscale([0.0] * blast.shape[0], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
 #        print(colours)
-    fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], blast['subject title'], colours, nhits)
-    fig.update_layout(showlegend=False, title={'text': 'BLAST Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
+    names = blast['subject acc.'] + ": " + blast['subject title']
+    fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits)
+    fig.update_layout(showlegend=False, title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+60, scale=2)
 
 

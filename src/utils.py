@@ -39,9 +39,10 @@ def taxdist(blast, reg_ids):
 #    blast = readblast(query)
     
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
+    # blast here is a dataframe of blast results
     blast2 = blast
     cutrows = []
-    lastrow = len(blast['subject tax ids'])
+    lastrow = blast.shape[0]
     for i in range(0, len(blast['subject tax ids'])):
         if str(blast.loc[i,'subject tax ids']).find(";") != -1:
             taxids = str(blast.loc[i,'subject tax ids']).split(";")
@@ -168,6 +169,22 @@ def readblast(fileh):
     blast = blast[blast['subject tax ids'].notna()]
     blast = blast.reset_index(drop=True)
     return blast
+
+# read in DIAMOND files and pre-format the data frame with essential info
+def readdmnd(fileh):
+    diamond = pd.read_csv(fileh, sep='\t', comment='#', header=None)
+    columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
+    
+    diamond.columns = columns
+    diamond = diamond.sort_values(by=['% identity'], ascending=False)
+    diamond['log evalue'] = -np.log10(pd.to_numeric(diamond['evalue'])+1e-300)
+    diamond['q. coverage'] = abs(diamond['q. end']-diamond['q. start'])/diamond['query length'].max()
+    diamond['s. coverage'] = abs(diamond['s. end']-diamond['s. start'])/diamond['subject length']
+    
+    diamond = diamond[diamond['subject tax ids'].notna()]
+    diamond = diamond.reset_index(drop=True)
+    
+    return diamond
 
 # trim BLAST results to the most interesting ones
 def trimblast(blast):

@@ -131,4 +131,4 @@ then
     rm ${OUTPUT}.*hmmsearch ${OUTPUT}.*blastx ${OUTPUT}.*blastn
 fi
 
-rm ${OUTPUT}_tmp
+rm ${OUTPUT}*_tmp

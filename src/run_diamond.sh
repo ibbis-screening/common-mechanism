@@ -39,7 +39,7 @@ while getopts "p:t:d:q:o:" OPTION
                 OUTPUT=$OPTARG
                 ;;
             \?)
-                echo "Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
+                echo "Usage: run_diamond.sh -d MY_DB -q QUERY -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
                 echo "  MY_DB           location of database (required)"
                 echo "  QUERY           input file to align to each database (required)"
                 echo "  OUTPUT_FILE     output prefix for alignments (default: out)" 
@@ -53,7 +53,7 @@ while getopts "p:t:d:q:o:" OPTION
 #Check for values
 if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
 then
-    echo "Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
+    echo "Usage: run_diamond.sh -d MY_DB -q QUERY -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
     echo "  MY_DB           location of database (required)"
     echo "  QUERY           input file to align to each database (required)"
     echo "  OUTPUT_FILE     output prefix for alignments (default: out)" 

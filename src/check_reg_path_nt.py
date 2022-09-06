@@ -19,6 +19,10 @@ query = sys.argv[1]
 file = query + ".nt.blastn"
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
+if checkfile(file) == 2:
+    print("No nt hits found")
+    exit(1)
+
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, query)
 #print(blast['regulated'])

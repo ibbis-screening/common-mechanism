@@ -51,7 +51,7 @@ for res in glob.glob('*.screen'):
         matching = [s for s in lines if "Regulated bacteria top hit: FLAG" in s]
 #        print(matching)
         reg_bact = check_flags(matching, reg_bact)
-                
+        
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         nohits = [s for s in lines if "No housekeeping genes found" in s]
         fail = [s for s in lines if "Regulated region failed to clear" in s]

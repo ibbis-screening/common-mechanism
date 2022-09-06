@@ -26,7 +26,7 @@ blast = taxdist(blast, reg_ids, query)
 
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
 blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
-print(blast2)
+#print(blast2)
 #print(blast.iloc[:,10:17])
 
 # ignore synthetic constructs when deciding whether to flag

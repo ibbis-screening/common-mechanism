@@ -186,15 +186,18 @@ def readdmnd(fileh):
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
-#    blast = blast.sort_values(by=['% identity', 'bit score', 'regulated'], ascending=False)
-    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
+    blast = blast.sort_values(by=['regulated'], ascending=False)
+#    print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated']])
     blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
+    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     
     drop = []
     blast2 = blast
     # only keep  top ranked hits that don't overlap
     for query in blast['query acc.'].unique():
         df = blast[blast['query acc.'] == query]
+#        print("DF for trimming:\n\n")
+#        print(df)
         for i in df.index:
             for j in df.index[(i+1):]:
                 # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit

@@ -77,7 +77,7 @@ fi
 
 #################################################################
 
-if [ ! -f  $CM_DIR ]
+if [ ! -z  $CM_DIR ]
 then
     echo "Please source config file before running"
 fi

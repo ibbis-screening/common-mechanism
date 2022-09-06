@@ -16,7 +16,7 @@ def check_for_benign(query, coords):
         qlen = 0
         if checkfile(hmmsearch) == 2:
             print("No housekeeping genes found")
-            exit(1)
+            exit(0)
         
         hmmer = readhmmer(hmmsearch)
 #        print(hmmer)

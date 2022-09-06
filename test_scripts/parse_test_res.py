@@ -43,12 +43,12 @@ for res in glob.glob('*.screen'):
         biorisk = check_flags(matching, biorisk)
 
         # reg_virus screen
-        matching = [s for s in lines if "Regulated virus top hit: FLAG" in s]
+        matching = [s for s in lines if "Regulated virus top hit: " in s]
 #        print(matching)
         reg_virus = check_flags(matching, reg_virus)
         
         # reg_virus screen
-        matching = [s for s in lines if "Regulated bacteria top hit: FLAG" in s]
+        matching = [s for s in lines if "Regulated bacteria top hit: " in s]
 #        print(matching)
         reg_bact = check_flags(matching, reg_bact)
         
@@ -113,4 +113,4 @@ breakdown.to_csv("test_itemized.csv", index=False)
 #plt.xticks(rotation=30, ha='right')
 #plt.savefig("Test_set.png",bbox_inches='tight')
 
-print((pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))
+print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))

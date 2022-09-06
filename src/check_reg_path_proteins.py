@@ -26,7 +26,7 @@ blast = taxdist(blast, reg_ids, query)
 
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
 blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
-print(blast2)
+#print(blast2)
 #print(blast.iloc[:,10:17])
 
 # ignore synthetic constructs when deciding whether to flag
@@ -63,6 +63,7 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
     hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 else:
-    print("Regulated pathogen proteins: PASS")
+    print("Regulated bacteria top hit: PASS")
+    print("Regulated virus top hit: PASS")
 
 

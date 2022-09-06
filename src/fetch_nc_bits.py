@@ -29,7 +29,7 @@ hits = sorted(hits, key=lambda x: x[0])
 #print(hits)
 
 nc_bits = []
-if hits[0][0] != 1:
+if hits[0][0] >20:
     nc_bits.append([1,hits[0][0]])
 for i in range(len(hits)-1):
     if hits[i][1] < (hits[i+1][0] - 19): # if there's a gap of >=20 between hits

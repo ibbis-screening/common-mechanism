@@ -1,7 +1,7 @@
-#! /usr/bin/env bash
+#!/bin/bash
 
 #####################################################################
-#run_diamond.sh runs DIAMOND against a specified database.
+#run_diamond.sh runs DIAMOND against a specified NCBI nr database. 
 #   Buchfink B, Reuter K, Drost HG, "Sensitive protein alignments at 
 #   tree-of-life scale using DIAMOND", 
 #   Nature Methods 18, 366–368 (2021). 
@@ -9,18 +9,17 @@
 #Script Author: Jennifer Lu, jennifer.lu717@gmail.com
 #Updated: 05/25/2022 
 ##################################################################### 
-#Usage: run_diamond.sh -d MY_DB -q QUERY -o OUTPUT_FILE [-p PROCESSES -t THREADS]
 
 #set -eux #debug mode
 set -eu
 PROCESSES=5         #number of processes to run at once 
 THREADS=1           #threads per process  
 DB_PATH=""
-QUERY=""
+INPUT=""
 OUTPUT="out" 
 
 #Get options from user
-while getopts "p:t:d:q:o:" OPTION
+while getopts "p:t:d:i:o:" OPTION
     do 
         case $OPTION in
             p) 
@@ -32,16 +31,16 @@ while getopts "p:t:d:q:o:" OPTION
             d) 
                 DB_PATH=$OPTARG
                 ;;
-            q)
-                QUERY=$OPTARG
+            i) 
+                INPUT=$OPTARG
                 ;;
             o) 
                 OUTPUT=$OPTARG
                 ;;
             \?)
-                echo "Usage: run_diamond.sh -d MY_DB -q QUERY -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
-                echo "  MY_DB           location of database (required)"
-                echo "  QUERY           input file to align to each database (required)"
+                echo "Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
+                echo "  MY_DB           location of NCBI nr database (required)"
+                echo "  INPUT_FILE      input file to align to each database (required)" 
                 echo "  OUTPUT_FILE     output prefix for alignments (default: out)" 
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
@@ -51,11 +50,11 @@ while getopts "p:t:d:q:o:" OPTION
     done
 
 #Check for values
-if [ "$DB_PATH" == "" ] && [ "$QUERY" == "" ]
+if [ "$DB_PATH" == "" ] && [ "$INPUT" == "" ]
 then
-    echo "Usage: run_diamond.sh -d MY_DB -q QUERY -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
-    echo "  MY_DB           location of database (required)"
-    echo "  QUERY           input file to align to each database (required)"
+    echo "Usage: run_diamond.sh -d MY_DB -i INPUT_FILE -o OUTPUT_FILE [-p PROCESSES -t THREADS]"
+    echo "  MY_DB           location of NCBI nr database (required)"
+    echo "  INPUT_FILE      input file to align to each database (required)" 
     echo "  OUTPUT_FILE     output prefix for alignments (default: out)" 
     echo "  PROCESSES       number of databases to evaluate (default: 5)"
     echo "  THREADS         number of threads for each database run (default: 1)"
@@ -66,9 +65,9 @@ echo " >> Checking for Valid Options..."
 if [ -d $DB_PATH ]
 then 
     #Directory exists, check for at least one diamond db file 
-    if [ ! -f $DB_PATH/*.1.dmnd ]
+    if [ ! -f $DB_PATH/nr.1.dmnd ] 
     then 
-        echo " ERROR: diamond database $DB_PATH/nr.1.dmnd does not exist"
+        echo " ERROR: nr diamond database $DB_PATH/nr.1.dmnd does not exist"
         exit
     fi
 else
@@ -77,11 +76,14 @@ else
 fi
   
 #Check for input file 
-if [ ! -f  $QUERY ]
+if [ ! -f  $INPUT ] 
 then
-    echo " ERROR: input file $QUERY does not exist"
+    echo " ERROR: input file $INPUT does not exist" 
     exit
 fi      
   
-ls ${DB_PATH}/*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --fast --threads ${THREADS} -q ${QUERY} -o ${OUTPUT}.{%}.tsv --frameshift 15 --range-culling --outfmt 6 qseqid stitle sseqid staxids evalue bitscore pident qlen qstart qend slen sstart send
+ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv 
+cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv 
+#rm ${OUTPUT}.*.tsv
+
 

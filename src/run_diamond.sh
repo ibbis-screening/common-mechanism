@@ -83,5 +83,5 @@ then
     exit
 fi      
   
-ls ${DB_PATH}/*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx -d ${DB_PATH}/uniref90.{%}.dmnd --fast --threads ${THREADS} -q ${QUERY} -o ${OUTPUT}.{%}.tsv --frameshift 15 --range-culling --outfmt 6 qseqid stitle sseqid staxids evalue bitscore pident qlen qstart qend slen sstart send
+ls ${DB_PATH}/*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --fast --threads ${THREADS} -q ${QUERY} -o ${OUTPUT}.{%}.tsv --frameshift 15 --range-culling --outfmt 6 qseqid stitle sseqid staxids evalue bitscore pident qlen qstart qend slen sstart send
 

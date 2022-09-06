@@ -74,20 +74,24 @@ for res in glob.glob('*.screen'):
 breakdown = list(zip(names, biorisk, reg_virus, reg_bact, benign))
 summary = []
 for name, risk, reg_vir, reg_bac, ben in breakdown:
-    if not None in (risk, reg_vir, reg_bac, ben):
         # if a biorisk is flagged, flag the whole thing
-        if risk == "F":
-            summary.append((name, "F"))
-        elif reg_vir == "F":
-            summary.append((name, "F"))
-        # if it's a regulated bacterial pathogen but a known benign gene, clear it
-        elif (reg_bac == "F" and ben == "P") == 1:
-            summary.append((name, "P"))
-        # if it's a regulated bacterial hit, flag it
-        elif reg_bac == "F":
-            summary.append((name, "F"))
+    if risk == "F":
+        summary.append((name, "F"))
+#        print("Biorisk found")
+    elif reg_vir == "F":
+        summary.append((name, "F"))
+#        print("Regulated virus found")
+    # if it's a regulated bacterial pathogen but a known benign gene, clear it
+    elif (reg_bac == "F" and ben == "P") == 1:
+        summary.append((name, "P"))
+#        print("Regulated bacterial housekeeping found")
+    # if it's a regulated bacterial hit, flag it
+    elif reg_bac == "F":
+#        print("Nothing found")
+        summary.append((name, "F"))
     else:
         summary.append((name, None))
+#print(summary)
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)

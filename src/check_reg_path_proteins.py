@@ -21,29 +21,32 @@ reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, query)
+#print(blast)
 #print(blast['regulated'])
 
-# trim down to the top hit for each region
-blast2 = trimblast(blast)
+# trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
+blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
+print(blast2)
 #print(blast.iloc[:,10:17])
 
 # ignore synthetic constructs when deciding whether to flag
 
 if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
+#    print(blast2)
     print("Regulated pathogen proteins: PRESENT")
     for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): # for each gene with at least one regulated hit
         # go back to blast - the full set of hits
         # if it's a viral protein
-        if "Viruses" in set(blast['superkingdom'][blast['subject acc.'] == gene]):
-            subset = blast[(blast['subject tax ids'] != "32630") & (blast['subject acc.'] == gene)]
-            subset = subset.reset_index(drop=True)
+        subset = blast[(blast['subject tax ids'] != "32630") & (blast['subject acc.'] == gene)]
+        subset = subset.reset_index(drop=True)
+        if "Viruses" in set(subset['superkingdom']):
             # if the top hit is both viral and regulated
             if subset['superkingdom'][0] == "Viruses":
                 if subset['regulated'][0] == True:
                     print("Regulated virus top hit: FLAG")
             else:
                 print("Regulated virus in hits: COND FLAG")
-        elif blast['regulated'][blast['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
+        elif subset['regulated'][0] == True: # if top hit that isn't a synthetic construct is regulated
             print("Regulated bacteria top hit: FLAG")
         n_reg = blast['regulated'][blast['subject acc.'] == gene].sum()
         n_total = len(blast['regulated'][blast['subject acc.'] == gene])

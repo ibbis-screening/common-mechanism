@@ -14,8 +14,9 @@ def checkfile(filename):
     for line in file.splitlines():
         if line.startswith('#') == False:
             lines = lines + 1
+#    print("\n\nLines counted: " + str(lines) + "\n\n")
     if lines == 0:
-        # print(filename, "has no hits")
+#        print(filename, "has no hits")
         return 2        
     if len(file) == 0:
         print(filename, "is empty")

@@ -77,10 +77,12 @@ fi
 
 #################################################################
 
-if [ ! -z  $CM_DIR ]
-then
-    echo "Please source config file before running"
-fi
+dirname="$( dirname "$0" )"
+
+export CM_DIR=$dirname
+export PYTHONPATH=$dirname
+
+source ${CM_DIR}/../config
 
 # Step 1: biorisk DB scan
 echo " >> Running biorisk HMM scan..."

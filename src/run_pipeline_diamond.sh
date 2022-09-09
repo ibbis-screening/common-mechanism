@@ -93,7 +93,7 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 # Step 2: taxon ID
 # protein screening
 echo " >> Running taxid screen for regulated pathogens..."
-${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -q $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES
+${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES
 
 python ${CM_DIR}/check_reg_path_diamond_proteins.py ${OUTPUT}
 

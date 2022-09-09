@@ -15,7 +15,7 @@ if len(sys.argv) < 1:
 query = sys.argv[1]
 
 # read in protein screening results
-file = query + ".nr.diamond"
+file = query + ".nr.dmnd"
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
 diamond = readdmnd(file)

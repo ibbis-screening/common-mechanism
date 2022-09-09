@@ -3,25 +3,21 @@
 #####################################################################
 #run_blastx.sh runs blastx against a specified database.
 #####################################################################
-#Usage: run_blastx.sh -d DB -q QUERY -o OUTPUT [-p PROCESSES -t THREADS -f FURTHEROPT]
+#Usage: run_blastx.sh -d DB -q QUERY -o OUTPUT [-t THREADS -f FURTHEROPT]
 
 #set -eux #debug mode
 set -eu
 DB=""
 QUERY=""
 OUTPUT="out" 
-PROCESSES=5         #number of processes to run at once
 THREADS=1           #threads per process
 FURTHEROPT=""
 
 #Get options from user
-while getopts "p:t:d:q:o:f:" OPTION
+while getopts "t:d:q:o:f:" OPTION
     do 
         case $OPTION in
-            p) 
-                PROCESSES=$OPTARG
-                ;;
-            t) 
+            t)
                 THREADS=$OPTARG
                 ;;
             d) 
@@ -37,11 +33,10 @@ while getopts "p:t:d:q:o:f:" OPTION
                 FURTHEROPT=$OPTARG
                 ;;
             \?)
-                echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+                echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-t THREADS -f FURTHEROPT]"
                 echo "  DB              full path to database (required)"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: out)"
-                echo "  PROCESSES       number of databases to evaluate (default: 5)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
                 echo "  FURTHEROPT      any further options to specify"
                 exit
@@ -52,11 +47,10 @@ while getopts "p:t:d:q:o:f:" OPTION
 #Check for values
 if [ "$DB" == "" ] && [ "$INPUT" == "" ]
 then
-    echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+    echo "Usage: run_blastx.sh -d DB -q QUERY -s OUTPUT [-t THREADS -f FURTHEROPT]"
         echo "  DB              full path to database (required)"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: out)"
-        echo "  PROCESSES       number of databases to evaluate (default: 5)"
         echo "  THREADS         number of threads for each database run (default: 1)"
         echo "  FURTHEROPT      any further options to specify"
     exit

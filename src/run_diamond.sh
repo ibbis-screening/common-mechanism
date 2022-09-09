@@ -83,7 +83,7 @@ then
 fi      
   
 ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv 
-cat ${OUTPUT}.*.tsv > ${OUTPUT}.tsv 
+cat ${OUTPUT}.*.tsv > ${OUTPUT}.dmnd
 #rm ${OUTPUT}.*.tsv
 
 

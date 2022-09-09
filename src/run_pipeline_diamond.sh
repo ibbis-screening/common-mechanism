@@ -1,47 +1,136 @@
 #! /usr/bin/env bash
 
-# usage: src/run_pipeline.sh test_folder/[$name].fasta
+##############################################################################
+#run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
+##############################################################################
+# Usage: src/run_pipeline_diamond.sh test_folder/[$name].fasta
 
-# need to make this flexible re: where people store their databases
-export PYTHONPATH=$PYTHONPATH/src
-export PFAMDB=databases
-export BLASTDB=$BLASTDB:./databases
+# parameters for the run
+set -eu
+PROCESSES=5         #number of processes to run at once
+THREADS=1           #threads per process
+QUERY=""
+OUTPUT=""
+CLEANUP=0
 
-query=$1 # the file name
-name=${query//*\//} # strip out any directory info
-name=${name//.fasta/} # the prefix detailing the name of the sequence
+#Get options from user
+while getopts "p:t:q:o:c:" OPTION
+    do
+        case $OPTION in
+            p)
+                PROCESSES=$OPTARG
+                ;;
+            t)
+                THREADS=$OPTARG
+                ;;
+            d)
+                DB_PATH=$OPTARG
+                ;;
+            q)
+                QUERY=$OPTARG
+                ;;
+            o)
+                OUTPUT=$OPTARG
+                ;;
+            c)
+                CLEANUP=$OPTARG
+                ;;
+            \?)
+                echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+                echo "  QUERY           query file to align to each database (required)"
+                echo "  OUTPUT          output prefix for alignments (default: query prefix)"
+                echo "  PROCESSES       number of databases to evaluate (default: 5)"
+                echo "  THREADS         number of threads for each database run (default: 1)"
+                echo "  CLEANUP         tidy up intermediate screening files afterward?"
+                exit
+                ;;
+        esac
+    done
 
-# Step 1: biorisk DB scan
-transeq $query ${name}.faa -frame 6 -clean &>/dev/null
-hmmscan --domtblout ${name}.biorisk.hmmsearch biorisk/biorisk.hmm ${name}.faa &>/dev/null
-python src/check_biorisk.py ${name}
-
-# Step 2: taxon ID
-if ! [ -e "${name}.nr.diamond" ];
-then src/run_diamond.sh -d $PFAMDB/nr_dmnd/ -i ${query} -o ${name}.nr.diamond -t 4 -p 4
-cat $name.*.tsv > $name.nr.diamond
-rm $name.*.tsv
+#Check for values
+if [ "$QUERY" == "" ]
+then
+    echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+        echo "  QUERY           query file to align to each database (required)"
+        echo "  OUTPUT          output prefix for alignments (default: query prefix)"
+        echo "  PROCESSES       number of databases to evaluate (default: 5)"
+        echo "  THREADS         number of threads for each database run (default: 1)"
+        echo "  CLEANUP         tidy up intermediate screening files afterward? 0 = no, 1 = y"
+    exit
 fi
 
-# here need to flag any uncovered regions >200 bp and blastn them
-# currently running this as a step in check_reg_path
 
-### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
-python src/check_reg_path_diamond_proteins.py ${name}
+if [ "$OUTPUT" == "" ]
+then
+    OUTPUT=$(basename "$QUERY" | cut -d. -f1)
+fi
+
+#Check for database
+echo " >> Checking for valid options..."
+
+#Check for input file
+if [ ! -f  $QUERY ]
+then
+    echo " ERROR: input file $QUERY does not exist"
+    exit
+fi
+
+#################################################################
+
+dirname="$( dirname "$0" )"
+
+export CM_DIR=$dirname
+export PYTHONPATH=$dirname
+
+source ${CM_DIR}/../config
+
+# Step 1: biorisk DB scan
+echo " >> Running biorisk HMM scan..."
+transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>${QUERY}_tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 biorisk/biorisk.hmm ${OUTPUT}.faa &>${OUTPUT}_tmp
+python ${CM_DIR}/check_biorisk.py ${OUTPUT}
+
+# Step 2: taxon ID
+# protein screening
+echo " >> Running taxid screen for regulated pathogens..."
+${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -q $QUERY -o ${OUTPUT}.nr -t $THREADS -p 6
+
+python ${CM_DIR}/check_reg_path_diamond_proteins.py ${OUTPUT}
 
 # nucleotide screening
 
-python src/fetch_nc_bits.py ${name} ${query}
-blastn -query ${name}_nc.fasta -db nt
+python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
+if [ -f "${OUTPUT}"_nc.fasta ]
+then blastn -query ${OUTPUT}_nc.fasta -db $NT_DB -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30
+python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
+fi
+
+### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 
 # Step 3: benign DB scan
-hmmscan --domtblout ${name}.benign.hmmsearch benign/benign.hmm ${name}.faa &>/dev/null
-blastn -db benign/benign.fasta -query $query -out ${name}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
+echo " >> Checking any pathogen regions for benign components..."
+hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 benign/benign.hmm ${OUTPUT}.faa &>/dev/null
+blastn -db ${PFAMDB}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
-python src/check_benign.py ${name} ${query} # added the original file path here to fetch sequence length, can tidy this
+python ${CM_DIR}/check_benign.py ${OUTPUT} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
+
+echo " >> Done with screening!"
 
 # Visualising outputs; functional characterization
 
-python src/viz_outputs.py ${name}
+#python ${CM_DIR}/viz_outputs.py ${OUTPUT} # turning off until file write permissions are resolved
 
-#rm ${query}.reg_path_coords.csv $name.*hmmsearch $name.*blastx $name.*blastn
+if [ "$CLEANUP" == 1 ]
+then
+    if [ -f "${OUTPUT}".reg_path_coords.csv ]
+    then
+        rm ${OUTPUT}.reg_path_coords.csv
+    fi
+    if [ -f "${OUTPUT}".reg_path_coords_nt.csv ]
+    then
+        rm ${OUTPUT}.reg_path_coords_nt.csv
+    fi
+    rm ${OUTPUT}.*hmmsearch ${OUTPUT}.*dmnd ${OUTPUT}.*blastn
+fi
+
+rm ${OUTPUT}*_tmp

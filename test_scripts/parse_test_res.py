@@ -43,12 +43,12 @@ for res in glob.glob('*.screen'):
         biorisk = check_flags(matching, biorisk)
 
         # reg_virus screen
-        matching = [s for s in lines if "Regulated virus top hit: " in s]
+        matching = [s for s in lines if "egulated virus top hit: " in s]
 #        print(matching)
         reg_virus = check_flags(matching, reg_virus)
         
         # reg_virus screen
-        matching = [s for s in lines if "Regulated bacteria top hit: " in s]
+        matching = [s for s in lines if "egulated bacteria top hit: " in s]
 #        print(matching)
         reg_bact = check_flags(matching, reg_bact)
         

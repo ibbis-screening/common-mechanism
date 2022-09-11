@@ -68,8 +68,8 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 
 if reg_bac == 0:
-    print("Regulated bacteria top hit: PASS")
+    print("No regulated bacteria top hit: PASS")
 if reg_vir == 0:
-    print("Regulated virus top hit: PASS")
+    print("No regulated virus top hit: PASS")
 
 

@@ -3,6 +3,7 @@ import numpy as np
 import os
 import taxoniq
 import matplotlib.cm as cm
+import re
 
 # check BLAST output files for each query to see if they exist and have any hits
 def checkfile(filename):
@@ -111,24 +112,24 @@ def taxdist(blast, reg_ids):
 
 # read in HMMER output files
 def readhmmer(fileh):
-    # read through the file with comments in to find column headers
-    # some column names are separated by spaces, don't know how to get around this
-#     file = open(fileh, "r")
-#     columns = []
-#     for line in file:
-#         if 'target name' in line:
-#             lines = line.split("  ")
-#             columns = list(filter(None, lines))
-#         if columns == []:
-#             print("ERROR: Failed to parse column IDs")
     columns = ['target name', 'accession','tlen', 'query name',' accession','qlen','E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
+    
+    hmmer = []
 
-    hmmer = pd.read_csv(fileh, sep="\s+", comment='#', header=None, engine='python', index_col=None)
-    hmmer['description'] = hmmer[hmmer.columns[23:]].apply(
-        lambda x: ' '.join(x.dropna().astype(str)),axis=1
-    )
-    hmmer = hmmer.drop(range(22, (hmmer.shape[1]-1)), axis=1)
-    hmmer.columns = columns
+    with open(fileh, 'r') as f:
+        for line in f:
+            if "#" in line:
+                continue
+            bits = re.split('\s+', line)
+            description = " ".join(bits[22:])
+            bits = bits[:22]
+            bits.append(description)
+            hmmer.append(bits)
+    hmmer = pd.DataFrame(hmmer, columns=columns)
+    hmmer['E-value'] = pd.to_numeric(hmmer['E-value'])
+    hmmer['score'] = pd.to_numeric(hmmer['score'])
+
+#    print(hmmer)
     return hmmer
 
 def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so coordinates will be complicated

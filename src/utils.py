@@ -120,6 +120,10 @@ def readhmmer(fileh):
     columns = ['target name', 'accession','tlen', 'query name',' accession','qlen','E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
 
     hmmer = pd.read_csv(fileh, sep="\s+", comment='#', header=None, engine='python', index_col=None)
+    hmmer['description'] = hmmer[hmmer.columns[23:]].apply(
+        lambda x: ' '.join(x.dropna().astype(str)),axis=1
+    )
+    hmmer = hmmer.drop(range(22, (hmmer.shape[1]-1)), axis=1)
     hmmer.columns = columns
     return hmmer
 

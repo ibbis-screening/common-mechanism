@@ -128,6 +128,8 @@ def readhmmer(fileh):
     hmmer = pd.DataFrame(hmmer, columns=columns)
     hmmer['E-value'] = pd.to_numeric(hmmer['E-value'])
     hmmer['score'] = pd.to_numeric(hmmer['score'])
+    hmmer['ali from'] = pd.to_numeric(hmmer['ali from'])
+    hmmer['ali to'] = pd.to_numeric(hmmer['ali to'])
 
 #    print(hmmer)
     return hmmer

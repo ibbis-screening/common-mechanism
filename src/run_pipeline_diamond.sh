@@ -95,7 +95,7 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES
 
-python ${CM_DIR}/check_reg_path_diamond_proteins.py ${OUTPUT}
+python ${CM_DIR}/check_reg_path_dmnd_prot.py ${OUTPUT}
 
 # nucleotide screening
 

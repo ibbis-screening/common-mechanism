@@ -34,7 +34,7 @@ blast2 = trimblast(blast)
 # ignore synthetic constructs when deciding whether to flag
 
 if blast2['regulated'].sum(): # if ANY of the hits are regulated
-    print("Regulated pathogen proteins: PRESENT")
+    print("Regulated pathogen nucleotides: PRESENT")
     for gene in set(blast2['subject acc.'][blast2['regulated'] == True]):
         if "Viruses" in set(blast['superkingdom'][blast['subject acc.'] == gene]):
             print("Regulated virus: FLAG")
@@ -55,5 +55,5 @@ if blast2['regulated'].sum(): # if ANY of the hits are regulated
     hits = blast[blast['regulated']==True]  # print out the start and end coordinated on the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 else:
-    print("Regulated pathogen proteins: PASS")
+    print("Regulated pathogen nucleotides: PASS")
 

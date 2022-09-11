@@ -36,7 +36,7 @@ while getopts "p:t:q:o:c:" OPTION
                 CLEANUP=$OPTARG
                 ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+                echo "Usage: src/run_pipeline.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -50,7 +50,7 @@ while getopts "p:t:q:o:c:" OPTION
 #Check for values
 if [ "$QUERY" == "" ]
 then
-    echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+    echo "Usage: src/run_pipeline.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: query prefix)"
         echo "  PROCESSES       number of databases to evaluate (default: 5)"
@@ -95,17 +95,14 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_blastx.sh -d $NR_DB -q $QUERY -o ${OUTPUT}.nr -t $THREADS
 
-python ${CM_DIR}/check_reg_path_proteins.py ${OUTPUT}
+python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
 
 # nucleotide screening
-
 python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 if [ -f "${OUTPUT}"_nc.fasta ]
 then blastn -query ${OUTPUT}_nc.fasta -db $NT_DB -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30
 python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
 fi
-
-### IF A HIT TO A REGULATED PATHOGEN, PROCEED, OTHERWISE CAN FINISH HERE ONCE TESTING IS COMPLETE ####
 
 # Step 3: benign DB scan
 echo " >> Checking any pathogen regions for benign components..."

@@ -190,7 +190,8 @@ def readdmnd(fileh):
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
-    blast = blast.sort_values(by=['regulated'], ascending=False)
+    if 'regulated' in blast:
+        blast = blast.sort_values(by=['regulated'], ascending=False)
 #    print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated']])
     blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)

@@ -63,7 +63,6 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         else:
             print("Gene: " + gene)
             print(blast['regulated'][blast['subject acc.'] == gene])
-#    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinates of the query sequence
     hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 

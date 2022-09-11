@@ -130,6 +130,7 @@ def readhmmer(fileh):
     hmmer['score'] = pd.to_numeric(hmmer['score'])
     hmmer['ali from'] = pd.to_numeric(hmmer['ali from'])
     hmmer['ali to'] = pd.to_numeric(hmmer['ali to'])
+    hmmer['qlen'] = pd.to_numeric(hmmer['qlen'])
 
 #    print(hmmer)
     return hmmer
@@ -169,6 +170,7 @@ def readblast(fileh):
     if columns == []:
         print("ERROR: Failed to parse column IDs")
     
+    print(blast)
     blast.columns = columns
     blast.sort_values(by=['% identity'])
     blast['log evalue'] = -np.log10(pd.to_numeric(blast['evalue'])+1e-300)

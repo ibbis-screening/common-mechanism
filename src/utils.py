@@ -196,24 +196,24 @@ def trimblast(blast):
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
     if 'regulated' in blast:
         blast = blast.sort_values(by=['regulated'], ascending=False)
-#    print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated']])
     blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
+    blast = blast.reset_index(drop=True)
     
     drop = []
     blast2 = blast
     # only keep  top ranked hits that don't overlap
     for query in blast['query acc.'].unique():
         df = blast[blast['query acc.'] == query]
-#        print("DF for trimming:\n\n")
-#        print(df)
-        for i in df.index:
-            for j in df.index[(i+1):]:
+        for i in df.index: # run through each hit from the top
+            for j in df.index[(i+1):]: # compare to each below
                 # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
                 if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
                     if j in blast2.index:
                         if df.loc[i,'subject tax ids']!="32630": # don't trim a lower ranked hit if the higher ranked hit is a synthetic construct
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
+#    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end']])
+    
     return blast2
 

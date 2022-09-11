@@ -12,6 +12,7 @@ biorisk = sys.argv[1] + ".biorisk.hmmsearch"
 benign = sys.argv[1] + ".benign.hmmsearch"
 synbio = sys.argv[1] + ".benign.blastn"
 taxid = sys.argv[1] + ".nr.blastx"
+taxid2 = sys.argv[1] + ".nt.blastn"
 
 reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
 
@@ -24,5 +25,6 @@ plot_blast(synbio)
 
 # viz taxon IDs
 plot_blast(taxid, 10)
-plot_tax(taxid, reg_ids) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
+plot_blast(taxid2, 10)
+plot_tax(taxid, reg_ids, sys.argv[1]) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
 

@@ -92,12 +92,13 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID
 # protein screening
-echo " >> Running taxid screen for regulated pathogens..."
+echo " >> Running taxid screen for regulated pathogen proteins..."
 ${CM_DIR}/run_blastx.sh -d $NR_DB -q $QUERY -o ${OUTPUT}.nr -t $THREADS
 
 python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
 
 # nucleotide screening
+echo " >> Running taxid screen for regulated pathogen nucleotides..."
 python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 if [ -f "${OUTPUT}"_nc.fasta ]
 then blastn -query ${OUTPUT}_nc.fasta -db $NT_DB -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30

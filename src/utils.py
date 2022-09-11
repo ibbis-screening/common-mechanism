@@ -70,7 +70,7 @@ def taxdist(blast, reg_ids, query):
                     blast[level.rank.name] = ""
                     blast.loc[x,level.rank.name] = level.scientific_name
         except:
-            print('Taxon id', blast['subject tax ids'][x], 'is missing')
+            print('Taxon id', blast['subject tax ids'][x], 'is missing from taxoniq database')
             cut.append(x)
 #
     blast.drop(cut)

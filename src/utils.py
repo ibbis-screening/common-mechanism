@@ -170,7 +170,7 @@ def readblast(fileh):
     if columns == []:
         print("ERROR: Failed to parse column IDs")
     
-    print(blast)
+#    print(blast)
     blast.columns = columns
     blast.sort_values(by=['% identity'])
     blast['log evalue'] = -np.log10(pd.to_numeric(blast['evalue'])+1e-300)

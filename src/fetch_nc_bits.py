@@ -27,10 +27,10 @@ for i in range(blast.shape[0]):
 hits = sorted(hits, key=lambda x: x[0])
 
 nc_bits = []
-if hits[0][0] >20:
+if hits[0][0] >50:
     nc_bits.append([1,hits[0][0]])
 for i in range(len(hits)-1):
-    if hits[i][1] < (hits[i+1][0] - 19): # if there's a gap of >=20 between hits
+    if hits[i][1] < (hits[i+1][0] - 49): # if there's a gap of >=50 between hits
         nc_bits.append([hits[i][1], hits[i+1][0]])
 #print(nc_bits)
 

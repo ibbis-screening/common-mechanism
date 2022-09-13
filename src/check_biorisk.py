@@ -14,7 +14,7 @@ if checkfile(file) == 1:
     hmmer = readhmmer(file)
     hmmer = hmmer[hmmer['E-value']<1e-30]
     if hmmer.shape[0] > 0:
-        print("Biorisks: " + " ".join(hmmer['description of target']) + " FLAG")
+        print("Biorisks: FLAG\n" + "\n".join(hmmer['description of target']))
     else:
         print("Biorisks: PASS")
 elif checkfile(file) == 2:

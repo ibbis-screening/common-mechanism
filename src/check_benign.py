@@ -28,7 +28,7 @@ def check_for_benign(query, coords):
                 htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
     #            htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
                 if any(htrim['coverage'] > 0.90):
-                    print("Housekeeping genes - >90% coverage achieved by " + htrim['description of target'][htrim['coverage'] > 90] + " = PASS")
+                    print("Housekeeping genes - >90% coverage achieved by " + " ".join(htrim['description of target'][htrim['coverage'] > 90]) + " = PASS")
                 else:
                     print("Housekeeping genes - <90% coverage achieved = FAIL")
             else:

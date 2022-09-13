@@ -85,6 +85,7 @@ export PYTHONPATH=$dirname
 source ${CM_DIR}/../config
 
 # Step 1: biorisk DB scan
+echo "$now"
 echo " >> Running biorisk HMM scan..."
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>>${QUERY}_tmp
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 biorisk/biorisk.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
@@ -92,12 +93,14 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID
 # protein screening
+echo "$now"
 echo " >> Running taxid screen for regulated pathogen proteins..."
 ${CM_DIR}/run_blastx.sh -d $NR_DB -q $QUERY -o ${OUTPUT}.nr -t $THREADS
 
 python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
 
 # nucleotide screening
+echo "$now"
 echo " >> Running taxid screen for regulated pathogen nucleotides..."
 python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 if [ -f "${OUTPUT}"_nc.fasta ]
@@ -106,12 +109,14 @@ python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
 fi
 
 # Step 3: benign DB scan
+echo "$now"
 echo " >> Checking any pathogen regions for benign components..."
 hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 benign/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
 blastn -db ${PFAMDB}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
 python ${CM_DIR}/check_benign.py ${OUTPUT} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
 
+echo "$now"
 echo " >> Done with screening!"
 
 # Visualising outputs; functional characterization

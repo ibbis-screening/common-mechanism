@@ -57,14 +57,14 @@ for res in glob.glob('*.screen'):
         fail = [s for s in lines if "Regulated region failed to clear" in s]
         toolow = [s for s in lines if "Housekeeping genes - <90% coverage achieved = FAIL" in s]
         passs = [s for s in lines if "Housekeeping genes - >90% coverage achieved" in s]
-        clear = [s for s in lines if "No regulated regions to clear" in s]
+        clear = [s for s in lines if "No regulated protein regions to clear" in s] + [s for s in lines if "No regulated nucleotide regions to clear" in s]
         # if any region failed to clear, keep flag
         if len(nohits) > 0 or len(fail) > 0 or len(toolow) > 0:
             benign.append("F")
         # if none failed and passes are observed, drop flag
         elif len(passs) > 0:
             benign.append("P")
-        elif len(clear) > 0:
+        elif len(clear) > 1:
             benign.append("-")
         else:
             benign.append(None)

@@ -1,6 +1,7 @@
 from utils import *
 import os, sys
 import pandas as pd
+from itertools import chain
 #import SeqIO
 
 #Input parameter error checking 
@@ -9,7 +10,6 @@ if len(sys.argv) < 2:
     exit(1)
     
 def check_for_benign(query, coords):
-        
         # for each set of hits, need to pull out the coordinates covered by benign entries
         # overall >90% of regulated pathogen sub-sequences must be covered with benign content
         hmmsearch = sys.argv[1] + ".benign.hmmsearch"
@@ -28,7 +28,8 @@ def check_for_benign(query, coords):
                 htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
     #            htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
                 if any(htrim['coverage'] > 0.90):
-                    print("Housekeeping genes - >90% coverage achieved by " + " ".join(htrim['description of target'][htrim['coverage'] > 90]) + " = PASS")
+#                    print(" ".join(list(chain(*list(zip(htrim['target name'][htrim['coverage'] > 0.90], htrim['description of target'][htrim['coverage'] > 0.90]))))))
+                    print("Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved by " + " ".join(list(chain(*list(zip(htrim['target name'][htrim['coverage'] > 0.90], htrim['description of target'][htrim['coverage'] > 0.90]))))) + " = PASS")
                 else:
                     print("Housekeeping genes - <90% coverage achieved = FAIL")
             else:

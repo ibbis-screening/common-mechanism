@@ -53,7 +53,7 @@ then
     echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: query prefix)"
-        echo "  PROCESSES       number of databases to evaluate (default: 5)"
+        echo "  PROCESSES       number of databases to evaluate (default: 6)"
         echo "  THREADS         number of threads for each database run (default: 1)"
         echo "  CLEANUP         tidy up intermediate screening files afterward? 0 = no, 1 = y"
     exit
@@ -77,14 +77,16 @@ fi
 
 #################################################################
 
-dirname="$( dirname "$0" )"
+CM_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#SCRIPT_DIR="$( dirname "$0" )"
 
-export CM_DIR=$dirname
-export PYTHONPATH=$dirname
+export CM_DIR=$CM_DIR
+export PYTHONPATH=$CM_DIR
 
 source ${CM_DIR}/../config
 
 # Step 1: biorisk DB scan
+date
 echo " >> Running biorisk HMM scan..."
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>${QUERY}_tmp
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 biorisk/biorisk.hmm ${OUTPUT}.faa &>${OUTPUT}_tmp
@@ -92,13 +94,15 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID
 # protein screening
+date
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES
 
 python ${CM_DIR}/check_reg_path_dmnd_prot.py ${OUTPUT}
 
 # nucleotide screening
-
+date
+echo " >> Running taxid screen for regulated pathogen nucleotides..."
 python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 if [ -f "${OUTPUT}"_nc.fasta ]
 then blastn -query ${OUTPUT}_nc.fasta -db $NT_DB -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -num_threads 8 -culling_limit 5 -evalue 30

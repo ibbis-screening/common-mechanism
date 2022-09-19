@@ -87,8 +87,8 @@ source ${CM_DIR}/../config
 # Step 1: biorisk DB scan
 date
 echo " >> Running biorisk HMM scan..."
-transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>>${QUERY}_tmp
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 biorisk/biorisk.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
+transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>>${QUERY}.tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 ${PFAMDB}/biorisk/biorisk.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID
@@ -111,7 +111,7 @@ fi
 # Step 3: benign DB scan
 date
 echo " >> Checking any pathogen regions for benign components..."
-hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 benign/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
+hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 ${PFAMDB}/benign/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
 blastn -db ${PFAMDB}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
 python ${CM_DIR}/check_benign.py ${OUTPUT} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
@@ -136,4 +136,4 @@ then
     rm ${OUTPUT}.*hmmsearch ${OUTPUT}.*blastx ${OUTPUT}.*blastn
 fi
 
-rm ${OUTPUT}*_tmp
+rm ${OUTPUT}*.tmp

@@ -83,7 +83,7 @@ then
 fi      
 
 echo " >> Running protein search..."
-ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv --outfmt 6 qseqid stitle sseqid staxids evalue bitscore pident qlen qstart qend slen sstart send
+ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j 5 diamond blastx -d ${DB_PATH}/nr.{%}.dmnd --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv --outfmt 6 qseqid stitle sseqid staxids evalue bitscore pident qlen qstart qend slen sstart send --frameshift 15 --range-culling
 cat ${OUTPUT}.*.tsv > ${OUTPUT}.dmnd
 rm ${OUTPUT}.*.tsv
 

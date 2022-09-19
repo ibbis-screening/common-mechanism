@@ -12,9 +12,10 @@ THREADS=1           #threads per process
 QUERY=""
 OUTPUT=""
 CLEANUP=0
+DB_PATH=""
 
 #Get options from user
-while getopts "p:t:q:o:c:" OPTION
+while getopts "p:t:d:q:o:c:" OPTION
     do
         case $OPTION in
             p)
@@ -39,6 +40,7 @@ while getopts "p:t:q:o:c:" OPTION
                 echo "Usage: src/run_pipeline.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
+                echo "  DB_PATH         path to detabases (required)"
                 echo "  PROCESSES       number of databases to evaluate (default: 5)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
                 echo "  CLEANUP         tidy up intermediate screening files afterward?"
@@ -53,6 +55,7 @@ then
     echo "Usage: src/run_pipeline.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: query prefix)"
+        echo "  DB_PATH         path to detabases (required)"
         echo "  PROCESSES       number of databases to evaluate (default: 5)"
         echo "  THREADS         number of threads for each database run (default: 1)"
         echo "  CLEANUP         tidy up intermediate screening files afterward? 0 = no, 1 = y"
@@ -65,8 +68,12 @@ then
     OUTPUT=$(basename "$QUERY" | cut -d. -f1)
 fi
 
-#Check for database
 echo " >> Checking for valid options..."
+
+if [ "$DB_PATH" == "" ]
+then
+    echo "Please specify the path to screening databases"
+fi
 
 #Check for input file
 if [ ! -f  $QUERY ]
@@ -82,20 +89,18 @@ dirname="$( dirname "$0" )"
 export CM_DIR=$dirname
 export PYTHONPATH=$dirname
 
-source ${CM_DIR}/../config
-
 # Step 1: biorisk DB scan
 date
 echo " >> Running biorisk HMM scan..."
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>>${QUERY}.tmp
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 ${PFAMDB}/biorisk/biorisk.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 ${DB_PATH}/biorisk/biorisk.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID
 # protein screening
 date
 echo " >> Running taxid screen for regulated pathogen proteins..."
-${CM_DIR}/run_blastx.sh -d $NR_DB -q $QUERY -o ${OUTPUT}.nr -t $THREADS
+${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
 
 python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
 
@@ -104,15 +109,15 @@ date
 echo " >> Running taxid screen for regulated pathogen nucleotides..."
 python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 if [ -f "${OUTPUT}"_nc.fasta ]
-then blastn -query ${OUTPUT}_nc.fasta -db $NT_DB -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+then blastn -query ${OUTPUT}_nc.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
 python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
 fi
 
 # Step 3: benign DB scan
 date
 echo " >> Checking any pathogen regions for benign components..."
-hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 ${PFAMDB}/benign/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
-blastn -db ${PFAMDB}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
+hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 ${DB_PATH}/benign/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}_tmp
+blastn -db ${DB_PATH}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
 python ${CM_DIR}/check_benign.py ${OUTPUT} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
 

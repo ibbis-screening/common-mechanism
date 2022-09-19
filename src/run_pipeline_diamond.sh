@@ -14,7 +14,7 @@ OUTPUT=""
 CLEANUP=0
 
 #Get options from user
-while getopts "p:t:q:o:c:" OPTION
+while getopts "p:t:d:q:o:c:" OPTION
     do
         case $OPTION in
             p)

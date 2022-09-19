@@ -7,7 +7,7 @@
 
 # parameters for the run
 set -eu
-PROCESSES=6         #number of database chunks
+PROCESSES=5         #number of database chunks
 THREADS=1           #threads per process
 QUERY=""
 OUTPUT=""
@@ -39,7 +39,7 @@ while getopts "p:t:q:o:c:" OPTION
                 echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
-                echo "  PROCESSES       number of databases to evaluate (default: 6)"
+                echo "  PROCESSES       number of databases to evaluate (default: 5)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
                 echo "  CLEANUP         tidy up intermediate screening files afterward?"
                 exit
@@ -97,8 +97,6 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 date
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES
-cat ${OUTPUT}.nr.*.tsv > ${OUTPUT}.nr.dmnd
-rm ${OUTPUT}.nr.*.tsv
 
 python ${CM_DIR}/check_reg_path_dmnd_prot.py ${OUTPUT}
 

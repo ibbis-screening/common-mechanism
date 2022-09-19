@@ -17,7 +17,7 @@ if len(sys.argv) < 1:
     
 query = sys.argv[1]
 f_file = sys.argv[2]
-dmnd_file = query + ".nr.diamond"
+dmnd_file = query + ".nr.dmnd"
 
 # find noncoding bits
 diamond = readdmnd(dmnd_file)

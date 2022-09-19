@@ -97,6 +97,8 @@ python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 date
 echo " >> Running taxid screen for regulated pathogens..."
 ${CM_DIR}/run_diamond.sh -d $NR_DB_DMND -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES
+cat ${OUTPUT}.nr.*.tsv > ${OUTPUT}.nr.dmnd
+rm ${OUTPUT}.nr.*.tsv
 
 python ${CM_DIR}/check_reg_path_dmnd_prot.py ${OUTPUT}
 

@@ -16,7 +16,7 @@ query = sys.argv[1]
 
 # read in protein screening
 file = query + ".nr.blastx"
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, query)

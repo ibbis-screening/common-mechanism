@@ -16,7 +16,7 @@ query = sys.argv[1]
 
 # read in protein screening results
 file = query + ".nr.dmnd"
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
 if checkfile(file) == 1:
     diamond = readdmnd(file)

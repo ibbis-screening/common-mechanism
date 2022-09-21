@@ -74,7 +74,7 @@ if [ "$DB_PATH" == "" ]
 then
     echo "Please specify the path to screening databases"
 fi
-export $DB_PATH
+export DB_PATH=${DB_PATH}
 
 #Check for input file
 if [ ! -f  $QUERY ]

@@ -74,6 +74,7 @@ if [ "$DB_PATH" == "" ]
 then
     echo "Please specify the path to screening databases"
 fi
+export DB_PATH=${DB_PATH}
 
 #Check for input file
 if [ ! -f  $QUERY ]
@@ -92,8 +93,8 @@ export PYTHONPATH=$dirname
 # Step 1: biorisk DB scan
 date
 echo " >> Running biorisk HMM scan..."
-transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>>${QUERY}.tmp
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 ${DB_PATH}/biorisk/biorisk.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
+transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch -E 1e-10 ${DB_PATH}/biorisk/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 python ${CM_DIR}/check_biorisk.py ${OUTPUT}
 
 # Step 2: taxon ID

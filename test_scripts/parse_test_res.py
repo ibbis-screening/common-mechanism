@@ -19,13 +19,12 @@ benign = []
 
 def check_flags(line, bin_list):
         if len(matching) > 0:
-            if 'PASS' in matching[0]:
-                bin_list.append("P")
-            elif 'FLAG' in matching[0]:
+            if 'FLAG' in matching[0]:
                 bin_list.append("F")
-#                print(matching)
+            elif 'FLAG' in matching[1]:
+                bin_list.append("F")
             else:
-                bin_list.append(None)
+                bin_list.append("P")
         else:
             bin_list.append(None)
         
@@ -56,7 +55,7 @@ for res in glob.glob('*.screen'):
         nohits = [s for s in lines if "No housekeeping genes found" in s]
         fail = [s for s in lines if "Regulated region failed to clear" in s]
         toolow = [s for s in lines if "Housekeeping genes - <90% coverage achieved = FAIL" in s]
-        passs = [s for s in lines if "Housekeeping genes - >90% coverage achieved" in s]
+        passs = [s for s in lines if "Housekeeping genes - >90% coverage of bases" in s]
         clear = [s for s in lines if "No regulated protein regions to clear" in s] + [s for s in lines if "No regulated nucleotide regions to clear" in s]
         # if any region failed to clear, keep flag
         if len(nohits) > 0 or len(fail) > 0 or len(toolow) > 0:

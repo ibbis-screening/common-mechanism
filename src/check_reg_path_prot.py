@@ -59,7 +59,7 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
             print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])))
         elif (n_reg == n_total):
             print("Gene " + gene + " found in only regulated organisms")
-            print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])) + " (taxid: " + " ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))) + ")")
+            print("Species: " + ", ".join(set(blast['species'][blast['subject acc.'] == gene])) + " (taxid: " + " ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))) + ")")
         else:
             print("Gene: " + gene)
             print(blast['regulated'][blast['subject acc.'] == gene])

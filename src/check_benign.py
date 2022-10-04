@@ -8,7 +8,11 @@ from itertools import chain
 if len(sys.argv) < 2:
     sys.stdout.write("\tERROR: Please provide two files: one sequence name, one FASTA for the sequence\n")
     exit(1)
-    
+
+pd.set_option('max_colwidth',200)
+benign_desc = pd.read_csv(os.environ['DB_PATH'] + '/benign/benign_annotations.csv')
+# print(benign_desc.head())
+
 def check_for_benign(query, coords):
         # for each set of hits, need to pull out the coordinates covered by benign entries
         # overall >90% of regulated pathogen sub-sequences must be covered with benign content
@@ -20,16 +24,22 @@ def check_for_benign(query, coords):
         
         hmmer = readhmmer(hmmsearch)
 #        print(hmmer)
-        qlen = hmmer['qlen'][0]
         for region in range(0, coords.shape[0]): # for each regulated pathogen region
             # look at only the hmmer hits that overlap with it
             htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region]) & (hmmer['ali to'] > coords['q. end'][region])) & ~((hmmer['ali from'] < coords['q. start'][region]) & (hmmer['ali to'] < coords['q. start'][region]))]
             if htrim.shape[0] > 0:
                 htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
-    #            htrim['coverage'] = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'][0]
                 if any(htrim['coverage'] > 0.90):
-#                    print(" ".join(list(chain(*list(zip(htrim['target name'][htrim['coverage'] > 0.90], htrim['description of target'][htrim['coverage'] > 0.90]))))))
-                    print("Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved by " + " ".join(list(chain(*list(zip(htrim['target name'][htrim['coverage'] > 0.90], htrim['description of target'][htrim['coverage'] > 0.90]))))) + " = PASS")
+                    htrim = htrim[htrim['coverage'] > 0.90]
+                    htrim = htrim.reset_index(drop=True)
+                    descriptions = []
+                    for row in range(htrim.shape[0]):
+                        hit = htrim['target name'][row]
+                        hit = hit.replace(".faa.final_tree.fa", "")
+                        descriptions.append(benign_desc['Annotation'][benign_desc['Model'] == hit])
+                    annot_string = "\n".join(str(v) for v in descriptions)
+                    print("Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS")
+                    print(annot_string)
                 else:
                     print("Housekeeping genes - <90% coverage achieved = FAIL")
             else:

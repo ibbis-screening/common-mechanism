@@ -17,7 +17,7 @@ query = sys.argv[1]
 
 # read in nucleotide screening
 file = query + ".nt.blastn"
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
 if checkfile(file) == 2:
     print("No nt hits found")

@@ -1,7 +1,6 @@
 from utils import *
 import os, sys
 import pandas as pd
-import taxoniq
 
 # check for any best matches to a regulated pathogen in the BLAST results, and if so, print their coordinates
 # we have opted to ignore any "synthetic construct" hits
@@ -20,7 +19,7 @@ reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None
 
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, query)
-#print(blast)
+# print(blast['subject tax ids'])
 #print(blast['regulated'])
 
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs

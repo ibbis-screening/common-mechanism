@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import taxoniq
+import pytaxonkit
 import matplotlib.cm as cm
 import re
 
@@ -34,14 +35,7 @@ def colourscale(reg_status, counts, averages):
         colours.append('rgb' + str((np.array(nrmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')')) if reg_status[i] != counts[i] else colours.append('rgb' + str((np.array(rmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')'))
     return colours
 
-
-def taxdist(blast, reg_ids):
-#    if checkfile(query) == 0:
-#        return
-#    blast = readblast(query)
-    
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
-    # blast here is a dataframe of blast results
+def split_taxa(blast):
     blast2 = blast
     cutrows = []
     lastrow = blast.shape[0]
@@ -57,6 +51,17 @@ def taxdist(blast, reg_ids):
     blast = blast2.drop(cutrows)
     blast = blast.reset_index(drop=True)
     blast['regulated'] = False
+
+    return blast
+
+def taxdist(blast, reg_ids, query):
+    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
+    # blast here is a dataframe of blast results
+    blast = split_taxa(blast)
+
+    # levels = ['superkingdom', 'phylum', 'order', 'genus', 'species', 'strain']
+    # for level in levels:
+    #     blast[level] = ""
     
     # checks which individual lines contain regulated pathogens
     cut = []
@@ -66,14 +71,17 @@ def taxdist(blast, reg_ids):
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
                 blast.loc[x,'regulated'] = True
-            for level in t.ranked_lineage:
-                if int(level.tax_id) in set(reg_ids[0]):
+            while t.scientific_name != 'root':
+                if int(t.tax_id) in set(reg_ids[0]):
                     blast.loc[x,'regulated'] = True
-                if blast.columns.str.contains(level.rank.name).any():
-                    blast.loc[x,level.rank.name] = level.scientific_name
+                if blast.columns.str.contains(t.rank.name).any():
+                    blast.loc[x,t.rank.name] = t.scientific_name
                 else:
-                    blast[level.rank.name] = ""
-                    blast.loc[x,level.rank.name] = level.scientific_name
+                    blast[t.rank.name] = ""
+                    blast.loc[x,t.rank.name] = t.scientific_name
+                t = t.parent
+                # print(t.rank.name)
+                # print(t.scientific_name)
         except:
             print('Taxon id', blast['subject tax ids'][x], 'is missing from taxoniq database')
             cut.append(x)

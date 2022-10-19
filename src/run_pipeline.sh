@@ -65,7 +65,7 @@ fi
 
 if [ "$OUTPUT" == "" ]
 then
-    OUTPUT=$(basename "$QUERY" | cut -d. -f1)
+    OUTPUT=$(basename "$QUERY")
 fi
 
 echo " >> Checking for valid options..."

@@ -18,6 +18,7 @@ if res == 1:
     hmmer = readhmmer(file)
     hmmer = hmmer[hmmer['E-value']<1e-30]
     hmmer['description'] = ''
+    hmmer = hmmer.reset_index(drop=True)
     for model in range(hmmer.shape[0]):
         hmmer['description'][model] = lookup['Description'][lookup['HMM_Name'] == hmmer['target name'][model]]
         print("Reassigning ", hmmer['target name'][model], ": ", lookup['Description'][lookup['HMM_Name'] == hmmer['target name'][model]], "\n")

@@ -17,15 +17,13 @@ query = sys.argv[1]
 file = query + ".nr.blastx"
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
+if checkfile(file) != 1:
+    exit(1)
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, query)
-# print(blast['subject tax ids'])
-#print(blast['regulated'])
 
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
 blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
-#print(blast2)
-#print(blast.iloc[:,10:17])
 
 # ignore synthetic constructs when deciding whether to flag
 

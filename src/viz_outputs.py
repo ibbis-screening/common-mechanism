@@ -14,7 +14,7 @@ synbio = sys.argv[1] + ".benign.blastn"
 taxid = sys.argv[1] + ".nr.blastx"
 taxid2 = sys.argv[1] + ".nt.blastn"
 
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
 # viz biorisk hits
 plot_hmmer(biorisk, 10)

@@ -1,22 +1,12 @@
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.io as pio
 import plotly.graph_objects as go
-import plotly
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-import matplotlib
 import re
 import os
-import subprocess
-from Bio import ExPASy
-from Bio import SwissProt
 from utils import *
 
-#pio.kaleido.scope.mathjax = None
-
-reg_ids = pd.read_csv(os.environ['PFAMDB'] + '/biorisk/reg_taxids', header=None)
+reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
 # taxonomic distribution plots
 def plot_tax(file, reg_ids, query):
@@ -96,13 +86,17 @@ def plot_hmmer(file, nhits=10):
         ax = fig.add_subplot(111, frameon=False)
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
-        ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
+        ax.text(0.5, 0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
         fig.savefig(os.path.abspath(file + ".png"))
         return
     
     hmmer = readhmmer(file)
     hmmer = hmmer.iloc[0:nhits,:]
-    
+     
+    # check if this is a batch of sequences
+    seq_names = hmmer['query name']
+    seq_pres = set([i.split('_')[0] for i in seq_names])
+  
     if hmmer.shape[0] < nhits:
         nhits = hmmer.shape[0]
     
@@ -136,6 +130,10 @@ def plot_blast(file, query, nhits=10):
     else:
         blast = readdmnd(file)
         blast['regulated'] = False
+    
+    # check if this is a batch of sequences
+    seq_names = blast[]
+
     blast = trimblast(blast)
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name

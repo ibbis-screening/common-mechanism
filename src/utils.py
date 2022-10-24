@@ -53,24 +53,21 @@ def split_taxa(blast):
 
     return blast
 
-def taxdist(blast, reg_ids, query):
+def taxdist(blast, reg_ids, vax_ids, query):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
-
-    # levels = ['superkingdom', 'phylum', 'order', 'genus', 'species', 'strain']
-    # for level in levels:
-    #     blast[level] = ""
     
     # checks which individual lines contain regulated pathogens
     cut = []
+    vax = []
     for x in range(0, blast.shape[0]):
         try:
             t = taxoniq.Taxon(blast['subject tax ids'][x])
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
                 blast.loc[x,'regulated'] = True
-            while t.scientific_name != 'root':
+            while t.scientific_name != 'root': #  & int(t.tax_id) not in set(vax_ids[0])
                 if int(t.tax_id) in set(reg_ids[0]):
                     blast.loc[x,'regulated'] = True
                 if blast.columns.str.contains(t.rank.name).any():
@@ -79,31 +76,19 @@ def taxdist(blast, reg_ids, query):
                     blast[t.rank.name] = ""
                     blast.loc[x,t.rank.name] = t.scientific_name
                 t = t.parent
+                if int(t.tax_id) in set(vax_ids[0]):
+                    vax.append(x)
                 # print(t.rank.name)
                 # print(t.scientific_name)
         except:
             print('Taxon id', blast['subject tax ids'][x], 'is missing from taxoniq database')
             cut.append(x)
+    
+    if (len(vax)>0):
+        blast['regulated'][vax] = False
 #
     blast.drop(cut)
-    
-    # identifies regulated status of each gene
-#    for gene in set(blast['subject acc.']):
-#        regulated = 0
-#        nonregulated = 0
-#        if (blast['regulated'][blast['subject acc.'] == gene] == True).any():
-#            print("Reg found")
-#            regulated = 1
-#        if (blast['regulated'][blast['subject acc.'] == gene] == False).any():
-#            print("Non-reg found")
-#            nonregulated = 1
-#        if (regulated == 1 & nonregulated == 0):
-#            blast['regulated'][blast['subject acc.'] == gene] = "Regulated"
-#        if (regulated == 1 & nonregulated == 1):
-#            blast['regulated'][blast['subject acc.'] == gene] = "Mixed"
-#        if (regulated == 0 & nonregulated == 0):
-#            blast['regulated'][blast['subject acc.'] == gene] = "Non-regulated"
-    
+        
     blast = blast.sort_values(by=['% identity'], ascending=False)
     
     # simplify output by putting all single instances of a species in an 'other' category

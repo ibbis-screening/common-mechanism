@@ -12,6 +12,7 @@ THREADS=1           #threads per process
 QUERY=""
 OUTPUT=""
 CLEANUP=0
+DB_PATH=""
 
 #Get options from user
 while getopts "p:t:d:q:o:c:" OPTION
@@ -73,6 +74,7 @@ if [ "$DB_PATH" == "" ]
 then
     echo "Please specify the path to screening databases"
 fi
+export DB_PATH=${DB_PATH}
 
 #Check for input file
 if [ ! -f  $QUERY ]

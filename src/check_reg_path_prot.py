@@ -16,11 +16,12 @@ query = sys.argv[1]
 # read in protein screening
 file = query + ".nr.blastx"
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
+vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
 
 if checkfile(file) != 1:
     exit(1)
 blast = readblast(file)
-blast = taxdist(blast, reg_ids, query)
+blast = taxdist(blast, reg_ids, vax_ids, query)
 
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
 blast2 = trimblast(blast[blast['subject tax ids']!="32630"])

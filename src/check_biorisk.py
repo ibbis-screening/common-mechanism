@@ -8,6 +8,7 @@ if len(sys.argv) < 1:
     exit(1)
 
 file = sys.argv[1] + ".biorisk.hmmsearch"
+print("File: ", file)
 
 lookup = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_lookup.csv')
 # print(lookup.head())
@@ -22,10 +23,13 @@ if res == 1:
     new_names = []
     for model in range(hmmer.shape[0]):
         name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
+        # print(name_index)
         # hmmer['description'][model] = lookup['Description'][name_index[0]]
-        new_names.append(lookup['Description'][name_index[0]])
+        try:
+            new_names.append(lookup['Description'][name_index[0]])
+        except:
+            new_names.append("")
         # print(lookup['Description'][name_index[0]])
-        # print("Reassigning ", hmmer['target name'][model], ": ", lookup['HMM_Name'][lookup['HMM_Orig_Name'] == hmmer['target name'][model]], "\n")
     hmmer['description'] = new_names
     keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
     hmmer = hmmer.iloc[keep1,:]

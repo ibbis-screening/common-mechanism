@@ -31,7 +31,7 @@ def check_flags(matching, bin_list):
     return bin_list
     
 for res in glob.glob('*.screen'):
-    print(res)
+    # print(res)
     names.append(res)
     with open(res) as f:
         lines = f.readlines()

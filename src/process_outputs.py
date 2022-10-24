@@ -132,8 +132,6 @@ def plot_blast(file, query, nhits=10):
         blast = readblast(file)
         blast['regulated'] = False
     
-    # check if this is a batch of sequences
-    seq_names = blast[]
 
     blast = trimblast(blast)
     

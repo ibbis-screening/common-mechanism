@@ -26,8 +26,6 @@ blast = taxdist(blast, reg_ids, vax_ids, query)
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
 blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
 
-# ignore synthetic constructs when deciding whether to flag
-
 reg_bac = 0
 reg_vir = 0
 
@@ -37,7 +35,7 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
     for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): # for each gene with at least one regulated hit
         # go back to blast - the full set of hits
         # if it's a viral protein
-        subset = blast[(blast['subject tax ids'] != "32630") & (blast['subject acc.'] == gene)]
+        subset = blast[(blast['subject acc.'] == gene)]
         subset = subset.reset_index(drop=True)
         if "Viruses" in set(subset['superkingdom']):
             # if the top hit is both viral and regulated

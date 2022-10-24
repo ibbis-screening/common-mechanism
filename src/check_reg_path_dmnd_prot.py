@@ -17,39 +17,55 @@ query = sys.argv[1]
 # read in protein screening results
 file = query + ".nr.dmnd"
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
+vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
 
-if checkfile(file) == 1:
-    diamond = readdmnd(file)
-    diamond = readdmnd(file)
-    diamond = taxdist(diamond, reg_ids, query)
-    diamond2 = trimblast(diamond)
+if checkfile(file) != 1:
+    exit(1)
+diamond = readdmnd(file)
+diamond = taxdist(diamond, reg_ids, vax_ids, query)
 
-    # ignore synthetic constructs when deciding whether to flag
-    #print(diamond)
+# trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
+diamond2 = trimblast(diamond[diamond['subject tax ids']!="32630"])
 
-    if diamond['regulated'].sum(): # if ANY of the hits are regulated
-        print("Regulated pathogen proteins: PRESENT")
-        for gene in set(diamond2['subject acc.'][diamond2['regulated'] == True]):
-            if "Viruses" in set(diamond['superkingdom'][diamond['subject acc.'] == gene]):
-                print("Regulated virus: FLAG")
-            elif diamond['regulated'][diamond['subject tax ids']!="32630"][0] == True: # if top hit that isn't a synthetic construct is regulated
-                print("Regulated bacteria top hit: FLAG")
-            n_reg = diamond['regulated'][diamond['subject acc.'] == gene].sum()
-            n_total = len(diamond['regulated'][diamond['subject acc.'] == gene])
-            if (n_reg < n_total):
-                print("Gene " + gene + " found in both regulated and nonregulated organisms: COND FLAG")
-            elif (n_reg == n_total):
-                print("Gene " + gene + " found in only regulated organisms: FLAG")
+reg_bac = 0
+reg_vir = 0
+
+if diamond2['regulated'].sum(): # if ANY of the hits are regulated
+    print("Regulated pathogen proteins: PRESENT")
+    for gene in set(diamond2['subject acc.'][diamond2['regulated'] == True]):
+        # go back to blast - the full set of hits
+        # if it's a viral protein
+        if "Viruses" in set(subset['superkingdom']):
+            # if the top hit is both viral and regulated
+            if subset['superkingdom'][0] == "Viruses":
+                if subset['regulated'][0] == True:
+                    print("Regulated virus top hit: FLAG")
+                    reg_vir = 1
             else:
-                print("Gene: " + gene)
-                print(diamond['regulated'][diamond['subject acc.'] == gene])
-    #    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
-        hits = diamond[diamond['regulated']==True]  # print out the start and end coordinated on the query sequence
-        hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
-    else:
-        print("Regulated pathogen proteins: PASS")
-elif checkfile(file) == 2:
-    print("No protein hits found")
-else:
-    print("Unexpected result from DIAMOND nr screen")
+                print("Regulated virus in hits: COND FLAG")
+        elif subset['regulated'][0] == True: # if top hit that isn't a synthetic construct is regulated
+            print("Regulated bacteria top hit: FLAG")
+            reg_bac = 1
+        n_reg = blast['regulated'][blast['subject acc.'] == gene].sum()
+        n_total = len(blast['regulated'][blast['subject acc.'] == gene])
+        if (n_reg < n_total):
+            print("Gene " + gene + " found in both regulated and nonregulated organisms")
+            print("Species: " + " ".join(set(blast['species'][blast['subject acc.'] == gene])))
+        elif (n_reg == n_total):
+            print("Gene " + gene + " found in only regulated organisms")
+            print("Species: " + ", ".join(set(blast['species'][blast['subject acc.'] == gene])) + " (taxid: " + " ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))) + ")")
+        else:
+            print("Gene: " + gene)
+            print(blast['regulated'][blast['subject acc.'] == gene])
+    hits = diamond2[diamond2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinated on the query sequence
+    hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
+
+
+if reg_bac == 0:
+    print("No regulated bacteria top hit: PASS")
+if reg_vir == 0:
+    print("No regulated virus top hit: PASS")
+
+
+
 

@@ -35,6 +35,8 @@ if diamond2['regulated'].sum(): # if ANY of the hits are regulated
     for gene in set(diamond2['subject acc.'][diamond2['regulated'] == True]):
         # go back to blast - the full set of hits
         # if it's a viral protein
+        subset = diamond[(diamond['subject acc.'] == gene)]
+        subset = subset.reset_index(drop=True)
         if "Viruses" in set(subset['superkingdom']):
             # if the top hit is both viral and regulated
             if subset['superkingdom'][0] == "Viruses":

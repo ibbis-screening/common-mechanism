@@ -2,6 +2,7 @@ from process_outputs import *
 from utils import *
 import sys, os
 import pandas as pd
+from os.path import exists
 
 #Input parameter error checking 
 if len(sys.argv) < 1:
@@ -12,6 +13,8 @@ biorisk = sys.argv[1] + ".biorisk.hmmsearch"
 benign = sys.argv[1] + ".benign.hmmsearch"
 synbio = sys.argv[1] + ".benign.blastn"
 taxid = sys.argv[1] + ".nr.blastx"
+if not exists(taxid):
+    taxid = sys.argv[1] + ".nr.dmnd"
 taxid2 = sys.argv[1] + ".nt.blastn"
 
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)

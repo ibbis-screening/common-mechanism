@@ -29,6 +29,7 @@ diamond2 = trimblast(diamond[diamond['subject tax ids']!="32630"])
 
 reg_bac = 0
 reg_vir = 0
+reg_fung = 0
 
 if diamond2['regulated'].sum(): # if ANY of the hits are regulated
     print("Regulated pathogen proteins: PRESENT")
@@ -37,17 +38,16 @@ if diamond2['regulated'].sum(): # if ANY of the hits are regulated
         # if it's a viral protein
         subset = diamond[(diamond['subject acc.'] == gene)]
         subset = subset.reset_index(drop=True)
-        if "Viruses" in set(subset['superkingdom']):
-            # if the top hit is both viral and regulated
+        if subset['regulated'][0] == True:
             if subset['superkingdom'][0] == "Viruses":
-                if subset['regulated'][0] == True:
-                    print("Regulated virus top hit: FLAG")
-                    reg_vir = 1
-            else:
-                print("Regulated virus in hits: COND FLAG")
-        elif subset['regulated'][0] == True: # if top hit that isn't a synthetic construct is regulated
-            print("Regulated bacteria top hit: FLAG")
-            reg_bac = 1
+                print("Regulated virus top hit: FLAG")
+                reg_vir = 1
+            elif subset['superkingdom'][0] == "Bacteria": # if top hit that isn't a synthetic construct is regulated
+                print("Regulated bacteria top hit: FLAG")
+                reg_bac = 1
+            elif subset['superkingdom'][0] == "Fungi":
+                print("Regulated fungi top hit: FLAG")
+                reg_fung = 1
         n_reg = diamond['regulated'][diamond['subject acc.'] == gene].sum()
         n_total = len(diamond['regulated'][diamond['subject acc.'] == gene])
         if (n_reg < n_total):
@@ -67,7 +67,5 @@ if reg_bac == 0:
     print("No regulated bacteria top hit: PASS")
 if reg_vir == 0:
     print("No regulated virus top hit: PASS")
-
-
-
-
+if reg_fung == 0:
+    print("No regulated fungi top hit: PASS")

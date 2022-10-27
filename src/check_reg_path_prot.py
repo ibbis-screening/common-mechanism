@@ -28,6 +28,7 @@ blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
 
 reg_bac = 0
 reg_vir = 0
+reg_fung = 0
 
 if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
 #    print(blast2)
@@ -37,17 +38,16 @@ if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         # if it's a viral protein
         subset = blast[(blast['subject acc.'] == gene)]
         subset = subset.reset_index(drop=True)
-        if "Viruses" in set(subset['superkingdom']):
-            # if the top hit is both viral and regulated
+        if subset['regulated'][0] == True:
             if subset['superkingdom'][0] == "Viruses":
-                if subset['regulated'][0] == True:
-                    print("Regulated virus top hit: FLAG")
-                    reg_vir = 1
-            else:
-                print("Regulated virus in hits: COND FLAG")
-        elif subset['regulated'][0] == True: # if top hit that isn't a synthetic construct is regulated
-            print("Regulated bacteria top hit: FLAG")
-            reg_bac = 1
+                print("Regulated virus top hit: FLAG")
+                reg_vir = 1
+            elif subset['superkingdom'][0] == "Bacteria": # if top hit that isn't a synthetic construct is regulated
+                print("Regulated bacteria top hit: FLAG")
+                reg_bac = 1
+            elif subset['superkingdom'][0] == "Fungi":
+                print("Regulated fungi top hit: FLAG")
+                reg_fung = 1
         n_reg = blast['regulated'][blast['subject acc.'] == gene].sum()
         n_total = len(blast['regulated'][blast['subject acc.'] == gene])
         if (n_reg < n_total):
@@ -66,5 +66,7 @@ if reg_bac == 0:
     print("No regulated bacteria top hit: PASS")
 if reg_vir == 0:
     print("No regulated virus top hit: PASS")
+if reg_fung == 0:
+    print("No regulated fungi top hit: PASS")
 
 

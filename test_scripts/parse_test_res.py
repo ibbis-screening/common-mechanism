@@ -5,8 +5,6 @@
 
 import glob
 import pandas as pd
-import seaborn as sb
-import matplotlib.pyplot as plt
 
 # columns in the summary file, to be filled with the checks below
 names = []
@@ -16,56 +14,44 @@ reg_bact = []
 benign = []
 
 def check_flags(matching, bin_list):
-    # print(matching)
     if len(matching) > 0:
         hit = 0
         for match in matching:
-            if ': FLAG' in match:
-                hit = 1
-                bin_list.append("F")
+            if hit == 0:
+                if ': FLAG' in match:
+                    hit = 1
+                    bin_list.append("F")
         if hit == 0:
             bin_list.append("P")
+            # print(matching)
     else:
         bin_list.append("Err")
     
     return bin_list
     
 for res in glob.glob('*.screen'):
-    # print(res)
     names.append(res)
+    # print(res)
     with open(res) as f:
         lines = f.readlines()
         
         # biorisk screen
         matching = [s for s in lines if "Biorisk" in s]
-#        print(matching)
         biorisk = check_flags(matching, biorisk)
 
-        # reg_virus screen
+        # reg_virus screen - fetch all coding and noncoding reports
         matching = [s for s in lines if "egulated virus top hit: " in s]
-        # print(matching)
         if len(matching) > 0:
-            # print(reg_virus)
             reg_virus = check_flags(matching, reg_virus)
         else:
             reg_virus.append("M")
         
-        # reg_virus screen
+        # reg_virus screen - fetch all coding and noncoding reports
         matching = [s for s in lines if "egulated bacteria top hit: " in s]
-#        print(matching)
         if len(matching) > 0:
             reg_bact = check_flags(matching, reg_bact)
         else:
             reg_bact.append("M")
-        
-        # matching = [s for s in lines if "nr.blastx has no hits" in s]
-        # if len(matching) > 0:
-        #     reg_virus = "M"
-        #     reg_bact = "M"
-        # matching = [s for s in lines if "nr.blastx does not exist" in s]
-        # if len(matching) > 0:
-        #     reg_virus = "M"
-        #     reg_bact = "M"
 
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         nohits = [s for s in lines if "No housekeeping genes found" in s]
@@ -83,6 +69,7 @@ for res in glob.glob('*.screen'):
             benign.append("-")
         else:
             benign.append("NA")
+    # print(len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 
 #print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 

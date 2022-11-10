@@ -116,12 +116,14 @@ python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
 fi
 
 # Step 3: benign DB scan
+date
 echo " >> Checking any pathogen regions for benign components..."
 hmmscan --domtblout ${OUTPUT}.benign.hmmsearch -E 1e-10 ${DB_PATH}/benign/benign.hmm ${OUTPUT}.faa &>/dev/null
 blastn -db ${DB_PATH}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
 python ${CM_DIR}/check_benign.py ${OUTPUT} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
 
+date
 echo " >> Done with screening!"
 
 # Visualising outputs; functional characterization

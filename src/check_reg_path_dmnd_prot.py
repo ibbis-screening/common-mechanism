@@ -62,6 +62,7 @@ if diamond2['regulated'].sum(): # if ANY of the hits are regulated
     hits = diamond2[diamond2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinated on the query sequence
     hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
 
+print(diamond2['superkingdom'])
 
 if reg_bac == 0:
     print("No regulated bacteria top hit: PASS")

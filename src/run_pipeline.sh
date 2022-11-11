@@ -3,7 +3,7 @@
 ##############################################################################
 #run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
 ##############################################################################
-# Usage: src/run_pipeline.sh test_folder/[$name].fasta
+# Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
 
 # parameters for the run
 set -eu
@@ -37,7 +37,7 @@ while getopts "p:t:d:q:o:c:" OPTION
                 CLEANUP=$OPTARG
                 ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
+                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-p PROCESSES -t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  DB_PATH         path to detabases (required)"
@@ -52,7 +52,7 @@ while getopts "p:t:d:q:o:c:" OPTION
 #Check for values
 if [ "$QUERY" == "" ]
 then
-    echo "Usage: src/run_pipeline.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
+    echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: query prefix)"
         echo "  DB_PATH         path to detabases (required)"

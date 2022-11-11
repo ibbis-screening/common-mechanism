@@ -74,6 +74,7 @@ echo " >> Checking for valid options..."
 if [ "$DB_PATH" == "" ]
 then
     echo "Please specify the path to screening databases"
+    exit
 fi
 export DB_PATH=${DB_PATH}
 

@@ -37,7 +37,7 @@ while getopts "p:t:d:q:o:c:" OPTION
                 CLEANUP=$OPTARG
                 ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+                echo "Usage: src/run_pipeline_diamond.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  DB_PATH         path to detabases (required)"
@@ -52,7 +52,7 @@ while getopts "p:t:d:q:o:c:" OPTION
 #Check for values
 if [ "$QUERY" == "" ]
 then
-    echo "Usage: src/run_pipeline.sh -q QUERY -s OUTPUT [-p PROCESSES -t THREADS]"
+    echo "Usage: src/run_pipeline_diamond.sh -q QUERY -o OUTPUT [-p PROCESSES -t THREADS]"
         echo "  QUERY           query file to align to each database (required)"
         echo "  OUTPUT          output prefix for alignments (default: query prefix)"
         echo "  DB_PATH         path to detabases (required)"

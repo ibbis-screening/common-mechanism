@@ -2,25 +2,48 @@
 
 ##############################################################################
 #run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
+#
+#Copyright (C) 2022-2023 NTI|Bio 
+#This file is part of the CommonMechanism 
 ##############################################################################
-# Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
-
-# parameters for the run
-set -eu
+# Usage:
+#   src/run_pipeline.sh
+#       -q INPUT_FILE
+#       -d DATBASE_FOLDER 
+#       -t THREADS (default: 1) 
+#       -o OUTPUT (output prefix, default: query name) 
+#   Optional parameters:
+#       -c = clean up intermediate files (default: no cleanup)
+#       -b = use blast instead of diamond (default: diamond) 
+# Example Usage: src/run_pipeline.sh-q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
+##############################################################################
+# set parameters for the run
+set -eu 
 PROCESSES=5         #number of processes to run at once
 THREADS=1           #threads per process
-QUERY=""
-OUTPUT=""
-CLEANUP=0
-DB_PATH=""
+QUERY=""            #query input file 
+OUTPUT=""           #output prefix
+CLEANUP=0           #cleanup files (default: false)" 
+BLAST=0             #blast or diamond (default: diamond) 
+DB_PATH="" 
+
+function print_usage() {
+    echo ""
+    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS]"
+    echo "    QUERY           query file to align to each database (required)"
+    echo "    OUTPUT          output prefix for alignments (default: query prefix)"
+    echo "    DB_PATH         path to detabases (required)"
+    echo "    THREADS         number of threads for each database run (default: 1)"
+    echo " OPTIONAL FLAGS" 
+    echo "    -c              tidy up intermediate screening files afterward"
+    echo "    -b              run blast for protein screen [default: diamond]"
+    
+}
 
 #Get options from user
-while getopts "p:t:d:q:o:c:" OPTION
+while getopts "t:d:q:o:c:b:" OPTION
     do
         case $OPTION in
-            p)
-                PROCESSES=$OPTARG
-                ;;
             t)
                 THREADS=$OPTARG
                 ;;
@@ -34,83 +57,100 @@ while getopts "p:t:d:q:o:c:" OPTION
                 OUTPUT=$OPTARG
                 ;;
             c)
-                CLEANUP=$OPTARG
+                CLEANUP=1
+                ;;
+            b)
+                BLAST=1
                 ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-p PROCESSES -t THREADS]"
+                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  DB_PATH         path to detabases (required)"
-                echo "  PROCESSES       number of databases to evaluate (default: 5)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
-                echo "  CLEANUP         tidy up intermediate screening files afterward?"
+                echo "OPTIONAL FLAGS" 
+                echo "  -c              tidy up intermediate screening files afterward"
+                echo "  -b              run blast for protein screen [default: diamond]"
                 exit
                 ;;
         esac
     done
 
-#Check for values
-if [ "$QUERY" == "" ]
-then
-    echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-p PROCESSES -t THREADS]"
-        echo "  QUERY           query file to align to each database (required)"
-        echo "  OUTPUT          output prefix for alignments (default: query prefix)"
-        echo "  DB_PATH         path to detabases (required)"
-        echo "  PROCESSES       number of databases to evaluate (default: 5)"
-        echo "  THREADS         number of threads for each database run (default: 1)"
-        echo "  CLEANUP         tidy up intermediate screening files afterward? 0 = no, 1 = y"
-    exit
+#INITIALIZING: Check for values
+#Check input query 
+echo " >> STEP 0: Checking for valid options..." 
+if [ "$QUERY" == "" ]; then
+    echo " ERROR: no input query file specified"
+    print_usage
+    exit 1 
+elif [ ! -f "$QUERY" ]; then 
+    echo " ERROR: specified input query file does not exist"
+    print_usage
+    exit 1
 fi
-
-echo "Running query: " $QUERY
-
-if [ "$OUTPUT" == "" ]
-then
+#If output not specified, set value 
+if [ "$OUTPUT" == "" ]; then
     OUTPUT=$(basename "$QUERY")
 fi
-
-echo " >> Checking for valid options..."
-
-if [ "$DB_PATH" == "" ]
-then
-    echo "Please specify the path to screening databases"
-    exit
+#Check input database folder 
+if [ "$DB_PATH" == "" ]; then
+    echo " ERROR: screening database path not specified"
+    print_usage
+    exit 1
+elif [ ! -d "$DB_PATH" ]; then
+    echo " ERROR: specified database folder does not exist"
+    print_usage
+    exit 1
+else
+    #Test database downloads 
+    biorisk_test=${DB_PATH}/biorisk_db/biorisk.hmm
+    benign_test=${DB_PATH}/benign_db/benign.hmm
+    split_nr_test=${DB_PATH}/split_nr/nr.1.dmnd
+    if [ ! -f "$biorisk_test" ]; then
+        echo " ERROR: database folder does not contain biorisk database"
+        exit 1 
+    fi 
+    if [ ! -f "$benign_test" ]; then
+        echo " ERROR: database folder does not contain benign database" 
+        exit 1 
+    fi 
+    if [ ! -f "$split_nr_test" ]; then 
+        echo " ERROR: database folder does not contain diamond database"
+        exit 1
+    fi 
 fi
-export DB_PATH=${DB_PATH}
-
-#Check for input file
-if [ ! -f  $QUERY ]
-then
-    echo " ERROR: input file $QUERY does not exist"
-    exit
-fi
+# export DB_PATH=${DB_PATH}
 
 #################################################################
-
-dirname="$( dirname "$0" )"
-
-export CM_DIR=$dirname
-export PYTHONPATH=$dirname
+CM_DIR="$( dirname "$0" )"
 
 # Step 1: biorisk DB scan
-date
-printf "\n >> Running biorisk HMM scan..."
+echo " >> STEP 1: Running biorisk hmm scan..." 
+echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
-python ${CM_DIR}/check_biorisk.py ${OUTPUT}
+echo -e "\t...running hmmscan" 
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
+echo -e "\t...testing output files"
+python ${CM_DIR}/check_biorisk.py -i ${OUTPUT} --database ${DB_PATH}/biorisk_db/
 
-# Step 2: taxon ID
-# protein screening
-date
-printf "\n >> Running taxid screen for regulated pathogen proteins..."
-${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
-
-python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
+# Step 2: taxon ID/protein screening
+echo " >> STEP 2: Checking regulated pathogen proteins..."
+if [ "$BLAST" = 1 ]; then
+    ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
+    python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
+else 
+    ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
+    python ${CM_DIR}/check_reg_path_dmnd_prot.py ${OUTPUT}
+fi
 
 # nucleotide screening
-date
-printf "\n >> Running taxid screen for regulated pathogen nucleotides..."
-python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
+echo " >> STEP 3: Checking regulated pathogen nucleotides..."
+if [ "$BLAST" = 1]; then 
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
+else
+    python ${CM_DIR}/fetch_nc_bits_dmnd.py ${OUTPUT} ${QUERY}
+fi
+
 if [ -f "${OUTPUT}"_nc.fasta ]
 then blastn -query ${OUTPUT}_nc.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
 python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}

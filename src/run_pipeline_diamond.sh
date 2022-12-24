@@ -144,3 +144,5 @@ then
 fi
 
 rm ${OUTPUT}*.tmp
+
+echo " >> COMMONMECHANISM: COMPLETED"

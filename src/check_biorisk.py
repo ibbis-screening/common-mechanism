@@ -7,10 +7,10 @@
 #This file is part of the CommonMechanism 
 ##############################################################################
 # Usage:
-#  python check_biorisk.py -i INPUT.biorisk.hmmsearch   
+#  python check_biorisk.py -i INPUT.biorisk.hmmsearch -d databases/biorisk_db/ 
 ##############################################################################
 from utils import *
-import sys, os, argparse 
+import os, sys, argparse 
 import pandas as pd
 
 def main():
@@ -23,7 +23,7 @@ def main():
     
     #check input files
     if (not os.path.exists(args.in_file)):
-        sys.stderrr.write("\t...input file does not exist\n") 
+        sys.stderr.write("\t...input file does not exist\n") 
         exit(1) 
     if (not os.path.exists(args.db + "/biorisk_lookup.csv")):
         sys.stderr.write("\t...biorisk_lookup.csv does not exist\n")
@@ -36,7 +36,7 @@ def main():
     lookup = pd.read_csv(args.db + "/biorisk_lookup.csv")
 
     # read in HMMER output and check for valid hits
-    res = checkfile(in_file)
+    res = check_blastfile(in_file)
     if res == 1:
         hmmer = readhmmer(in_file)
         hmmer['description'] = ''

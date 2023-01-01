@@ -18,7 +18,7 @@
 # Example Usage: src/run_pipeline.sh-q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
 ##############################################################################
 # set parameters for the run
-set -eu 
+#set -eu 
 PROCESSES=5         #number of processes to run at once
 THREADS=1           #threads per process
 QUERY=""            #query input file 
@@ -105,7 +105,7 @@ else
     #Test database downloads 
     biorisk_test=${DB_PATH}/biorisk_db/biorisk.hmm
     benign_test=${DB_PATH}/benign_db/benign.hmm
-    split_nr_test=${DB_PATH}/split_nr/nr.1.dmnd
+    split_nr_test=${DB_PATH}/nr_dmnd/nr.1.dmnd
     if [ ! -f "$biorisk_test" ]; then
         echo " ERROR: database folder does not contain biorisk database"
         exit 1 
@@ -124,28 +124,34 @@ fi
 #################################################################
 CM_DIR="$( dirname "$0" )"
 
+start_time=$(date)
+echo -e " >> STARTED AT $start_time"
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Running biorisk hmm scan..." 
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
-echo -e "\t...testing output files"
-python ${CM_DIR}/check_biorisk.py -i ${OUTPUT} --database ${DB_PATH}/biorisk_db/
+echo -e "\t...testing output files (running check_biorisk.py)"
+python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
 
 # Step 2: taxon ID/protein screening
 echo " >> STEP 2: Checking regulated pathogen proteins..."
 if [ "$BLAST" = 1 ]; then
+    echo -e "\t...running run_blastx.sh"
     ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
+    echo -e "\t...checking blast results"
     python ${CM_DIR}/check_reg_path_prot.py ${OUTPUT}
 else 
+    echo -e "\t...running run_diamond.sh"
     ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
-    python ${CM_DIR}/check_reg_path_dmnd_prot.py ${OUTPUT}
+    echo -e "\t...checking diamond results"
+    python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
 
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
-if [ "$BLAST" = 1]; then 
+if [ "$BLAST" = 1 ]; then 
     python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
 else
     python ${CM_DIR}/fetch_nc_bits_dmnd.py ${OUTPUT} ${QUERY}
@@ -157,15 +163,15 @@ python ${CM_DIR}/check_reg_path_nt.py ${OUTPUT}
 fi
 
 # Step 3: benign DB scan
-date
-printf "\n >> Checking any pathogen regions for benign components..."
-hmmscan --domtblout ${OUTPUT}.benign.hmmsearch ${DB_PATH}/benign/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
-blastn -db ${DB_PATH}/benign/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
+#date
+echo -e " >> STEP 4: Checking any pathogen regions for benign components..."
+hmmscan --domtblout ${OUTPUT}.benign.hmmsearch ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
+blastn -db ${DB_PATH}/benign_db/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
-python ${CM_DIR}/check_benign.py ${OUTPUT} ${QUERY} # added the original file path here to fetch sequence length, can tidy this
+python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${QUERY} -d ${DB_PATH}/benign_db/ # added the original file path here to fetch sequence length, can tidy this
 
-date
-printf "\n >> Done with screening!"
+finish_time=$(date)
+echo -e " >> COMPLETED AT $finish_time"
 
 # Visualising outputs; functional characterization
 

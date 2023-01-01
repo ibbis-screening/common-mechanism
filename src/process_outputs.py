@@ -78,9 +78,9 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
 
 # plot HMMER results from --domtblout
 def plot_hmmer(file, nhits=10):
-    if checkfile(file) == 0:
+    if check_blastfile(file) == 0:
         return
-    if checkfile(file) == 2:
+    if check_blastfile(file) == 2:
 		# generate empty plot saying "no hits"
         fig = plt.figure(figsize=(10,3))
         ax = fig.add_subplot(111, frameon=False)
@@ -112,9 +112,9 @@ def plot_hmmer(file, nhits=10):
 
 # plot BLAST results
 def plot_blast(file, query, nhits=10):
-    if checkfile(file) == 0:
+    if check_blastfile(file) == 0:
         return
-    if checkfile(file) == 2:
+    if check_blastfile(file) == 2:
 		# generate empty plot saying "no hits"
         fig = plt.figure(figsize=(10,3))
         ax = fig.add_subplot(111, frameon=False)

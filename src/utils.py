@@ -1,3 +1,18 @@
+#! /usr/bin/env python
+
+##############################################################################
+#utils.py provides functions used across multiple python scripts in the 
+#CommonMechanism package 
+#
+#Copyright (C) 2022-2023 NTI|Bio
+#This file is part of the CommonMechanism
+##############################################################################
+#Included functions:
+#   check_blastfile(filename): checks BLAST output files for each query to check if 
+#       results exist and if hits exist
+#   
+##############################################################################
+
 import pandas as pd
 import numpy as np
 import os
@@ -5,27 +20,40 @@ import taxoniq
 import matplotlib.cm as cm
 import re
 
-# check BLAST output files for each query to see if they exist and have any hits
-def checkfile(filename):
+##############################################################################
+#check_blastfile 
+#usage: check BLAST output files for each query to see if they exist and have any hits
+#input: 
+#   - name of BLAST output file  
+def check_blastfile(filename):
     if os.path.isfile(filename) == False:
-        print(filename, "does not exist")
+        sys.stderr.write("\t...%s does not exist\n" % filename)
         return 0
-    file = open(filename).read()
-    lines = 0
-    for line in file.splitlines():
-        if line.startswith('#') == False:
-            lines = lines + 1
-#    print("\n\nLines counted: " + str(lines) + "\n\n")
-    if lines == 0:
-        print(filename, "has no hits")
+    curr_file = open(filename,'r')
+    num_hits = 0 
+    num_lines = 0
+    for line in curr_file:
+        if (len(line) > 0) and (line[0] != "#"):
+            num_hits += 1
+        num_lines += 1
+    #Return based on file results
+    if num_lines == 0:
+        sys.stderr.write("\t...%s has no hits\n" % filename)
         return 2        
-    if len(file) == 0:
-        print(filename, "is empty")
+    if num_lines == 0:
+        sys.stderr.write("\t...%s is empty\n" % filename)
         return 0
     else:
         return 1
 
-# assign a nice colour scale to numeric values associated with taxon bins - one colour for regulated orgs, another for non-regulated
+##############################################################################
+#colourscale 
+#usage: assigns colour scale to numeric values associated with taxon bins
+#   separate colours for regulated orgs (OrRd) and non-regulated (Blues)
+#input:
+#   - reg_status: regulatory status
+#   - counts: counts to evaluate
+#   - averages: averages to evaluate 
 def colourscale(reg_status, counts, averages):
     rmap = cm.get_cmap('OrRd', 100)
     nrmap = cm.get_cmap('Blues', 100)
@@ -34,6 +62,8 @@ def colourscale(reg_status, counts, averages):
         colours.append('rgb' + str((np.array(nrmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')')) if reg_status[i] != counts[i] else colours.append('rgb' + str((np.array(rmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')'))
     return colours
 
+##############################################################################
+#split_taxa 
 def split_taxa(blast):
     blast2 = blast
     cutrows = []
@@ -53,6 +83,8 @@ def split_taxa(blast):
 
     return blast
 
+##############################################################################
+#taxdist 
 def taxdist(blast, reg_ids, vax_ids, query):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
@@ -81,7 +113,7 @@ def taxdist(blast, reg_ids, vax_ids, query):
                 # print(t.rank.name)
                 # print(t.scientific_name)
         except:
-            print('Taxon id', blast['subject tax ids'][x], 'is missing from taxoniq database')
+            sys.stderr.write('\t...taxon id' + blast['subject tax ids'][x] + 'is missing from taxoniq database\n')
             cut.append(x)
     
     if (len(vax)>0):
@@ -102,7 +134,11 @@ def taxdist(blast, reg_ids, vax_ids, query):
     return blast
 
 
-# read in HMMER output files
+#####################################################################################
+#readhmmer
+#usage:  read in HMMER output files
+#input:
+#   - hmmer output file name
 def readhmmer(fileh):
     columns = ['target name', 'accession','tlen', 'query name',' accession','qlen','E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
     
@@ -127,6 +163,7 @@ def readhmmer(fileh):
 #    print(hmmer)
     return hmmer
 
+#####################################################################################
 def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so coordinates will be complicated
     # rank hits by bitscore
     hmmer = hmmer.sort_values(by=['score'], ascending=False)
@@ -146,6 +183,7 @@ def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so
     return hmmer2
     
 
+#####################################################################################
 # read in BLAST files and pre-format the data frame with essential info
 def readblast(fileh):
     blast = pd.read_csv(fileh, sep='\t', comment='#', header=None)
@@ -172,6 +210,7 @@ def readblast(fileh):
     blast = blast.reset_index(drop=True)
     return blast
 
+#####################################################################################
 # read in DIAMOND files and pre-format the data frame with essential info
 def readdmnd(fileh):
     diamond = pd.read_csv(fileh, sep='\t', comment='#', header=None)
@@ -188,6 +227,7 @@ def readdmnd(fileh):
     
     return diamond
 
+#####################################################################################
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top

@@ -19,7 +19,7 @@ query = sys.argv[1]
 file = query + ".nt.blastn"
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 
-if checkfile(file) == 2:
+if check_blastfile(file) == 2:
     print("No nt hits found")
 else:
     blast = readblast(file)

@@ -44,7 +44,7 @@ def main():
     if check_blastfile(args.in_file) != 1:
         exit(1)
     blast = readdmnd(args.in_file)                  #function in utils.py
-    blast = taxdist(blast, reg_ids, vax_ids, query) #function in utils.py
+    blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast[blast['subject tax ids']!="32630"])

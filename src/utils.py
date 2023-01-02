@@ -85,7 +85,7 @@ def split_taxa(blast):
 
 ##############################################################################
 #taxdist 
-def taxdist(blast, reg_ids, vax_ids, query):
+def taxdist(blast, reg_ids, vax_ids):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
@@ -129,7 +129,6 @@ def taxdist(blast, reg_ids, vax_ids, query):
     blast.loc[blast.species.isin(singletons), 'species_simplified'] = 'other'
     
     blast = blast.reset_index(drop=True)
-#    blast.to_csv(query + ".reg_path_coords.csv", columns=["q. start", "q. end"], header=None)
     
     return blast
 

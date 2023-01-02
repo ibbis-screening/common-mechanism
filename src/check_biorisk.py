@@ -36,9 +36,9 @@ def main():
     lookup = pd.read_csv(args.db + "/biorisk_lookup.csv")
 
 # read in HMMER output and check for valid hits
-res = checkfile(file)
+res = check_blastfile(in_file)
 if res == 1:
-    hmmer = readhmmer(file)
+    hmmer = readhmmer(in_file)
     hmmer = trimhmmer(hmmer)
     hmmer['description'] = ''
     hmmer = hmmer.reset_index(drop=True)

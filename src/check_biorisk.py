@@ -1,17 +1,39 @@
+#! /usr/bin/env python
+
+##############################################################################
+#check_biorisk.py checks the output from hmmscan and prints to screen the results
+#
+#Copyright (C) 2022-2023 NTI|Bio 
+#This file is part of the CommonMechanism 
+##############################################################################
+# Usage:
+#  python check_biorisk.py -i INPUT.biorisk.hmmsearch -d databases/biorisk_db/ 
+##############################################################################
 from utils import *
-import sys, os
+import os, sys, argparse 
 import pandas as pd
 
-#Input parameter error checking 
-if len(sys.argv) < 1:
-    sys.stdout.write("\tERROR: Please provide a query file\n")
-    exit(1)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i","--input", dest="in_file",
+        required=True, help="Input file - hmmscan output file")
+    parser.add_argument("-d","--database", dest="db",
+        required=True, help="HMM folder (must contain biorisk_lookup.csv)")
+    args = parser.parse_args()
+    
+    #check input files
+    if (not os.path.exists(args.in_file)):
+        sys.stderr.write("\t...input file does not exist\n") 
+        exit(1) 
+    if (not os.path.exists(args.db + "/biorisk_lookup.csv")):
+        sys.stderr.write("\t...biorisk_lookup.csv does not exist\n")
+        exit(1)
+    
+    #Specify input file and read in database file 
+    in_file = args.in_file
+    sys.stdout.write("\t...checking %s\n" % in_file) 
 
-file = sys.argv[1] + ".biorisk.hmmsearch"
-print("File: ", file)
-
-lookup = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_lookup.csv')
-# print(lookup.head())
+    lookup = pd.read_csv(args.db + "/biorisk_lookup.csv")
 
 # read in HMMER output and check for valid hits
 res = checkfile(file)
@@ -37,8 +59,7 @@ if res == 1:
     if hmmer.shape[0] > 0:
         print("Biorisks: FLAG\n" + "\n".join(set(hmmer['description'])))
     else:
-        print("Biorisks: PASS")
-elif res == 2:
-	print("Biorisks: PASS")
-else:
-	print("Biorisks: unexpected outcome")
+        sys.stdout.write("\t...Biorisks: unexpected outcome\n")
+
+if __name__ == "__main__":
+    main()

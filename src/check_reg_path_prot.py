@@ -18,7 +18,7 @@ file = query + ".nr.blastx"
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
 
-if checkfile(file) != 1:
+if check_blastfile(file) != 1:
     exit(1)
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, vax_ids, query)

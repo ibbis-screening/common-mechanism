@@ -91,6 +91,7 @@ fi
 #If output not specified, set value 
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=$(basename "$QUERY")
+    echo "Output handle = $OUTPUT"
 fi
 #Check input database folder 
 if [ "$DB_PATH" == "" ]; then
@@ -126,6 +127,7 @@ CM_DIR="$( dirname "$0" )"
 
 start_time=$(date)
 echo -e " >> STARTED AT $start_time"
+
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Running biorisk hmm scan..." 
 echo -e "\t...running transeq" 

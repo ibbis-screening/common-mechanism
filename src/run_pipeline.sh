@@ -90,7 +90,7 @@ elif [ ! -f "$QUERY" ]; then
 fi
 #If output not specified, set value 
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=${QUERY//fasta/}
+    OUTPUT=${QUERY//.fasta/}
     echo "Output handle = $OUTPUT"
 fi
 #Check input database folder 

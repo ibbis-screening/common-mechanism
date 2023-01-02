@@ -15,15 +15,13 @@
 from utils import *
 import os, sys, argparse 
 import pandas as pd
-from itertools import chain
-#import SeqIO
 
 def check_for_benign(query, coords):
         # for each set of hits, need to pull out the coordinates covered by benign entries
         # overall >90% of regulated pathogen sub-sequences must be covered with benign content
         hmmsearch = query + ".benign.hmmsearch"
         blast = query + ".benign.blastn"
-        if checkfile(hmmsearch) == 2 and checkfile(blast) == 2:
+        if check_blastfile(hmmsearch) == 2 and check_blastfile(blast) == 2:
             print("No benign hits found")
             exit(0)
         
@@ -66,21 +64,6 @@ def check_for_benign(query, coords):
             print("No synbio parts hits")
         else:
             sys.stderr.write("\t...regulated region failed to clear\n")
-
-    # annotate (and clear?) synbio parts
-    blast = sys.argv[1] + ".benign.blastn"
-    if check_blastfile(blast) == 2:
-        sys.stderr.write("\t...No synbio parts hits\n")
-    else:
-        blastn = readblast(blast)
-        for region in range(0, coords.shape[0]): # for each regulated pathogen region
-            # look at only the hits that overlap with it
-            htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
-            htrim = htrim.assign(coverage = abs(htrim['q. end'] - htrim['q. start']) / htrim['query length'])
-            if any(htrim['coverage'] > 0.90):
-                sys.stderr.write("\t...Synbio parts - >90% coverage achieved = PASS\n")
-            else:
-                sys.stderr.write("\t...Synbio parts - <90% coverage achieved = FAIL\n")
 
 def main(): 
     parser = argparse.ArgumentParser()

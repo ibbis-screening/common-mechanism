@@ -35,32 +35,29 @@ def main():
 
     lookup = pd.read_csv(args.db + "/biorisk_lookup.csv")
 
-    # read in HMMER output and check for valid hits
-    res = check_blastfile(in_file)
-    if res == 1:
-        hmmer = readhmmer(in_file)
-        hmmer['description'] = ''
-        hmmer = hmmer.reset_index(drop=True)
-        # hmmer['target name'] = hmmer['target name'].str.replace("\.", "")
-        new_names = []
-        for model in range(hmmer.shape[0]):
-            name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
-            # print(name_index)
-            # hmmer['description'][model] = lookup['Description'][name_index[0]]
-            try:
-                new_names.append(lookup['Description'][name_index[0]])
-            except:
-                new_names.append("")
-            # print(lookup['Description'][name_index[0]])
-        hmmer['description'] = new_names
-        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
-        hmmer = hmmer.iloc[keep1,:]
-        if hmmer.shape[0] > 0:
-            sys.stdout.write("\t...Biorisks: FLAG\n" + "\n".join(set(hmmer['description'])))
-        else:
-            sys.stdout.write("\t...Biorisks: PASS\n")
-    elif res == 2:
-        sys.stdout.write("\t...Biorisks: PASS\n")
+# read in HMMER output and check for valid hits
+res = check_blastfile(in_file)
+if res == 1:
+    hmmer = readhmmer(in_file)
+    hmmer = trimhmmer(hmmer)
+    hmmer['description'] = ''
+    hmmer = hmmer.reset_index(drop=True)
+    # hmmer['target name'] = hmmer['target name'].str.replace("\.", "")
+    new_names = []
+    for model in range(hmmer.shape[0]):
+        name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
+        # print(name_index)
+        # hmmer['description'][model] = lookup['Description'][name_index[0]]
+        try:
+            new_names.append(lookup['Description'][name_index[0]])
+        except:
+            new_names.append("")
+        # print(lookup['Description'][name_index[0]])
+    hmmer['description'] = new_names
+    keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
+    hmmer = hmmer.iloc[keep1,:]
+    if hmmer.shape[0] > 0:
+        print("Biorisks: FLAG\n" + "\n".join(set(hmmer['description'])))
     else:
         sys.stdout.write("\t...Biorisks: unexpected outcome\n")
 

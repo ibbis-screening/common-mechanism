@@ -59,7 +59,7 @@ def main():
         if hmmer.shape[0] > 0:
             print("Biorisks: FLAG\n" + "\n".join(set(hmmer['description'])))
         else:
-            sys.stdout.write("\t...Biorisks: unexpected outcome\n")
+            sys.stdout.write("\t...Biorisks: no hits detected, PASS\n")
 
 if __name__ == "__main__":
     main()

@@ -19,6 +19,7 @@ import os
 import taxoniq
 import matplotlib.cm as cm
 import re
+import sys
 
 ##############################################################################
 #check_blastfile 

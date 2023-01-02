@@ -126,6 +126,9 @@ CM_DIR="$( dirname "$0" )"
 
 start_time=$(date)
 echo -e " >> STARTED AT $start_time"
+
+echo "Output handle = $OUTPUT"
+
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Running biorisk hmm scan..." 
 echo -e "\t...running transeq" 

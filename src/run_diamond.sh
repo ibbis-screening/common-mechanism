@@ -82,7 +82,7 @@ then
     exit
 fi      
 
-echo -e "\t ..running diamond protein search..."
+echo -e "\t...running diamond protein search..."
 ls ${DB_PATH}/nr*.dmnd | parallel --will-cite -j ${PROCESSES} diamond blastx --quiet -d ${DB_PATH}/nr.{%}.dmnd --threads ${THREADS} -q ${INPUT} -o ${OUTPUT}.{%}.tsv --outfmt 6 qseqid stitle sseqid staxids evalue bitscore pident qlen qstart qend slen sstart send --frameshift 15 --range-culling
 cat ${OUTPUT}.*.tsv > ${OUTPUT}.dmnd
 rm ${OUTPUT}.*.tsv

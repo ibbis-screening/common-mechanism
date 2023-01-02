@@ -38,7 +38,7 @@ def check_blastfile(filename):
             num_hits += 1
         num_lines += 1
     #Return based on file results
-    if num_lines == 0:
+    if num_hits == 0:
         sys.stderr.write("\t...%s has no hits\n" % filename)
         return 2        
     if num_lines == 0:
@@ -184,48 +184,21 @@ def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so
     
 
 #####################################################################################
-# read in BLAST files and pre-format the data frame with essential info
+# read in BLAST/DIAMOND files and pre-format the data frame with essential info
 def readblast(fileh):
     blast = pd.read_csv(fileh, sep='\t', comment='#', header=None)
+    columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
     
-    # read through the file with comments in to find column headers
-    file = open(fileh, "r")
-    columns = []
-    # query acc.ver, subject acc.ver, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score      in real title
-    # qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send      in command
-    for line in file:
-        if 'Fields' in line:
-            fields = line.replace('# Fields: ', '').rstrip()
-            columns = fields.split(', ')
-    if columns == []:
-        print("ERROR: Failed to parse column IDs")
-    
-#    print(blast)
     blast.columns = columns
-    blast.sort_values(by=['% identity'])
+    blast = blast.sort_values(by=['% identity'], ascending=False)
     blast['log evalue'] = -np.log10(pd.to_numeric(blast['evalue'])+1e-300)
     blast['q. coverage'] = abs(blast['q. end']-blast['q. start'])/blast['query length'].max()
     blast['s. coverage'] = abs(blast['s. end']-blast['s. start'])/blast['subject length']
+    
     blast = blast[blast['subject tax ids'].notna()]
     blast = blast.reset_index(drop=True)
+    
     return blast
-
-#####################################################################################
-# read in DIAMOND files and pre-format the data frame with essential info
-def readdmnd(fileh):
-    diamond = pd.read_csv(fileh, sep='\t', comment='#', header=None)
-    columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
-    
-    diamond.columns = columns
-    diamond = diamond.sort_values(by=['% identity'], ascending=False)
-    diamond['log evalue'] = -np.log10(pd.to_numeric(diamond['evalue'])+1e-300)
-    diamond['q. coverage'] = abs(diamond['q. end']-diamond['q. start'])/diamond['query length'].max()
-    diamond['s. coverage'] = abs(diamond['s. end']-diamond['s. start'])/diamond['subject length']
-    
-    diamond = diamond[diamond['subject tax ids'].notna()]
-    diamond = diamond.reset_index(drop=True)
-    
-    return diamond
 
 #####################################################################################
 # trim BLAST results to the most interesting ones

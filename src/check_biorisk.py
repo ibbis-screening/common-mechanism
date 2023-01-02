@@ -17,6 +17,7 @@ lookup = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_lookup.csv')
 res = checkfile(file)
 if res == 1:
     hmmer = readhmmer(file)
+    hmmer = trimhmmer(hmmer)
     hmmer['description'] = ''
     hmmer = hmmer.reset_index(drop=True)
     # hmmer['target name'] = hmmer['target name'].str.replace("\.", "")

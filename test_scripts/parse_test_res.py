@@ -11,6 +11,7 @@ names = []
 biorisk = []
 reg_virus = []
 reg_bact = []
+reg_fungi = []
 benign = []
 
 def check_flags(matching, bin_list):
@@ -40,18 +41,25 @@ for res in glob.glob('*.screen'):
         biorisk = check_flags(matching, biorisk)
 
         # reg_virus screen - fetch all coding and noncoding reports
-        matching = [s for s in lines if "egulated virus top hit: " in s]
+        matching = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
         if len(matching) > 0:
             reg_virus = check_flags(matching, reg_virus)
         else:
             reg_virus.append("M")
         
-        # reg_virus screen - fetch all coding and noncoding reports
-        matching = [s for s in lines if "egulated bacteria top hit: " in s]
+        # reg_bact screen - fetch all coding and noncoding reports
+        matching = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
         if len(matching) > 0:
             reg_bact = check_flags(matching, reg_bact)
         else:
             reg_bact.append("M")
+
+        # reg_fungi screen - fetch all coding and noncoding reports
+        matching = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
+        if len(matching) > 0:
+            reg_fungi = check_flags(matching, reg_bact)
+        else:
+            reg_fungi.append("M")
 
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         nohits = [s for s in lines if "No housekeeping genes found" in s]
@@ -73,9 +81,9 @@ for res in glob.glob('*.screen'):
 
 #print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 
-breakdown = list(zip(names, biorisk, reg_virus, reg_bact, benign))
+breakdown = list(zip(names, biorisk, reg_virus, reg_bact, reg_fungi, benign))
 summary = []
-for name, risk, reg_vir, reg_bac, ben in breakdown:
+for name, risk, reg_vir, reg_bac, reg_fungi, ben in breakdown:
         # if a biorisk is flagged, flag the whole thing
     if risk == "F":
         summary.append((name, "F"))
@@ -87,8 +95,13 @@ for name, risk, reg_vir, reg_bac, ben in breakdown:
     elif (reg_bac == "F" and ben == "P") == 1:
         summary.append((name, "P"))
 #        print("Regulated bacterial housekeeping found")
+    elif (reg_fungi == "F" and ben == "P") == 1:
+        summary.append((name, "P"))
     # if it's a regulated bacterial hit, flag it
     elif reg_bac == "F":
+#        print("Nothing found")
+        summary.append((name, "F"))
+    elif reg_fungi == "F":
 #        print("Nothing found")
         summary.append((name, "F"))
     else:
@@ -97,7 +110,7 @@ for name, risk, reg_vir, reg_bac, ben in breakdown:
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)
-breakdown.columns = ("names", "biorisk", "regulated_virus", "regulated_bacteria", "benign")
+breakdown.columns = ("names", "biorisk", "regulated_virus", "regulated_bacteria", "regulated_fungi", "benign")
 breakdown.to_csv("test_itemized.csv", index=False)
 
 

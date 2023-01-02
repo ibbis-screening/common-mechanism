@@ -197,7 +197,6 @@ def trimblast(blast):
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     blast = blast.reset_index(drop=True)
     
-    drop = []
     blast2 = blast
     # only keep  top ranked hits that don't overlap
     for query in blast['query acc.'].unique():
@@ -213,4 +212,23 @@ def trimblast(blast):
 #    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end']])
     
     return blast2
+
+def trimhmmer(hmmer):
+    # rank hits by bitscore
+    hmmer = hmmer.sort_values(by=['score'], ascending=False)
+    hmmer = hmmer.reset_index(drop=True)
+    
+    hmmer2 = hmmer
+    # only keep  top ranked hits that don't overlap
+    for query in hmmer['query name'].unique():
+        df = hmmer[hmmer['query name'] == query]
+        for i in df.index: # run through each hit from the top
+            for j in df.index[(i+1):]: # compare to each below
+                # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
+                if (df.loc[i,'env from'] <= df.loc[j,'env from'] and df.loc[i,'env to'] >= df.loc[j,'env to']):
+                    if j in hmmer2.index:
+                        hmmer2 = hmmer2.drop([j])
+    hmmer2 = hmmer2.reset_index(drop=True)
+    
+    return hmmer2
 

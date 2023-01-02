@@ -77,7 +77,7 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
     return fig
 
 # plot HMMER results from --domtblout
-def plot_hmmer(file, nhits=10):
+def plot_hmmer(file, lookup, nhits=10):
     if checkfile(file) == 0:
         return
     if checkfile(file) == 2:
@@ -91,6 +91,7 @@ def plot_hmmer(file, nhits=10):
         return
     
     hmmer = readhmmer(file)
+    hmmer = trimhmmer(hmmer)
     hmmer = hmmer.iloc[0:nhits,:]
      
     # check if this is a batch of sequences
@@ -105,7 +106,19 @@ def plot_hmmer(file, nhits=10):
     else:
         colours = colourscale([0.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
 
-    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description of target"], colours, nhits, hmmer['score'].max())
+    new_names = []
+    for model in range(hmmer.shape[0]):
+        name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
+        # print(name_index)
+        # hmmer['description'][model] = lookup['Description'][name_index[0]]
+        try:
+            new_names.append(lookup['Description'][name_index[0]])
+        except:
+            new_names.append("")
+        # print(lookup['Description'][name_index[0]])
+    hmmer['description'] = new_names
+    
+    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description"], colours, nhits, hmmer['score'].max())
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     print("Path specified: ", file + ".png")
     fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)

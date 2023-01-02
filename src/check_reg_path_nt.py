@@ -45,8 +45,6 @@ else:
                     if subset['regulated'][0] == True:
                         print("Regulated virus top hit: FLAG")
                         reg_vir = 1
-                else:
-                    print("Regulated virus in hits: COND FLAG")
             elif subset['regulated'][0] == True: # if top hit that isn't a synthetic construct is regulated
                 print("Regulated bacteria top hit: FLAG")
                 reg_bac = 1
@@ -63,7 +61,7 @@ else:
                 print(blast['regulated'][blast['subject acc.'] == gene])
     #    hits = diamond[diamond['regulated']==True][['q. start', 'q. end']]   # print out the start and end coordinated on the query sequence
         hits = blast[blast['regulated']==True]  # print out the start and end coordinated on the query sequence
-        hits.to_csv(sys.argv[1] + ".reg_path_coords.csv", index=False)
+        hits.to_csv(sys.argv[1] + ".reg_path_coords_nt.csv", index=False)
     else:
-        print("Regulated pathogen nucleotides: PASS")
+        print("No regulated pathogen top hit: PASS")
 

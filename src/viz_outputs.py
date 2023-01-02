@@ -18,13 +18,15 @@ if not exists(taxid):
 taxid2 = sys.argv[1] + ".nt.blastn"
 
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
+biorisk_desc = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_lookup.csv')
+benign_desc = pd.read_csv(os.environ['DB_PATH'] + '/benign/benign_annotations.csv')
 
 # viz biorisk hits
-plot_hmmer(biorisk, 10)
+plot_hmmer(biorisk, biorisk_desc, 10)
 
 # viz benign hits
-plot_hmmer(benign, 10)
-plot_blast(synbio)
+plot_hmmer(benign, benign_desc, 10)
+plot_blast(file=synbio, nhits = 10, query=sys.argv[1])
 
 # viz taxon IDs
 plot_blast(taxid, 10)

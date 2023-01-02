@@ -78,7 +78,7 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
 
 # plot HMMER results from --domtblout
 def plot_hmmer(file, lookup, nhits=10):
-    if checkfile(file) == 0:
+    if check_blastfile(file) == 0:
         return
     if check_blastfile(file) == 2:
 		# generate empty plot saying "no hits"
@@ -118,6 +118,7 @@ def plot_hmmer(file, lookup, nhits=10):
         # print(lookup['Description'][name_index[0]])
     hmmer['description'] = new_names
     
+    print(hmmer)
     fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description"], colours, nhits, hmmer['score'].max())
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     print("Path specified: ", file + ".png")

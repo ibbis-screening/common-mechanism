@@ -18,14 +18,14 @@ def main():
     parser.add_argument("-i","--input", dest="in_file",
         required=True, help="Input file - hmmscan output file")
     parser.add_argument("-d","--database", dest="db",
-        required=True, help="HMM folder (must contain biorisk_lookup.csv)")
+        required=True, help="HMM folder (must contain biorisk_annotations.csv)")
     args = parser.parse_args()
     
     #check input files
     if (not os.path.exists(args.in_file)):
         sys.stderr.write("\t...input file does not exist\n") 
         exit(1) 
-    if (not os.path.exists(args.db + "/biorisk_lookup.csv")):
+    if (not os.path.exists(args.db + "/biorisk_annotations.csv")):
         sys.stderr.write("\t...biorisk_lookup.csv does not exist\n")
         exit(1)
     
@@ -33,7 +33,7 @@ def main():
     in_file = args.in_file
     sys.stdout.write("\t...checking %s\n" % in_file) 
 
-    lookup = pd.read_csv(args.db + "/biorisk_lookup.csv")
+    lookup = pd.read_csv(args.db + "/biorisk_annotations.csv")
 
     # read in HMMER output and check for valid hits
     res = check_blastfile(in_file)
@@ -49,7 +49,7 @@ def main():
             # print(name_index)
             # hmmer['description'][model] = lookup['Description'][name_index[0]]
             try:
-                new_names.append(lookup['Description'][name_index[0]])
+                new_names.append(lookup['Annotation'][name_index[0]])
             except:
                 new_names.append("")
             # print(lookup['Description'][name_index[0]])

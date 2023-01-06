@@ -16,11 +16,11 @@ f_file = sys.argv[2]
 outname = query.replace(".nr.*", "")
 
 # check if the nr hits file is empty
-if check_blastfile(file) == 0:
+if check_blastfile(query) == 0:
     sys.stdout.write("\tERROR: Protein search has failed\n")
     exit(1)
-if check_blastfile(file) == 0:
-    sys.stdout.write("\t...no protein hits\n")
+if check_blastfile(query) == 0:
+    sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
 # if not, check whether any of the hits has an E-value > 1e-30
 # if so, find the start and end of those hits and use these to get the coordinates of non-coding regions

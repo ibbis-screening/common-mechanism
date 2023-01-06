@@ -37,6 +37,8 @@ def main():
 
     # read in HMMER output and check for valid hits
     res = check_blastfile(in_file)
+    if res == 0:
+        sys.stdout.write("\t...ERROR: biorisk search results empty\n")
     if res == 1:
         hmmer = readhmmer(in_file)
         hmmer = trimhmmer(hmmer)
@@ -58,8 +60,8 @@ def main():
         hmmer = hmmer.iloc[keep1,:]
         if hmmer.shape[0] > 0:
             print("Biorisks: FLAG\n" + "\n".join(set(hmmer['description'])))
-        else:
-            sys.stdout.write("\t...Biorisks: no hits detected, PASS\n")
+    if res == 2:
+        sys.stdout.write("\t...Biorisks: no hits detected, PASS\n")
 
 if __name__ == "__main__":
     main()

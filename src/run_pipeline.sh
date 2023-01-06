@@ -142,13 +142,15 @@ echo " >> STEP 2: Checking regulated pathogen proteins..."
 if [ "$BLAST" = 1 ]; then
     echo -e "\t...running run_blastx.sh"
     ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
+    echo -e "\t...checking blast results"
+    python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nr.blastx --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 else 
     echo -e "\t...running run_diamond.sh"
     ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
     cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
-    fi
-echo -e "\t...checking blast results"
-python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nr.blastx --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    echo -e "\t...checking blast results"
+    python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+fi
 
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."

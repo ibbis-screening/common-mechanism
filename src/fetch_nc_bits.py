@@ -6,11 +6,6 @@ from utils import *
 import sys, shutil
 import pybedtools
 
-#Input parameter error checking
-if len(sys.argv) < 1:
-    sys.stdout.write("\tERROR: Please provide a query file\n")
-    exit(1)
-    
 query = sys.argv[1]
 f_file = sys.argv[2]
 
@@ -18,7 +13,7 @@ f_file = sys.argv[2]
 if check_blastfile(query) == 0:
     sys.stdout.write("\tERROR: Protein search has failed\n")
     exit(1)
-elif check_blastfile(query) == 0:
+elif check_blastfile(query) == 2:
     sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
 # if not, check whether any of the hits has an E-value > 1e-30

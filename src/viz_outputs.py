@@ -18,7 +18,7 @@ if not exists(taxid):
 taxid2 = sys.argv[1] + ".nt.blastn"
 
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
-biorisk_desc = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_lookup.csv')
+biorisk_desc = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_annotations.csv')
 benign_desc = pd.read_csv(os.environ['DB_PATH'] + '/benign/benign_annotations.csv')
 
 # viz biorisk hits

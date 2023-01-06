@@ -114,7 +114,7 @@ def taxdist(blast, reg_ids, vax_ids):
                 # print(t.rank.name)
                 # print(t.scientific_name)
         except:
-            sys.stderr.write('\t...taxon id' + blast['subject tax ids'][x] + 'is missing from taxoniq database\n')
+            sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxoniq database\n')
             cut.append(x)
     
     if (len(vax)>0):

@@ -26,7 +26,7 @@ def main():
         sys.stderr.write("\t...input file does not exist\n") 
         exit(1) 
     if (not os.path.exists(args.db + "/biorisk_annotations.csv")):
-        sys.stderr.write("\t...biorisk_lookup.csv does not exist\n")
+        sys.stderr.write("\t...biorisk_annotations.csv does not exist\n")
         exit(1)
     
     #Specify input file and read in database file 

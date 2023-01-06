@@ -189,6 +189,7 @@ def readblast(fileh):
     blast = pd.read_csv(fileh, sep='\t', comment='#', header=None)
     columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
     
+    print(blast)
     blast.columns = columns
     blast = blast.sort_values(by=['% identity'], ascending=False)
     blast['log evalue'] = -np.log10(pd.to_numeric(blast['evalue'])+1e-300)

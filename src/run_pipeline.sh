@@ -169,7 +169,7 @@ fi
 
 if [ -f "${OUTPUT}"_nc.fasta ]
 echo -e "\t...running blastn"
-then blastn -query ${OUTPUT}_nc.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+then blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
 echo -e "\t...checking blastn results"
 python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi

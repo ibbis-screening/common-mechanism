@@ -13,7 +13,6 @@ if len(sys.argv) < 1:
     
 query = sys.argv[1]
 f_file = sys.argv[2]
-outname = query.replace(".nr.*", "")
 
 # check if the nr hits file is empty
 if check_blastfile(query) == 0:
@@ -48,7 +47,8 @@ else:
 
 # fetch noncoding sequences
 
-outfile = outname + '_nc.fasta'
+outfile = query.replace(".nr.*", "") + '.noncoding.fasta'
+
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
     # print("no significant protein hits")

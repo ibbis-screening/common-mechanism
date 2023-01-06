@@ -34,7 +34,6 @@ else:
         hits = sorted(hits, key=lambda x: x[0])
 
         nc_bits = []
-        print(hits)
         if hits[0][0] >50:
             nc_bits.append([1,hits[0][0]])
         for i in range(len(hits)-1):
@@ -53,15 +52,12 @@ else:
     # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]
 
-    print(nc_bits)
-
     tofetch = ""
     for (start, stop) in nc_bits:
         tofetch = tofetch + str(seqid) + " " + str(start) + " " + str(stop) + "\n"
 
     if tofetch != "":
         a = pybedtools.BedTool(tofetch, from_string=True)
-        print(a)
         fasta = f_file
         a = a.sequence(fi=fasta, fo=outfile)
 

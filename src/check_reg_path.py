@@ -59,7 +59,7 @@ def main():
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         sys.stdout.write("\t...regulated pathogen proteins: PRESENT")
-        sys.stdout.write(blast[['subject acc.', 'regulated', 'genus', 'species']])
+        # print(blast[['subject acc.', 'regulated', 'genus', 'species']])
         # for each hit (subject acc) linked with at least one regulated taxid
         for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): 
             # go back to blast - the full set of hits
@@ -87,7 +87,7 @@ def main():
                         org = "fungi"
                         reg_fung = 1
                     sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                    sys.stdout.write("\t...gene %s found in only regulated orgainsms: FLAG (%s)\n" % gene, org)
+                    sys.stdout.write("\t\t --> gene %s found in only regulated orgainsms: FLAG (%s)\n" % (gene, org))
                     sys.stdout.write("\t...species: %s (taxid: %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene)
@@ -98,7 +98,7 @@ def main():
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0:
-        sys.stdout.write("\t...no regulated pathogen top hit: PASS\n")
+        sys.stdout.write("\t\t --> no regulated pathogen top hit: PASS\n")
 
 if __name__ == "__main__":
     main()

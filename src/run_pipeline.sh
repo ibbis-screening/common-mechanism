@@ -137,20 +137,26 @@ hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hm
 echo -e "\t...testing output files (running check_biorisk.py)"
 python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
 
+s1_time=$(date)
+echo -e "    STEP 1 completed at $s1_time\n"
+
 # Step 2: taxon ID/protein screening
 echo " >> STEP 2: Checking regulated pathogen proteins..."
 if [ "$BLAST" = 1 ]; then
     echo -e "\t...running run_blastx.sh"
     ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nr.blastx --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 else 
     echo -e "\t...running run_diamond.sh"
     ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
     cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
+
+s2_time=$(date)
+echo -e "    STEP 2 completed at $s2_time\n"
 
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
@@ -163,10 +169,13 @@ fi
 
 if [ -f "${OUTPUT}"_nc.fasta ]
 echo -e "\t...running blastn"
-then blastn -query ${OUTPUT}_nc.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+then blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
 echo -e "\t...checking blastn results"
-python ${CM_DIR}/check_reg_path_dmnd_prot.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
+
+s3_time=$(date)
+echo -e "    STEP 3 completed at $s3_time\n"
 
 # Step 3: benign DB scan
 #date

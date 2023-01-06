@@ -38,12 +38,12 @@ def check_blastfile(filename):
             num_hits += 1
         num_lines += 1
     #Return based on file results
-    if num_hits == 0:
-        # sys.stderr.write("\t...%s has no hits\n" % filename)
-        return 2        
     if num_lines == 0:
         # sys.stderr.write("\t...%s is empty\n" % filename)
         return 0
+    elif num_hits == 0:
+        # sys.stderr.write("\t...%s has no hits\n" % filename)
+        return 2        
     else:
         return 1
 

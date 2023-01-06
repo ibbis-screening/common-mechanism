@@ -47,7 +47,7 @@ def main():
     if check_blastfile(args.in_file) == 2:
         sys.stdout.write("\t...no protein hits\n")
         exit(1)
-    blast = readdmnd(args.in_file)                  #function in utils.py
+    blast = readblast(args.in_file)                  #function in utils.py
     blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs

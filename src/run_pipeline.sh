@@ -138,7 +138,7 @@ echo -e "\t...testing output files (running check_biorisk.py)"
 python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
 
 s1_time=$(date)
-echo -e "    STEP 1 completed at $s1_time"
+echo -e "    STEP 1 completed at $s1_time\n"
 
 # Step 2: taxon ID/protein screening
 echo " >> STEP 2: Checking regulated pathogen proteins..."
@@ -156,7 +156,7 @@ else
 fi
 
 s2_time=$(date)
-echo -e "    STEP 2 completed at $s2_time"
+echo -e "    STEP 2 completed at $s2_time\n"
 
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
@@ -175,7 +175,7 @@ python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/b
 fi
 
 s3_time=$(date)
-echo -e "    STEP 3 completed at $s3_time"
+echo -e "    STEP 3 completed at $s3_time\n"
 
 # Step 3: benign DB scan
 #date

@@ -24,12 +24,10 @@ def check_for_benign(query, coords):
         if check_blastfile(hmmsearch) == 2 and check_blastfile(blast) == 2:
             print("No benign hits found")
             exit(0)
-        
         if check_blastfile(hmmsearch) == 2:
             print("No benign gene hits")
         else:
             hmmer = readhmmer(hmmsearch)
-            blastn = readblast(blast) # synbio parts
     #        print(hmmer)
             for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 # look at only the hmmer hits that overlap with it
@@ -52,6 +50,14 @@ def check_for_benign(query, coords):
                         cleared = 1
                     else:
                         print("Housekeeping genes - <90% coverage achieved = FAIL")
+                    
+
+        # annotate (and clear?) synbio parts
+        if check_blastfile(blast) == 2:
+            print("No synbio parts hits")
+        else:
+            blastn = readblast(blast) # synbio parts
+            for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
                 htrim = htrim.assign(coverage = abs(htrim['q. end'] - htrim['q. start']) / htrim['query length'])
                 if any(htrim['coverage'] > 0.90):
@@ -59,14 +65,10 @@ def check_for_benign(query, coords):
                     cleared = 1
                 else:
                     print("Synbio parts - <90% coverage achieved = FAIL")
-                if cleared == 0:
-                    print("Regulated region failed to clear")
-
-        # annotate (and clear?) synbio parts
-        if check_blastfile(blast) == 2:
-            print("No synbio parts hits")
-        else:
-            sys.stderr.write("\t...regulated region failed to clear\n")
+                
+            if cleared == 0:
+                print("Regulated region failed to clear")
+                sys.stderr.write("\t...regulated region failed to clear\n")
 
 def main(): 
     parser = argparse.ArgumentParser()

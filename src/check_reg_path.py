@@ -42,7 +42,7 @@ def main():
     vax_ids = pd.read_csv(args.benign_db + "/vax_taxids", header=None)
 
     if check_blastfile(args.in_file) == 0:
-        sys.stdout.write("\tERROR: Protein search has failed\n")
+        sys.stdout.write("\tERROR: Homology search has failed\n")
         exit(1)
     if check_blastfile(args.in_file) == 2:
         sys.stdout.write("\t...no protein hits\n")

@@ -9,9 +9,12 @@ import pybedtools
 query = sys.argv[1]
 f_file = sys.argv[2]
 
+nc_bits = 0
+
 # check if the nr hits file is empty
 if check_blastfile(query) == 0:
     sys.stdout.write("\tERROR: Protein search has failed\n")
+    nc_bits = "all"
 elif check_blastfile(query) == 2:
     sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
@@ -21,6 +24,7 @@ else:
     blast = readblast(query)
     blast = trimblast(blast)
     blast = blast[blast['evalue'] < 1e-30]
+    sys.stdout.write("\t...protein hits found, fetching noncoding regions\n")
     if blast.shape[0] > 0:
     # find noncoding bits
         hits = []
@@ -47,6 +51,8 @@ print("Outfile: " + outfile)
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
     # print("no significant protein hits")
+elif nc_bits == 0:
+    sys.stdout.write("\t...no noncoding regions >= 50 bases found\n")
 else: 
     # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]

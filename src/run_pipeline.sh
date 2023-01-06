@@ -137,6 +137,9 @@ hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hm
 echo -e "\t...testing output files (running check_biorisk.py)"
 python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
 
+s1_time=$(date)
+echo -e "    STEP 1 completed at $s1_time"
+
 # Step 2: taxon ID/protein screening
 echo " >> STEP 2: Checking regulated pathogen proteins..."
 if [ "$BLAST" = 1 ]; then
@@ -151,6 +154,9 @@ else
     echo -e "\t...checking blast results"
     python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
+
+s2_time=$(date)
+echo -e "    STEP 2 completed at $s2_time"
 
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
@@ -167,6 +173,9 @@ then blastn -query ${OUTPUT}_nc.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.
 echo -e "\t...checking blastn results"
 python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
+
+s3_time=$(date)
+echo -e "    STEP 3 completed at $s3_time"
 
 # Step 3: benign DB scan
 #date

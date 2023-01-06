@@ -155,7 +155,11 @@ fi
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
 echo -e "\t...fetching noncoding regions"
-python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT} ${QUERY}
+if [ "$BLAST" = 1 ]; then
+python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY}
+else
+python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY}
+fi
 
 if [ -f "${OUTPUT}"_nc.fasta ]
 echo -e "\t...running blastn"

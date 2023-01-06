@@ -46,8 +46,8 @@ else:
 
 # fetch noncoding sequences
 
+# print("Outfile: " + outfile)
 outfile = re.sub(".nr.*", "", query) + '.noncoding.fasta'
-print("Outfile: " + outfile)
 
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)

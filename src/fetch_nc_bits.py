@@ -10,6 +10,7 @@ query = sys.argv[1]
 f_file = sys.argv[2]
 
 # check if the nr hits file is empty
+check_blastfile(query)
 if check_blastfile(query) == 0:
     sys.stdout.write("\tERROR: Protein search has failed\n")
     exit(1)

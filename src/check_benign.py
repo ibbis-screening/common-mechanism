@@ -45,7 +45,7 @@ def check_for_benign(query, coords):
                             hit = htrim['target name'][row]
                             hit = hit.replace(".faa.final_tree.fa", "")
                             hit = hit.replace(".faa.final_tree.used_alg.fa", "")
-                            descriptions.append(benign_desc['Annotation'][benign_desc['Model'] == hit])
+                            descriptions.append(benign_desc['Annotation'][benign_desc['ID'] == hit])
                         annot_string = "\n".join(str(v) for v in descriptions)
                         print("Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS")
                         print(annot_string)

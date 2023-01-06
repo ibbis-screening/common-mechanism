@@ -17,7 +17,11 @@ file = sys.argv[1]
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
 
-if check_blastfile(file) != 1:
+if check_blastfile(file) == 0:
+    sys.stdout.write("\tERROR: Protein search has failed\n")
+    exit(1)
+if check_blastfile(file) == 0:
+    sys.stdout.write("\tNo protein hits\n")
     exit(1)
 blast = readblast(file)
 blast = taxdist(blast, reg_ids, vax_ids)

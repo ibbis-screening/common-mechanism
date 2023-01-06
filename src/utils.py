@@ -28,7 +28,7 @@ import sys
 #   - name of BLAST output file  
 def check_blastfile(filename):
     if os.path.isfile(filename) == False:
-        sys.stderr.write("\t...%s does not exist\n" % filename)
+        # sys.stderr.write("\t...%s does not exist\n" % filename)
         return 0
     curr_file = open(filename,'r')
     num_hits = 0 
@@ -39,10 +39,10 @@ def check_blastfile(filename):
         num_lines += 1
     #Return based on file results
     if num_hits == 0:
-        sys.stderr.write("\t...%s has no hits\n" % filename)
+        # sys.stderr.write("\t...%s has no hits\n" % filename)
         return 2        
     if num_lines == 0:
-        sys.stderr.write("\t...%s is empty\n" % filename)
+        # sys.stderr.write("\t...%s is empty\n" % filename)
         return 0
     else:
         return 1

@@ -11,17 +11,20 @@ if len(sys.argv) < 1:
     sys.stdout.write("\tERROR: Please provide a query file\n")
     exit(1)
 
-query = sys.argv[1]
+file = sys.argv[1]
 
 # read in protein screening
-file = query + ".nr.blastx"
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
 vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
 
-if check_blastfile(file) != 1:
+if check_blastfile(file) == 0:
+    sys.stdout.write("\tERROR: Protein search has failed\n")
+    exit(1)
+if check_blastfile(file) == 0:
+    sys.stdout.write("\tNo protein hits\n")
     exit(1)
 blast = readblast(file)
-blast = taxdist(blast, reg_ids, vax_ids, query)
+blast = taxdist(blast, reg_ids, vax_ids)
 
 # trim down to the top hit for each region, ingnoring any top hits that are synthetic constructs
 blast2 = trimblast(blast[blast['subject tax ids']!="32630"])

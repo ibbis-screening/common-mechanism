@@ -22,10 +22,10 @@ def check_for_benign(query, coords):
         hmmsearch = query + ".benign.hmmsearch"
         blast = query + ".benign.blastn"
         if check_blastfile(hmmsearch) == 2 and check_blastfile(blast) == 2:
-            print("No benign hits found")
+            print("\t...no benign hits found")
             exit(0)
         if check_blastfile(hmmsearch) == 2:
-            print("No benign gene hits")
+            print("\t...no benign gene hits")
         else:
             hmmer = readhmmer(hmmsearch)
     #        print(hmmer)
@@ -45,29 +45,29 @@ def check_for_benign(query, coords):
                             hit = hit.replace(".faa.final_tree.used_alg.fa", "")
                             descriptions.append(benign_desc['Annotation'][benign_desc['ID'] == hit])
                         annot_string = "\n".join(str(v) for v in descriptions)
-                        print("Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS")
+                        print("\t...Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS")
                         print(annot_string)
                         cleared = 1
                     else:
-                        print("Housekeeping genes - <90% coverage achieved = FAIL")
+                        print("\t...Housekeeping genes - <90% coverage achieved = FAIL")
                     
 
         # annotate (and clear?) synbio parts
         if check_blastfile(blast) == 2:
-            print("No synbio parts hits")
+            print("\t...no synbio parts hits")
         else:
             blastn = readblast(blast) # synbio parts
             for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
                 htrim = htrim.assign(coverage = abs(htrim['q. end'] - htrim['q. start']) / htrim['query length'])
                 if any(htrim['coverage'] > 0.90):
-                    print("Synbio parts - >90% coverage achieved = PASS")
+                    print("\t...Synbio parts - >90% coverage achieved = PASS")
                     cleared = 1
                 else:
-                    print("Synbio parts - <90% coverage achieved = FAIL")
+                    print("\t...Synbio parts - <90% coverage achieved = FAIL")
                 
             if cleared == 0:
-                print("Regulated region failed to clear")
+                print("\t...Regulated region failed to clear")
                 sys.stderr.write("\t...regulated region failed to clear\n")
 
 def main(): 

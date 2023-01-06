@@ -16,7 +16,11 @@ f_file = sys.argv[2]
 outname = query.replace(".nr.*", "")
 
 # check if the nr hits file is empty
-if check_blastfile(query) == 0 or check_blastfile(query) == 2:
+if check_blastfile(query) == 0:
+    sys.stdout.write("\tERROR: Protein search has failed\n")
+    exit(1)
+if check_blastfile(query) == 0:
+    sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
 # if not, check whether any of the hits has an E-value > 1e-30
 # if so, find the start and end of those hits and use these to get the coordinates of non-coding regions
@@ -34,7 +38,6 @@ else:
         hits = sorted(hits, key=lambda x: x[0])
 
         nc_bits = []
-        print(hits)
         if hits[0][0] >50:
             nc_bits.append([1,hits[0][0]])
         for i in range(len(hits)-1):
@@ -45,15 +48,13 @@ else:
 
 # fetch noncoding sequences
 
-outfile = query + '_nc.fasta'
+outfile = outname + '_nc.fasta'
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
-    print("no significant protein hits")
+    # print("no significant protein hits")
 else: 
-    print("pulling out noncoding bits")
+    # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]
-
-    print(nc_bits)
 
     tofetch = ""
     for (start, stop) in nc_bits:
@@ -61,7 +62,6 @@ else:
 
     if tofetch != "":
         a = pybedtools.BedTool(tofetch, from_string=True)
-        print(a)
         fasta = f_file
         a = a.sequence(fi=fasta, fo=outfile)
 

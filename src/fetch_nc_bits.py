@@ -12,7 +12,6 @@ f_file = sys.argv[2]
 # check if the nr hits file is empty
 if check_blastfile(query) == 0:
     sys.stdout.write("\tERROR: Protein search has failed\n")
-    exit(1)
 elif check_blastfile(query) == 2:
     sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
@@ -43,6 +42,7 @@ else:
 # fetch noncoding sequences
 
 outfile = query.replace(".nr.*", "") + '.noncoding.fasta'
+print("Outfile: " + outfile)
 
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)

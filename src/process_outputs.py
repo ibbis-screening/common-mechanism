@@ -11,10 +11,7 @@ reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None
 
 # taxonomic distribution plots
 def plot_tax(file, reg_ids, query):
-    if re.search(".nr.blastx", file):
-        blast = readblast(file)
-    else:
-        blast = readdmnd(file)
+    blast = readblast(file)
     hits = taxdist(blast, reg_ids, query)
     if hits is not None:
         plot_pie(hits, query)
@@ -139,14 +136,8 @@ def plot_blast(file, query, nhits=10):
         fig.savefig(os.path.abspath(file + ".png"))
         return
 	
-    if re.search(".nr.blastx", file):
-        blast = readblast(file)
-        blast = taxdist(blast, reg_ids, query)
-    else:
-        blast = readblast(file)
-        blast['regulated'] = False
-    
-
+    blast = readblast(file)
+    blast = taxdist(blast, reg_ids, query)    
     blast = trimblast(blast)
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name

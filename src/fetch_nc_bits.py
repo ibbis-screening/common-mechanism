@@ -48,9 +48,9 @@ else:
 outfile = query + '_nc.fasta'
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
-    print("no significant protein hits")
+    # print("no significant protein hits")
 else: 
-    print("pulling out noncoding bits")
+    # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]
 
     print(nc_bits)

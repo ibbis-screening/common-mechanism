@@ -5,6 +5,7 @@
 from utils import *
 import sys, shutil
 import pybedtools
+import re
 
 query = sys.argv[1]
 f_file = sys.argv[2]
@@ -45,7 +46,7 @@ else:
 
 # fetch noncoding sequences
 
-outfile = query.replace(".nr.*", "") + '.noncoding.fasta'
+outfile = re.sub(".nr.*", "", query) + '.noncoding.fasta'
 print("Outfile: " + outfile)
 
 if nc_bits == "all":

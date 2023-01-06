@@ -41,10 +41,10 @@ def main():
     reg_ids = pd.read_csv(args.biorisk_db + "/reg_taxids", header=None)
     vax_ids = pd.read_csv(args.benign_db + "/vax_taxids", header=None)
 
-    if check_blastfile(file) == 0:
+    if check_blastfile(in_file) == 0:
         sys.stdout.write("\tERROR: Protein search has failed\n")
         exit(1)
-    if check_blastfile(file) == 0:
+    if check_blastfile(in_file) == 2:
         sys.stdout.write("\t...no protein hits\n")
         exit(1)
     blast = readdmnd(args.in_file)                  #function in utils.py

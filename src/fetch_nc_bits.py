@@ -19,7 +19,7 @@ outname = query.replace(".nr.*", "")
 if check_blastfile(query) == 0:
     sys.stdout.write("\tERROR: Protein search has failed\n")
     exit(1)
-if check_blastfile(query) == 0:
+elif check_blastfile(query) == 0:
     sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
 # if not, check whether any of the hits has an E-value > 1e-30

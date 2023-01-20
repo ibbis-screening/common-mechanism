@@ -53,6 +53,8 @@ def main():
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
 
+    print("Starting")
+
     reg_bac = 0
     reg_vir = 0
     reg_fung = 0

@@ -20,8 +20,13 @@ The CommonMechanism pipeline has the following package dependencies:
 
 Additionally, the CommonMechanism pipeline requires users to install [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND github") by the following commands: 
    
-    wget http://github.com/bbuchfink/diamond/releases/download/v2.0.15/diamond-linux64.tar.gz`
-    tar xzf diamond-linux64.tar.gz`
+    wget https://github.com/bbuchfink/diamond/archive/v2.0.13.tar.gz
+    tar xzf v2.0.13.tar.gz
+    mkdir diamond-2.0.13/bin
+    cd diamond-2.0.13/bin
+    cmake -DWITH_ZSTD=ON ZSTD_LIBRARY=~/miniconda3/lib -DBLAST_INCLUDE_DIR=$HOME/BLAST2.11/include/ncbi-tools++ -DBLAST_LIBRARY_DIR=$HOME/BLAST2.11/lib ..
+    make -j8
+    sudo make install
 
 Following installation of all required packages, please see [Required Data](#required-data)
 

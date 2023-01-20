@@ -31,7 +31,7 @@ def main():
     
     #Specify input file and read in database file 
     in_file = args.in_file
-    sys.stdout.write("\t...checking %s\n" % in_file) 
+    # sys.stdout.write("\t...checking %s\n" % in_file) 
 
     lookup = pd.read_csv(args.db + "/biorisk_annotations.csv")
 

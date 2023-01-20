@@ -58,7 +58,7 @@ def main():
     reg_fung = 0
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
-        sys.stdout.write("\t...regulated pathogen proteins: PRESENT")
+        sys.stdout.write("\t...regulated pathogen sequence: PRESENT")
         # print(blast[['subject acc.', 'regulated', 'genus', 'species']])
         # for each hit (subject acc) linked with at least one regulated taxid
         for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): 
@@ -72,7 +72,7 @@ def main():
                 n_total = len(blast['regulated'][blast['subject acc.'] == gene])
                 # if some of the organisms with this gene aren't regulated, say so
                 if (n_reg < n_total):
-                    sys.stdout.write("\t...gene %s found in both regulated and non-regulated organisms\n" % gene)
+                    sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene)
                     sys.stdout.write("\t...species: %s\n" % (" ".join(set(blast['species'][blast['subject acc.'] == gene])))) 
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
@@ -87,7 +87,7 @@ def main():
                         org = "fungi"
                         reg_fung = 1
                     sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                    sys.stdout.write("\t\t --> gene %s found in only regulated orgainsms: FLAG (%s)\n" % (gene, org))
+                    sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
                     sys.stdout.write("\t...species: %s (taxid: %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene)

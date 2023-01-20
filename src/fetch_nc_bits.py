@@ -48,14 +48,15 @@ else:
 
 # print("Outfile: " + outfile)
 outfile = re.sub(".nr.*", "", query) + '.noncoding.fasta'
+# print(outfile)
 
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
-    # print("no significant protein hits")
-elif nc_bits == 0:
+    print("no significant protein hits")
+elif nc_bits == []:
     sys.stdout.write("\t...no noncoding regions >= 50 bases found\n")
 else: 
-    # print("pulling out noncoding bits")
+    print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]
 
     tofetch = ""
@@ -66,5 +67,8 @@ else:
         a = pybedtools.BedTool(tofetch, from_string=True)
         fasta = f_file
         a = a.sequence(fi=fasta, fo=outfile)
+    else:
+        print("Error")
+        print(nc_bits)
 
 

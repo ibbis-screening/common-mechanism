@@ -45,21 +45,21 @@ for res in glob.glob('*.screen'):
         if len(matching) > 0:
             reg_virus = check_flags(matching, reg_virus)
         else:
-            reg_virus.append("M")
+            reg_virus.append("P")
         
         # reg_bact screen - fetch all coding and noncoding reports
         matching = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
         if len(matching) > 0:
             reg_bact = check_flags(matching, reg_bact)
         else:
-            reg_bact.append("M")
+            reg_bact.append("P")
 
         # reg_fungi screen - fetch all coding and noncoding reports
         matching = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
         if len(matching) > 0:
             reg_fungi = check_flags(matching, reg_bact)
         else:
-            reg_fungi.append("M")
+            reg_fungi.append("P")
 
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         nohits = [s for s in lines if "No housekeeping genes found" in s]

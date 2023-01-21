@@ -134,7 +134,7 @@ echo -e "\t...running transeq"
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
-echo -e "\t...testing output files (running check_biorisk.py)"
+echo -e "\t...checking hmmscan results"
 python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
 
 s1_time=$(date)
@@ -151,7 +151,7 @@ else
     echo -e "\t...running run_diamond.sh"
     ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
     cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
-    echo -e "\t...checking blast results"
+    echo -e "\t...checking diamond results"
     python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
 
@@ -162,18 +162,19 @@ echo -e "    STEP 2 completed at $s2_time\n"
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
-python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY}
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY}
 else
-python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY}
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY}
 fi
 
 if [ -f "${OUTPUT}".noncoding.fasta ]
-echo -e "\t...running blastn"
-then blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
-echo -e "\t...checking blastn results"
-python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+then 
+    echo -e "\t...running blastn"
+    blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+    echo -e "\t...checking blastn results"
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 else 
-echo "\t...skipping nucleotide search"
+    echo "\t...skipping nucleotide search"
 fi
 
 s3_time=$(date)

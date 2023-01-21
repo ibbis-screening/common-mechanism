@@ -103,7 +103,7 @@ def main():
         hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
         #Create output file 
         if hits1 is not None:
-            hits = hits.append(hits1)
+            hits = hits.concat(hits1)
         # print(hits)
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 

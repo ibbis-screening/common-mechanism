@@ -134,7 +134,7 @@ echo -e "\t...running transeq"
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
-echo -e "\t...testing output files (running check_biorisk.py)"
+echo -e "\t...checking hmmscan results"
 python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
 
 s1_time=$(date)
@@ -151,7 +151,7 @@ else
     echo -e "\t...running run_diamond.sh"
     ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
     cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
-    echo -e "\t...checking blast results"
+    echo -e "\t...checking diamond results"
     python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 fi
 

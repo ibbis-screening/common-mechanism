@@ -34,6 +34,7 @@ def main():
     # sys.stdout.write("\t...checking %s\n" % in_file) 
 
     lookup = pd.read_csv(args.db + "/biorisk_annotations.csv")
+    print(lookup)
 
     # read in HMMER output and check for valid hits
     res = check_blastfile(in_file)

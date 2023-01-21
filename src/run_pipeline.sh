@@ -177,7 +177,7 @@ if [ -f "${OUTPUT}".noncoding.fasta ]; then
     echo -e "\t...checking blastn results"
     python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 else 
-    echo "\t...skipping nucleotide search"
+    echo -e "\t...skipping nucleotide search"
 fi
 
 s3_time=$(date)

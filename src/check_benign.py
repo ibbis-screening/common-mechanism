@@ -18,7 +18,6 @@ import pandas as pd
 
 def check_for_benign(query, coords):
         # for each set of hits, need to pull out the coordinates covered by benign entries
-        # overall >90% of regulated pathogen sub-sequences must be covered with benign content
         hmmsearch = query + ".benign.hmmsearch"
         blast = query + ".benign.blastn"
         if check_blastfile(hmmsearch) == 2 and check_blastfile(blast) == 2:

@@ -25,9 +25,10 @@ else:
     blast = readblast(query)
     blast = trimblast(blast)
     blast = blast[blast['evalue'] < 1e-30]
-    sys.stdout.write("\t...protein hits found, fetching noncoding regions\n")
+    # print(blast)
     if blast.shape[0] > 0:
     # find noncoding bits
+        sys.stdout.write("\t...protein hits found, fetching noncoding regions\n")
         hits = []
         for i in range(blast.shape[0]):
             pair = [blast['q. start'][i], blast['q. end'][i]]
@@ -35,6 +36,7 @@ else:
             hits.append(pair)
         hits = sorted(hits, key=lambda x: x[0])
 
+        # print(hits)
         nc_bits = []
         if hits[0][0] >50:
             nc_bits.append([1,hits[0][0]])
@@ -42,6 +44,7 @@ else:
             if hits[i][1] < (hits[i+1][0] - 49): # if there's a noncoding region of >=50 between hits
                 nc_bits.append([hits[i][1], hits[i+1][0]])
     else:
+        sys.stdout.write("\t...protein hits all low significance - screening entire sequence\n")
         nc_bits = "all"
 
 # fetch noncoding sequences
@@ -52,9 +55,9 @@ outfile = re.sub(".nr.*", "", query) + '.noncoding.fasta'
 
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
-    print("no significant protein hits")
-elif nc_bits == []:
-    sys.stdout.write("\t...no noncoding regions >= 50 bases found\n")
+    print("\t...no significant protein hits")
+elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
+    sys.stdout.write("\t...no noncoding regions >= 50 bases found, skipping nt scan\n")
 else: 
     print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]

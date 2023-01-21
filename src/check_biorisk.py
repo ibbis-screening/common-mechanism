@@ -59,7 +59,9 @@ def main():
         keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
         hmmer = hmmer.iloc[keep1,:]
         if hmmer.shape[0] > 0:
-            print("\t\t --> Biorisks: FLAG\n" + "\n".join(set(hmmer['description'])))
+            sys.stdout.write("\t\t --> Biorisks: FLAG\n\t\t\t" + ", ".join(set(hmmer['description'])))
+        else: 
+            sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")
     if res == 2:
         sys.stdout.write("\t\t --> Biorisks: no hits detected, PASS\n")
 

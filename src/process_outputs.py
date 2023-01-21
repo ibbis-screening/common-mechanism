@@ -7,6 +7,7 @@ import os
 from utils import *
 
 reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
+vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
 
 
 # taxonomic distribution plots
@@ -137,7 +138,8 @@ def plot_blast(file, query, nhits=10):
         return
 	
     blast = readblast(file)
-    blast = taxdist(blast, reg_ids, query)    
+    blast = taxdist(blast, reg_ids, vax_ids)
+    
     blast = trimblast(blast)
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name

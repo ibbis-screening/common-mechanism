@@ -57,7 +57,7 @@ for res in glob.glob('*.screen'):
         # reg_fungi screen - fetch all coding and noncoding reports
         matching = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
         if len(matching) > 0:
-            reg_fungi = check_flags(matching, reg_bact)
+            reg_fungi = check_flags(matching, reg_fungi)
         else:
             reg_fungi.append("P")
 

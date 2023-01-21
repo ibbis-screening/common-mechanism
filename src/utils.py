@@ -90,6 +90,8 @@ def taxdist(blast, reg_ids, vax_ids):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
+    blast = blast[blast['subject tax ids'] != "32630"]
+    blast = blast.reset_index(drop=True)
     
     # checks which individual lines contain regulated pathogens
     cut = []

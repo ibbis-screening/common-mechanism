@@ -49,11 +49,10 @@ def main():
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py
     blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
+    print(blast['subject tax ids'])
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    blast2 = trimblast(blast[blast['subject tax ids']!="32630"])
-
-    print("Starting")
+    blast2 = trimblast(blast)
 
     reg_bac = 0
     reg_vir = 0
@@ -75,7 +74,8 @@ def main():
                 # if some of the organisms with this gene aren't regulated, say so
                 if (n_reg < n_total):
                     sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene)
-                    sys.stdout.write("\t...species: %s\n" % (" ".join(set(blast['species'][blast['subject acc.'] == gene])))) 
+                    sys.stdout.write("\t   species: %s\n" % (", ".join(set(blast['species'][blast['subject acc.'] == gene])))) 
+                    sys.stdout.write(", ".join(set(blast['subject tax ids'][blast['subject acc.'] == gene])))
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
@@ -90,7 +90,7 @@ def main():
                         reg_fung = 1
                     sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
-                    sys.stdout.write("\t...species: %s (taxid: %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
+                    sys.stdout.write("\t   species: %s (taxid: %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene]))
@@ -100,7 +100,7 @@ def main():
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0:
-        sys.stdout.write("\t\t --> no regulated pathogen top hit: PASS\n")
+        sys.stdout.write("\t\t --> no top hit exclusive to a regulated pathogen: PASS\n")
 
 if __name__ == "__main__":
     main()

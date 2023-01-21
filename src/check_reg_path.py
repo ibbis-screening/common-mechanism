@@ -46,7 +46,7 @@ def main():
     # if there are already regulated regions written to file for this query, add to them
     hits1 = None
     if os.path.exists(sample_name + ".reg_path_coords.csv"):
-        hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv", index_col=0)
+        hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
     if check_blastfile(args.in_file) == 0:
         sys.stdout.write("\tERROR: Homology search has failed\n")
@@ -104,6 +104,7 @@ def main():
         #Create output file 
         if hits1 is not None:
             hits = hits.append(hits1)
+        # print(hits)
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0:

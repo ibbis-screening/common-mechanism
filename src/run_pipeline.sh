@@ -162,18 +162,19 @@ echo -e "    STEP 2 completed at $s2_time\n"
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
-python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY}
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY}
 else
-python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY}
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY}
 fi
 
 if [ -f "${OUTPUT}".noncoding.fasta ]
-echo -e "\t...running blastn"
-then blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
-echo -e "\t...checking blastn results"
-python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+then 
+    echo -e "\t...running blastn"
+    blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+    echo -e "\t...checking blastn results"
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
 else 
-echo "\t...skipping nucleotide search"
+    echo "\t...skipping nucleotide search"
 fi
 
 s3_time=$(date)

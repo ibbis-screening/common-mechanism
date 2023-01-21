@@ -52,7 +52,7 @@ def main():
         sys.stdout.write("\tERROR: Homology search has failed\n")
         exit(1)
     if check_blastfile(args.in_file) == 2:
-        sys.stdout.write("\t...no protein hits\n")
+        sys.stdout.write("\t...no hits\n")
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py
     blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
@@ -66,7 +66,7 @@ def main():
     reg_fung = 0
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
-        sys.stdout.write("\t...regulated pathogen sequence: PRESENT")
+        sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
         # print(blast[['subject acc.', 'regulated', 'genus', 'species']])
         # for each hit (subject acc) linked with at least one regulated taxid
         for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): 

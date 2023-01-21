@@ -15,7 +15,6 @@
 from utils import *
 import os, sys, argparse
 import pandas as pd
-import taxoniq
 
 def main(): 
     parser = argparse.ArgumentParser() 
@@ -41,6 +40,14 @@ def main():
     reg_ids = pd.read_csv(args.biorisk_db + "/reg_taxids", header=None)
     vax_ids = pd.read_csv(args.benign_db + "/vax_taxids", header=None)
 
+    sample_name = re.sub("\..*", "", args.in_file)
+    # print("Sample name: " + sample_name)
+    
+    # if there are already regulated regions written to file for this query, add to them
+    hits1 = None
+    if os.path.exists(sample_name + ".reg_path_coords.csv"):
+        hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv", index_col=0)
+
     if check_blastfile(args.in_file) == 0:
         sys.stdout.write("\tERROR: Homology search has failed\n")
         exit(1)
@@ -49,7 +56,7 @@ def main():
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py
     blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
-    print(blast['subject tax ids'])
+    # print(blast['subject tax ids'])
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast)
@@ -75,7 +82,6 @@ def main():
                 if (n_reg < n_total):
                     sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene)
                     sys.stdout.write("\t   species: %s\n" % (", ".join(set(blast['species'][blast['subject acc.'] == gene])))) 
-                    sys.stdout.write(", ".join(set(blast['subject tax ids'][blast['subject acc.'] == gene])))
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
@@ -90,13 +96,14 @@ def main():
                         reg_fung = 1
                     sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
-                    sys.stdout.write("\t   species: %s (taxid: %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
+                    sys.stdout.write("\t   species: %s (taxid(s): %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene]))
         hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
         #Create output file 
-        sample_name = args.in_file[0:-8]
+        if hits1 is not None:
+            hits = hits.append(hits1)
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0:

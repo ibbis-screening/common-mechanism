@@ -41,23 +41,23 @@ for res in glob.glob('*.screen'):
         biorisk = check_flags(matching, biorisk)
 
         # reg_virus screen - fetch all coding and noncoding reports
-        matching = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
-        if len(matching) > 0:
-            reg_virus = check_flags(matching, reg_virus)
+        matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
+        if len(matching_virus) > 0:
+            reg_virus = check_flags(matching_virus, reg_virus)
         else:
             reg_virus.append("P")
         
         # reg_bact screen - fetch all coding and noncoding reports
-        matching = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
-        if len(matching) > 0:
-            reg_bact = check_flags(matching, reg_bact)
+        matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
+        if len(matching_bact) > 0:
+            reg_bact = check_flags(matching_bact, reg_bact)
         else:
             reg_bact.append("P")
 
         # reg_fungi screen - fetch all coding and noncoding reports
-        matching = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
-        if len(matching) > 0:
-            reg_fungi = check_flags(matching, reg_fungi)
+        matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
+        if len(matching_fungi) > 0:
+            reg_fungi = check_flags(matching_fungi, reg_fungi)
         else:
             reg_fungi.append("P")
 

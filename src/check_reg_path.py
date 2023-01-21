@@ -96,7 +96,7 @@ def main():
                         reg_fung = 1
                     sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
-                    sys.stdout.write("\t   species: %s (taxid(s): %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene]))

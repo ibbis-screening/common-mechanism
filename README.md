@@ -54,7 +54,7 @@ To download the benign_db and biorisk_db files, please download via https://driv
 ## BLAST Database
 The Common Mechanism requires the BLAST nt database. The files for the BLAST nt database are located at https://ftp.ncbi.nlm.nih.gov/blast/db/. Users may download the BLAST database (including 700+ files) within the `nt_blast/` folder by using the following command:
 
-   update_blastdb.pl --passive --decompress nt
+      update_blastdb.pl --passive --decompress nt
    
 This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
 
@@ -64,7 +64,7 @@ The CommonMechanism database will be provided via Amazon AWS. Please email Jenni
 # Running the Common Mechanism 
 The basic command line for running the Common Mechanism is as follows:
 
-   /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER}
+      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER}
 
 The following required parameters must be specified:
 - `${QUERY}` - The sequence file to test

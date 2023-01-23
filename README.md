@@ -10,15 +10,25 @@ Table of Contents:
 5. [Author Information](#author-information)
 
 # Installation 
-The CommonMechanism pipeline has the following package dependencies:
+In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies
+
+## Python Packages 
+The CommonMechanism pipeline has the following python package dependencies:
  * plotly 
  * taxoniq 
+ * ncbi-taxon-db
  * biopython
  * matplotlib
  * kaleido
  * pybedtools 
 
-Additionally, the CommonMechanism pipeline requires users to install [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND github") by the following commands: 
+## BLAST Aligner 
+The CommonMechanism requires the BLAST code executable which is found at https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/. 
+
+For more details on BLAST, see https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html. 
+
+## DIAMOND Aligner 
+The CommonMechanism pipeline requires users to install [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND github") by the following commands: 
    
     wget https://github.com/bbuchfink/diamond/archive/v2.0.13.tar.gz
     tar xzf v2.0.13.tar.gz
@@ -31,18 +41,36 @@ Additionally, the CommonMechanism pipeline requires users to install [DIAMOND](h
 Following installation of all required packages, please see [Required Data](#required-data)
 
 # Required Data 
-The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder. The resulting file structure will be as follows:
+The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder. The resulting file structure (and required storage space) will be as follows:
 
     databases/
-    databases/split_nr
-    databases/benign_db
-    databases/biorisk_db 
+    databases/nr_dmnd (~276 Gb) 
+    databases/nt_blast (~280 Gb) 
+    databases/benign_db (~2.2 Gb)
+    databases/biorisk_db (~1.0 Gb)
 
 ## Benign and Biorisk Databases 
-https://drive.google.com/uc?id=1INLOrC_vLMxEmtFCW4rzyZe5z6hWD1Qu
+To download the benign_db and biorisk_db files, please download via https://drive.google.com/uc?id=1INLOrC_vLMxEmtFCW4rzyZe5z6hWD1Qu
+
+## BLAST Database
+The Common Mechanism requires the BLAST nt database. The files for the BLAST nt database are located at https://ftp.ncbi.nlm.nih.gov/blast/db/. Users may download the BLAST database (including 700+ files) within the `nt_blast/` folder by using the following command:
+
+      update_blastdb.pl --passive --decompress nt
+   
+This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
+
+## DIAMOND Datbase
+The CommonMechanism database will be provided via Amazon AWS. Please email Jennifer Lu (jennifer.lu717@gmail.com) for instructions to download the database. 
 
 # Running the Common Mechanism 
+The basic command line for running the Common Mechanism is as follows:
 
+      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER}
+
+The following required parameters must be specified:
+- `${QUERY}` - The sequence file to test
+- `${OUTPUT}` - User-specified output prefix (All output files will begin with ${OUTPUT})
+- `${DATABASE FOLDER}` - The path to the `databases/` folder setup as described in [Required Data](#required-data)
 
 # User survey
 https://docs.google.com/forms/d/1LqzEH3XkFHBtMHNzGW9i4vRU7TyabBnNIDOFQBXa-4s/edit?usp=sharing

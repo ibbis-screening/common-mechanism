@@ -113,7 +113,7 @@ for name, risk, reg_vir, reg_bac, reg_fungi, ben in breakdown:
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)
-breakdown.columns = ("names", "biorisk", "regulated_virus", "regulated_bacteria", "regulated_fungi", "benign")
+breakdown.columns = ("names", "biorisk", "regulated_virus", "regulated_bacteria", "regulated_fungi/oomycetes", "benign")
 breakdown.to_csv("test_itemized.csv", index=False)
 
 

@@ -16,6 +16,7 @@ In addition to the CommonMechanism source code, users may need to install a numb
 The CommonMechanism pipeline has the following python package dependencies:
  * plotly 
  * taxoniq 
+ * ncbi-taxon-db
  * biopython
  * matplotlib
  * kaleido

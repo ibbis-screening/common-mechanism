@@ -57,6 +57,7 @@ def main():
     blast = readblast(args.in_file)                  #function in utils.py
     blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
     # print(blast['subject tax ids'])
+    blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast)
@@ -71,8 +72,13 @@ def main():
         # for each hit (subject acc) linked with at least one regulated taxid
         for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): 
             # go back to blast - the full set of hits
+            # print(gene)
             subset = blast[(blast['subject acc.'] == gene)]
+            subset = subset.sort_values(by=['regulated'], ascending=False)
             subset = subset.reset_index(drop=True)
+            # print(subset[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
+            # print(subset[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
+            # print(subset[['species', 'genus', 'family', 'order', 'phylum', 'clade', 'superkingdom']])
             org = ""
             # if the top hit is found in regulated pathogens
             if subset['regulated'][0] == True:
@@ -91,10 +97,14 @@ def main():
                     elif subset['superkingdom'][0] == "Bacteria": 
                         reg_bac = 1
                         org = "bacteria"
-                    elif subset['kingdom'][0] == "Fungi":
-                        org = "fungi"
-                        reg_fung = 1
-                    sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
+                    elif 'kingdom' in subset:
+                        if subset['kingdom'][0] == "Fungi":
+                            org = "fungi"
+                            reg_fung = 1
+                        if subset['phylum'][0] == "Oomycota":
+                            org = "oomycete"
+                            reg_fung = 1 # sorry! to save complexity
+                    # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total

@@ -94,8 +94,10 @@ def taxdist(blast, reg_ids, vax_ids):
     blast = blast.reset_index(drop=True)
     
     # checks which individual lines contain regulated pathogens
-    cut = []
+    missing = []
     vax = []
+    columns = []
+
     for x in range(0, blast.shape[0]):
         try:
             t = taxoniq.Taxon(blast['subject tax ids'][x])
@@ -110,6 +112,7 @@ def taxdist(blast, reg_ids, vax_ids):
                 else:
                     blast[t.rank.name] = ""
                     blast.loc[x,t.rank.name] = t.scientific_name
+                    columns.append(t.rank.name)
                 t = t.parent
                 if int(t.tax_id) in set(vax_ids[0]):
                     vax.append(x)
@@ -117,12 +120,14 @@ def taxdist(blast, reg_ids, vax_ids):
                 # print(t.scientific_name)
         except:
             sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxoniq database\n')
-            cut.append(x)
+            missing.append(x)
     
     if (len(vax)>0):
         blast['regulated'][vax] = False
 #
-    blast.drop(cut)
+    blast = blast.drop(missing)
+    # if (len(missing)>0):
+    #     blast.loc[missing,columns] = "missing"
         
     blast = blast.sort_values(by=['% identity'], ascending=False)
     
@@ -216,13 +221,15 @@ def trimblast(blast):
     # only keep  top ranked hits that don't overlap
     for query in blast['query acc.'].unique():
         df = blast[blast['query acc.'] == query]
+        # print(df)
         for i in df.index: # run through each hit from the top
             for j in df.index[(i+1):]: # compare to each below
                 # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
                 if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
                     if j in blast2.index:
                         if df.loc[i,'subject tax ids']!="32630": # don't trim a lower ranked hit if the higher ranked hit is a synthetic construct
-                            blast2 = blast2.drop([j])
+                            if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
+                                blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
 #    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end']])
     

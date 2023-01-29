@@ -29,7 +29,7 @@ plot_hmmer(benign, benign_desc, 10)
 plot_blast(file=synbio, nhits = 10, query=sys.argv[1])
 
 # viz taxon IDs
-plot_blast(taxid, 10)
-plot_blast(taxid2, 10)
+plot_blast(taxid, 20)
+plot_blast(taxid2, 20)
 plot_tax(taxid, reg_ids, sys.argv[1]) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
 

@@ -102,14 +102,11 @@ for name, risk, reg_vir, reg_bac, reg_fungi, ben in breakdown:
         summary.append((name, "P"))
     # if it's a regulated bacterial hit, flag it
     elif reg_bac == "F":
-#        print("Nothing found")
         summary.append((name, "F"))
     elif reg_fungi == "F":
-#        print("Nothing found")
         summary.append((name, "F"))
     else:
-        summary.append((name, None))
-#print(summary)
+        summary.append((name, "P"))
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)

@@ -88,11 +88,16 @@ elif [ ! -f "$QUERY" ]; then
     print_usage
     exit 1
 fi
+
 #If output not specified, set value 
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=${QUERY//.fasta/}
+    if [ ${#OUTPUT} -ge 200 ]; then
+        OUTPUT=`echo $OUTPUT | cut -c1-200`
+    fi
     echo "Output handle = $OUTPUT"
 fi
+
 #Check input database folder 
 if [ "$DB_PATH" == "" ]; then
     echo " ERROR: screening database path not specified"
@@ -131,8 +136,7 @@ echo -e " >> STARTED AT $start_time"
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Running biorisk hmm scan..." 
 echo -e "\t...running transeq" 
-transeq $QUERY ${OUTPUT}.init.faa -frame 6 -clean &>> ${OUTPUT}.tmp
-sed 's/ /_/g' ${OUTPUT}.init.faa > ${OUTPUT}.faa
+transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 echo -e "\t...checking hmmscan results"

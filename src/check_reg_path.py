@@ -106,8 +106,8 @@ def main():
                             org = "oomycete"
                             reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                    sys.stdout.write("\t\t --> %s found in only regulated organisms (%s percent identity to query): FLAG (%s)\n" % (gene, blast['% identity'][blast['subject acc.'] == gene].item(), org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene]))))))
+                    sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene])))), (" ".join(map(str, set(blast['% identity'][blast['subject acc.'] == gene]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene]))

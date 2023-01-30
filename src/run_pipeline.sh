@@ -91,6 +91,9 @@ fi
 #If output not specified, set value 
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=${QUERY//.fasta/}
+    if $OUTPUT; then
+        OUTPUT=`echo $OUTPUT | cut -c1-100`
+    fi
     echo "Output handle = $OUTPUT"
 fi
 #Check input database folder 

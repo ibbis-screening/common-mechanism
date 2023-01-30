@@ -92,7 +92,7 @@ fi
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=${QUERY//.fasta/}
     if $OUTPUT; then
-        OUTPUT=`echo $OUTPUT | cut -c1-100`
+        OUTPUT=`echo $OUTPUT | cut -c1-200`
     fi
     echo "Output handle = $OUTPUT"
 fi

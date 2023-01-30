@@ -88,14 +88,16 @@ elif [ ! -f "$QUERY" ]; then
     print_usage
     exit 1
 fi
+
 #If output not specified, set value 
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=${QUERY//.fasta/}
-    if $OUTPUT; then
+    if [ ${#OUTPUT} -ge 200 ]; then
         OUTPUT=`echo $OUTPUT | cut -c1-200`
     fi
     echo "Output handle = $OUTPUT"
 fi
+
 #Check input database folder 
 if [ "$DB_PATH" == "" ]; then
     echo " ERROR: screening database path not specified"

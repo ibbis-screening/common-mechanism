@@ -45,6 +45,7 @@ The following databases will need to be installed prior to running the CommonMec
 
     databases/
     databases/nr_dmnd (~276 Gb) 
+    databases/nr_blast (~375 Gb)   (optional)
     databases/nt_blast (~280 Gb) 
     databases/benign_db (~2.2 Gb)
     databases/biorisk_db (~1.0 Gb)
@@ -58,8 +59,11 @@ The Common Mechanism requires the BLAST nt database. The files for the BLAST nt 
       update_blastdb.pl --passive --decompress nt
    
 This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
+Users can also download the BLAST nr database to check the relative speed of BLAST vs DIAMOND search on their machine:
 
-## DIAMOND Datbase
+      update_blastdb.pl --passive --decompress nr
+
+## DIAMOND Database
 The CommonMechanism database will be provided via Amazon AWS. Please email Jennifer Lu (jennifer.lu717@gmail.com) for instructions to download the database. 
 
 # Running the Common Mechanism 

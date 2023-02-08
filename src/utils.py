@@ -213,6 +213,15 @@ def readblast(fileh):
 #####################################################################################
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
+    # set start to the lowest coordinate and end to the highest to avoid confusion
+    for j in blast.index:
+        if blast.loc[j,'q. start'] > blast.loc[j,'q. end']:
+            start = blast.loc[j,'q. end']
+            end = blast.loc[j,'q. start']
+            blast.loc[j,'q. start'] = start
+            blast.loc[j,'q. end'] = end
+            # print(blast.loc[j,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']])
+
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
     if 'regulated' in blast:
         blast = blast.sort_values(by=['regulated'], ascending=False)
@@ -238,22 +247,51 @@ def trimblast(blast):
     
     return blast2
 
-def trimhmmer(hmmer):
-    # rank hits by bitscore
-    hmmer = hmmer.sort_values(by=['score'], ascending=False)
-    hmmer = hmmer.reset_index(drop=True)
+# go through trimmed BLAST hits and only look at top protein hit for each base
+def tophits(blast2):
+    print(blast2.loc[:10,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']])
     
-    hmmer2 = hmmer
-    # only keep  top ranked hits that don't overlap
-    for query in hmmer['query name'].unique():
-        df = hmmer[hmmer['query name'] == query]
+    # set start to the lowest coordinate and end to the highest to avoid confusion
+    # for j in blast2.index:
+    #     if blast2.loc[j,'q. start'] > blast2.loc[j,'q. end']:
+    #         start = blast2.loc[j,'q. end']
+    #         end = blast2.loc[j,'q. start']
+    #         blast2.loc[j,'q. start'] = start
+    #         blast2.loc[j,'q. end'] = end
+    #         print(blast2.loc[j,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']])
+    
+    blast3 = blast2
+    # only keep coordinates of each hit that are not already covered by a better hit
+    for query in blast3['query acc.'].unique():
+        df = blast3[blast3['query acc.'] == query]
+        # print(df)
         for i in df.index: # run through each hit from the top
             for j in df.index[(i+1):]: # compare to each below
-                # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
-                if (df.loc[i,'env from'] <= df.loc[j,'env from'] and df.loc[i,'env to'] >= df.loc[j,'env to']):
-                    if j in hmmer2.index:
-                        hmmer2 = hmmer2.drop([j])
-    hmmer2 = hmmer2.reset_index(drop=True)
-    
-    return hmmer2
-
+                # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
+                if (df.loc[j,'q. start'] >= df.loc[i,'q. start'] and df.loc[j,'q. start'] <= df.loc[i,'q. end']):
+                    # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
+                    if (df.loc[i,'q. end'] + 1 < df.loc[j,'q. end']):
+                        df.loc[j,'q. start'] = df.loc[i,'q. end'] + 1
+                    else:
+                        df.loc[j,'q. start'] = 0
+                        df.loc[j,'q. end'] = 0
+                # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
+                if (df.loc[j,'q. end'] >= df.loc[i,'q. start'] and df.loc[j,'q. end'] <= df.loc[i,'q. end']):
+                    # print(df.loc[j,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
+                    if (df.loc[i,'q. end'] + 1 < df.loc[j,'q. start']):
+                        df.loc[j,'q. end'] = df.loc[i,'q. start'] - 1
+                    else:
+                        df.loc[j,'q. start'] = 0
+                        df.loc[j,'q. end'] = 0
+        for j in df.index: 
+            blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])
+            blast3.loc[j,'q. start'] = df.loc[j,'q. start']
+            blast3.loc[j,'q. end'] = df.loc[j,'q. end']
+                
+    blast3 = blast3[blast3['subject length'] >= 50]
+    # blast3 = blast3[blast3['q. start'] < blast3['q. end']]
+    print(blast3[['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
+    print(blast2.loc[blast3.index,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
+    blast3 = blast3.reset_index(drop=True)
+    # print(blast3['subject length'])
+    return blast3

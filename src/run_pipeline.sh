@@ -138,9 +138,9 @@ echo " >> STEP 1: Running biorisk hmm scan..."
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 echo -e "\t...running hmmscan" 
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmsearch ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 echo -e "\t...checking hmmscan results"
-python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmsearch --database ${DB_PATH}/biorisk_db/
+python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/
 
 s1_time=$(date)
 echo -e "    STEP 1 completed at $s1_time\n"
@@ -193,7 +193,7 @@ echo -e "    STEP 3 completed at $s3_time\n"
 # Step 3: benign DB scan
 #date
 echo -e " >> STEP 4: Checking any pathogen regions for benign components..."
-hmmscan --domtblout ${OUTPUT}.benign.hmmsearch ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
+hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
 python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${QUERY} -d ${DB_PATH}/benign_db/ # added the original file path here to fetch sequence length, can tidy this
@@ -211,7 +211,7 @@ then
     then
         rm ${OUTPUT}.reg_path_coords.csv
     fi
-    rm ${OUTPUT}.*hmmsearch ${OUTPUT}.*blastx ${OUTPUT}.*blastn
+    rm ${OUTPUT}.*hmmscan ${OUTPUT}.*blastx ${OUTPUT}.*blastn
 fi
 
 rm ${OUTPUT}*.tmp

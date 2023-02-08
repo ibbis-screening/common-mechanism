@@ -8,7 +8,7 @@
 #################################################################################
 #Usage: 
 #   python check_benign.py -i INPUT -s SEQUENCE -d DATABASE FOLDER 
-#       -i, --input = input sample name (will check for sample.benign.hmmsearch file)
+#       -i, --input = input sample name (will check for sample.benign.hmmscan file)
 #       -s, --sequence = input sequence file
 #       -d, --database = database folder location/path (will check for benign_annotations.csv) 
 #################################################################################
@@ -18,15 +18,15 @@ import pandas as pd
 
 def check_for_benign(query, coords):
         # for each set of hits, need to pull out the coordinates covered by benign entries
-        hmmsearch = query + ".benign.hmmsearch"
+        hmmscan = query + ".benign.hmmscan"
         blast = query + ".benign.blastn"
-        if check_blastfile(hmmsearch) == 2 and check_blastfile(blast) == 2:
+        if check_blastfile(hmmscan) == 2 and check_blastfile(blast) == 2:
             print("\t...no benign hits found")
             exit(0)
-        if check_blastfile(hmmsearch) == 2:
+        if check_blastfile(hmmscan) == 2:
             print("\t...no benign gene hits")
         else:
-            hmmer = readhmmer(hmmsearch)
+            hmmer = readhmmer(hmmscan)
     #        print(hmmer)
             for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 # look at only the hmmer hits that overlap with it

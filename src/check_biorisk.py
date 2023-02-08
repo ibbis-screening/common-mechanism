@@ -7,7 +7,7 @@
 #This file is part of the CommonMechanism 
 ##############################################################################
 # Usage:
-#  python check_biorisk.py -i INPUT.biorisk.hmmsearch -d databases/biorisk_db/ 
+#  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/ 
 ##############################################################################
 from utils import *
 import os, sys, argparse 

@@ -92,6 +92,8 @@ def taxdist(blast, reg_ids, vax_ids):
     blast = split_taxa(blast)
     blast = blast[blast['subject tax ids'] != "32630"]
     blast = blast.reset_index(drop=True)
+    blast['subject tax ids'] = blast['subject tax ids'].astype('int')
+    # print(blast)
     
     # checks which individual lines contain regulated pathogens
     missing = []
@@ -100,7 +102,7 @@ def taxdist(blast, reg_ids, vax_ids):
 
     for x in range(0, blast.shape[0]):
         try:
-            t = taxoniq.Taxon(blast['subject tax ids'][x])
+            t = taxoniq.Taxon(int(blast['subject tax ids'][x]))
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
                 blast.loc[x,'regulated'] = True
@@ -130,6 +132,7 @@ def taxdist(blast, reg_ids, vax_ids):
     #     blast.loc[missing,columns] = "missing"
         
     blast = blast.sort_values(by=['% identity'], ascending=False)
+    # print(blast)
     
     # simplify output by putting all single instances of a species in an 'other' category
     singletons = blast.species.value_counts().index[blast.species.value_counts()==1]

@@ -15,6 +15,7 @@
 from utils import *
 import os, sys, argparse
 import pandas as pd
+import textwrap
 
 pd.set_option("display.max_colwidth", 10000)
 
@@ -83,11 +84,13 @@ def main():
                 n_reg = blast['regulated'][blast['q. start'] == site].sum()
                 n_total = len(blast['regulated'][blast['q. start'] == site])
                 gene_names = ", ".join(set(subset['subject acc.']))
+                species_list = textwrap.fill(", ".join(set(blast['species'][blast['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                taxid_list = textwrap.fill(", ".join(map(str, set(blast['subject tax ids'][blast['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
 
                 # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
                     sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene_names)
-                    sys.stdout.write("\t\t   Species: %s\n" % (", ".join(set(blast['species'][blast['q. start'] == site])))) 
+                    sys.stdout.write("\t\t     Species: %s\n" % species_list) 
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
@@ -106,7 +109,7 @@ def main():
                             reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % ((", ".join(set(blast['species'][blast['q. start'] == site]))), (" ".join(map(str, set(blast['subject tax ids'][blast['q. start'] == site])))), (" ".join(map(str, set(blast['% identity'][blast['q. start'] == site]))))))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, (" ".join(map(str, set(blast['% identity'][blast['q. start'] == site]))))))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene_names)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))

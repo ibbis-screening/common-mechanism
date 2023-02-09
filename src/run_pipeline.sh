@@ -153,7 +153,7 @@ if [ "$BLAST" = 1 ]; then
         ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
     fi
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
@@ -161,7 +161,7 @@ else
         # cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
     fi
     echo -e "\t...checking diamond results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH
 fi
 
 s2_time=$(date)

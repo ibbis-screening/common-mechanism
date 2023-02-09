@@ -90,9 +90,9 @@ def taxdist(blast, reg_ids, vax_ids):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
-    blast = blast[blast['subject tax ids'] != "32630"]
-    blast = blast.reset_index(drop=True)
     blast['subject tax ids'] = blast['subject tax ids'].astype('int')
+    blast = blast[blast['subject tax ids'] != 32630]
+    blast = blast.reset_index(drop=True)
     # print(blast)
     
     # checks which individual lines contain regulated pathogens
@@ -226,7 +226,7 @@ def trimblast(blast):
     if 'regulated' in blast:
         blast = blast.sort_values(by=['regulated'], ascending=False)
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
-    blast = blast.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
+    blast = blast.drop_duplicates(subset=['query acc.', 'subject acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     blast = blast.reset_index(drop=True)
     
     blast2 = blast
@@ -272,7 +272,9 @@ def tophits(blast2):
                 # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
                 if (df.loc[j,'q. start'] >= df.loc[i,'q. start'] and df.loc[j,'q. start'] <= df.loc[i,'q. end']):
                     # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
-                    if (df.loc[i,'q. end'] + 1 < df.loc[j,'q. end']):
+                    if (df.loc[j,'q. start'] == df.loc[i,'q. start'] and df.loc[j,'q. end'] == df.loc[i,'q. end'] and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                        pass
+                    elif (df.loc[i,'q. end'] + 1 < df.loc[j,'q. end']):
                         df.loc[j,'q. start'] = df.loc[i,'q. end'] + 1
                     else:
                         df.loc[j,'q. start'] = 0
@@ -280,7 +282,9 @@ def tophits(blast2):
                 # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
                 if (df.loc[j,'q. end'] >= df.loc[i,'q. start'] and df.loc[j,'q. end'] <= df.loc[i,'q. end']):
                     # print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
-                    if (df.loc[i,'q. start'] - 1 > df.loc[j,'q. start']):
+                    if (df.loc[j,'q. start'] == df.loc[i,'q. start'] and df.loc[j,'q. end'] == df.loc[i,'q. end'] and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                        pass
+                    elif (df.loc[i,'q. start'] - 1 > df.loc[j,'q. start']):
                         df.loc[j,'q. end'] = df.loc[i,'q. start'] - 1
                     else:
                         df.loc[j,'q. start'] = 0

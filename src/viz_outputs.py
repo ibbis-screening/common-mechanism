@@ -1,35 +1,51 @@
 from process_outputs import *
 from utils import *
-import sys, os
+import argparse
 import pandas as pd
 from os.path import exists
 
-#Input parameter error checking 
-if len(sys.argv) < 1:
-    sys.stdout.write("\tERROR: Please provide a query name\n")
-    exit(1)
 
-biorisk = sys.argv[1] + ".biorisk.hmmsearch"
-benign = sys.argv[1] + ".benign.hmmsearch"
-synbio = sys.argv[1] + ".benign.blastn"
-taxid = sys.argv[1] + ".nr.blastx"
-if not exists(taxid):
-    taxid = sys.argv[1] + ".nr.dmnd"
-taxid2 = sys.argv[1] + ".nt.blastn"
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-q","--query", dest="query",
+        required=True, help="Query name")
+    parser.add_argument("-d","--database", dest="db",
+        required=True, help="Database folder")
+    parser.add_argument("-n","--n-hits", dest="n_hits",
+        required=False, help="Number of hits to display")
+    args = parser.parse_args()
 
-reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
-biorisk_desc = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/biorisk_annotations.csv')
-benign_desc = pd.read_csv(os.environ['DB_PATH'] + '/benign/benign_annotations.csv')
+    biorisk = args.query + ".biorisk.hmmscan"
+    benign = args.query + ".benign.hmmscan"
+    synbio = args.query + ".benign.blastn"
+    taxid = args.query + ".nr.blastx"
+    if not exists(taxid):
+        taxid = args.query + ".nr.dmnd"
+    taxid2 = args.query + ".nt.blastn"
 
-# viz biorisk hits
-plot_hmmer(biorisk, biorisk_desc, 10)
+    reg_ids = pd.read_csv(args.db + '/biorisk_db/reg_taxids', header=None)
+    vax_ids = pd.read_csv(args.db + '/benign_db/vax_taxids', header=None)
+    biorisk_desc = pd.read_csv(args.db + '/biorisk_db/biorisk_annotations.csv')
+    benign_desc = pd.read_csv(args.db + '/benign_db/benign_annotations.csv')
 
-# viz benign hits
-plot_hmmer(benign, benign_desc, 10)
-plot_blast(file=synbio, nhits = 10, query=sys.argv[1])
+    # define number of hits to display
+    if args.n_hits is None:
+        args.n_hits = 10
+    else:
+        args.n_hits = int(args.n_hits)
 
-# viz taxon IDs
-plot_blast(taxid, 20)
-plot_blast(taxid2, 20)
-plot_tax(taxid, reg_ids, sys.argv[1]) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
+    # viz biorisk hits
+    plot_hmmer(biorisk, biorisk_desc, args.n_hits)
 
+    # viz benign hits
+    plot_hmmer(benign, benign_desc, args.n_hits)
+    # plot_blast(file=synbio, reg_ids=reg_ids, vax_ids=vax_ids, nhits = 10)
+
+    # viz taxon IDs
+    plot_blast(taxid, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
+    plot_blast(taxid2, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
+    plot_tax(taxid, reg_ids, args.query) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
+
+
+if __name__ == "__main__":
+    main()

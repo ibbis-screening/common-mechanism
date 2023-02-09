@@ -157,10 +157,10 @@ def plot_hmmer(file, lookup, nhits=10):
         # print(lookup['Description'][name_index[0]])
     hmmer['description'] = new_names
     
-    print(hmmer)
+    # print(hmmer)
     fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description"], colours, nhits, hmmer['score'].max())
     fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
-    print("Path specified: ", file + ".png")
+    # print("Path specified: ", file + ".png")
     fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 # plot BLAST results
@@ -181,11 +181,11 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     blast = taxdist(blast, reg_ids, vax_ids)
     
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
-    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = trimblast(blast)
     # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = tophits(blast)
-    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name
     blast = blast.reset_index()
@@ -194,10 +194,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
     
-    if re.search(".nr.blastx", file):
-        colours = colourscale(blast['regulated'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
-    else:
-        colours = colourscale([0.0] * blast.shape[0], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+    colours = colourscale(blast['regulated'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
     names = blast['subject acc.'] + ": " + blast['subject title']
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
     fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}

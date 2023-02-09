@@ -14,6 +14,7 @@ In addition to the CommonMechanism source code, users may need to install a numb
 
 ## Python Packages 
 The CommonMechanism pipeline has the following python package dependencies:
+ * pandas
  * plotly 
  * taxoniq 
  * ncbi-taxon-db

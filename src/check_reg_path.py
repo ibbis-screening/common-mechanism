@@ -61,7 +61,7 @@ def main():
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast)
-    blast2 = tophits(blast2)
+    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit
     # print(blast2[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
 
     reg_bac = 0

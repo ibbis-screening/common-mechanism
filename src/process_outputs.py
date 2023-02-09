@@ -5,9 +5,11 @@ import matplotlib.pyplot as plt
 import re
 import os
 from utils import *
+import textwrap
+import math
 
-reg_ids = pd.read_csv(os.environ['DB_PATH'] + '/biorisk/reg_taxids', header=None)
-vax_ids = pd.read_csv(os.environ['DB_PATH'] + '/benign/vax_taxids', header=None)
+# reg_ids = pd.read_csv(args.database + '/biorisk/reg_taxids', header=None)
+# vax_ids = pd.read_csv(args.database + '/benign/vax_taxids', header=None)
 
 # taxonomic distribution plots
 def plot_tax(file, reg_ids, query):
@@ -49,6 +51,44 @@ def plot_pie(blast, query):
 ##### plotting sequence alignments
 
 # basic plotting of alignments of hits
+# def plothits_new(starts, ends, qlen, names, colours, nhits, max):
+#     if nhits <5:
+#         yax = 6
+#     else:
+#         yax=nhits+1
+#     # fontsize = int(10/math.log(yax, 200))
+#     xlim = qlen*2
+#     fontsize = 20*(qlen/3000)
+#     plts = make_subplots(rows=1, cols=2)
+#     plts.add_trace(
+#         fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,max], colorscale="Greys",colorbar=dict(title="Similarity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white")),
+#     row=1, col=1)
+#     plts.add_trace(
+#         fig.add_annotation(xanchor='left', text='Query', x=qlen, y=(0.5+1.3)/2,font=dict(family="Arial Narrow", size=fontsize, color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
+#         for i in range(0, starts.shape[0]): # for each hit
+#             fig.add_annotation(xanchor='left', text=hit_description, x=qlen, y=(0.5+i+1+1.3+i+1)/2,font=dict(family="Arial Narrow", size=fontsize, color="#000000"), bgcolor="#ffffff", showarrow=False), # Courier New, monospace,
+#     row=1, col=2)
+#     fig.add_shape(type="rect", name = 'Query', x0 = 1, x1 = qlen, y0=0.5, y1=1.3, line=dict(color="white"), fillcolor='grey')
+#     for i in range(0, starts.shape[0]): # for each hit
+#         start = starts[i]
+#         end = ends[i]
+#         max_name_length = 100
+#         if len(names[i]) > max_name_length:
+#             hit_description = names[i][:max_name_length] + "..."
+#         else:
+#             hit_description = names[i][:max_name_length]
+#         hit_description = textwrap.fill(hit_description, 60).replace("\n", "<br>")
+#         colour = colours[i]
+#         fig.add_shape(type="rect", name = hit_description, x0 = start, x1 = end, y0=0.5+i+1, y1=1.3+i+1, line=dict(color="white"), fillcolor=colour)
+#         fig.add_trace(go.Scatter(text = str(colour), x = [start, end, end, start, start], y=[0.5+i+1, 0.5+i+1, 1.3+i+1, 1.3+i+1, 0.5+i+1], fill="toself", line=dict(color="white")))
+#         fig.add_annotation(xanchor='left', text=hit_description, x=qlen, y=(0.5+i+1+1.3+i+1)/2,font=dict(family="Arial Narrow", size=fontsize, color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
+#     fig.update_xaxes(range=[0, xlim])
+#     fig.update_yaxes(range=[yax+0.5, 0.5], showticklabels=False)
+#     fig.update_layout(margin=dict(l=10, r=20, t=30, b=0))
+#     return plts
+
+
+# basic plotting of alignments of hits
 def plothits(starts, ends, qlen, names, colours, nhits, max):
     if nhits <5:
         yax = 6
@@ -73,6 +113,7 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
     fig.update_yaxes(range=[yax+0.5, 0.5], showticklabels=False)
     fig.update_layout(margin=dict(l=10, r=20, t=30, b=0))
     return fig
+
 
 # plot HMMER results from --domtblout
 def plot_hmmer(file, lookup, nhits=10):
@@ -123,7 +164,7 @@ def plot_hmmer(file, lookup, nhits=10):
     fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 # plot BLAST results
-def plot_blast(file, query, nhits=10):
+def plot_blast(file, reg_ids, vax_ids, nhits):
     if check_blastfile(file) == 0:
         return
     if check_blastfile(file) == 2:
@@ -139,7 +180,12 @@ def plot_blast(file, query, nhits=10):
     blast = readblast(file)
     blast = taxdist(blast, reg_ids, vax_ids)
     
+    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
+    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = trimblast(blast)
+    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    blast = tophits(blast)
+    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     
     blast = blast.drop_duplicates('subject title') # drop hits with the same gene name
     blast = blast.reset_index()
@@ -154,8 +200,9 @@ def plot_blast(file, query, nhits=10):
         colours = colourscale([0.0] * blast.shape[0], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
     names = blast['subject acc.'] + ": " + blast['subject title']
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
-    fig.update_layout(showlegend=False, title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
+    fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)
+
 
 
 

@@ -153,7 +153,7 @@ if [ "$BLAST" = 1 ]; then
         ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
     fi
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
@@ -161,7 +161,7 @@ else
         # cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
     fi
     echo -e "\t...checking diamond results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH
 fi
 
 s2_time=$(date)
@@ -182,7 +182,7 @@ if [ -f "${OUTPUT}".noncoding.fasta ]; then
         blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
     fi
     echo -e "\t...checking blastn results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn --benign-db $DB_PATH/benign_db/ --biorisk-db $DB_PATH/biorisk_db/
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH
 else 
     echo -e "\t...skipping nucleotide search"
 fi

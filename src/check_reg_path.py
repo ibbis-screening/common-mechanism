@@ -15,30 +15,31 @@
 from utils import *
 import os, sys, argparse
 import pandas as pd
+import textwrap
+
+pd.set_option("display.max_colwidth", 10000)
 
 def main(): 
     parser = argparse.ArgumentParser() 
     parser.add_argument("-i","--input",dest="in_file", 
         required=True, help="Input query file (QUERY.nr.dmnd)")
-    parser.add_argument("--benign-db", dest="benign_db",
-        required=True,help="Benign HMM database folder (must contain vax_taxids file)")
-    parser.add_argument("--biorisk-db", dest="biorisk_db",
-        required=True,help="Biorisk HMM database folder (must contain reg_taxids file)")
+    parser.add_argument("-d","--database", dest="db",
+        required=True,help="database folder (must contain vax_taxids and reg_taxids file)")
     args=parser.parse_args() 
     
     #check input files
     if (not os.path.exists(args.in_file)):
         sys.stderr.write("\t...input query file %s does not exist\n" % args.in_file)
         exit(1)
-    if (not os.path.exists(args.benign_db + "/vax_taxids")):
-        sys.stderr.write("\t...benign db file %s does not exist\n" % (args.benign_db + "/vax_taxids"))
+    if (not os.path.exists(args.db + "/benign_db/vax_taxids")):
+        sys.stderr.write("\t...benign db file %s does not exist\n" % (args.db + "/benign_db/vax_taxids"))
         exit(1)
-    if (not os.path.exists(args.biorisk_db + "/reg_taxids")):
-        sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.biorisk_db + "/reg_taxids"))
+    if (not os.path.exists(args.db + "/biorisk_db/reg_taxids")):
+        sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.db + "/biorisk_db/reg_taxids"))
         exit(1)
     # read in files
-    reg_ids = pd.read_csv(args.biorisk_db + "/reg_taxids", header=None)
-    vax_ids = pd.read_csv(args.benign_db + "/vax_taxids", header=None)
+    reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids", header=None)
+    vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids", header=None)
 
     sample_name = re.sub("\..*", "", args.in_file)
     # print("Sample name: " + sample_name)
@@ -61,7 +62,7 @@ def main():
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast)
-    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit
+    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes 
     # print(blast2[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
 
     reg_bac = 0
@@ -72,24 +73,24 @@ def main():
         sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
         # print(blast[['subject acc.', 'regulated', 'genus', 'species']])
         # for each hit (subject acc) linked with at least one regulated taxid
-        for gene in set(blast2['subject acc.'][blast2['regulated'] == True]): 
+        for site in set(blast2['q. start'][blast2['regulated'] == True]): 
             # go back to blast - the full set of hits
-            # print(gene)
-            subset = blast[(blast['subject acc.'] == gene)]
+            subset = blast[(blast['q. start'] == site)]
             subset = subset.sort_values(by=['regulated'], ascending=False)
             subset = subset.reset_index(drop=True)
-            # print(subset[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
-            # print(subset[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
-            # print(subset[['species', 'genus', 'family', 'order', 'phylum', 'clade', 'superkingdom']])
             org = ""
-            # if the top hit is found in regulated pathogens
-            if subset['regulated'][0] == True:
-                n_reg = blast['regulated'][blast['subject acc.'] == gene].sum()
-                n_total = len(blast['regulated'][blast['subject acc.'] == gene])
-                # if some of the organisms with this gene aren't regulated, say so
+            
+            if sum(subset['regulated']) > 0: # if there's at least one regulated hit
+                n_reg = blast['regulated'][blast['q. start'] == site].sum()
+                n_total = len(blast['regulated'][blast['q. start'] == site])
+                gene_names = ", ".join(set(subset['subject acc.']))
+                species_list = textwrap.fill(", ".join(set(blast['species'][blast['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                taxid_list = textwrap.fill(", ".join(map(str, set(blast['subject tax ids'][blast['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
+
+                # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
-                    sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene)
-                    sys.stdout.write("\t   species: %s\n" % (", ".join(set(blast['species'][blast['subject acc.'] == gene])))) 
+                    sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene_names)
+                    sys.stdout.write("\t\t     Species: %s\n" % species_list) 
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
@@ -107,12 +108,13 @@ def main():
                             org = "oomycete"
                             reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                    sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene, org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % ((", ".join(set(blast['species'][blast['subject acc.'] == gene]))), (" ".join(map(str, set(blast['subject tax ids'][blast['subject acc.'] == gene])))), (" ".join(map(str, set(blast['% identity'][blast['subject acc.'] == gene]))))))
+                    sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, org))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, (" ".join(map(str, set(blast['% identity'][blast['q. start'] == site]))))))
                 else: # something is wrong, n_reg > n_total
-                    sys.stdout.write("\t...gene: %s\n" % gene)
-                    sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene]))
+                    sys.stdout.write("\t...gene: %s\n" % gene_names)
+                    sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
         hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
+        hits = hits.drop_duplicates()
         #Create output file 
         if hits1 is not None:
             hits = pd.concat([hits1, hits])

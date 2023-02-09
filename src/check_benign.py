@@ -55,6 +55,7 @@ def check_for_benign(query, coords):
         if check_blastfile(blast) == 2:
             print("\t...no synbio parts hits")
         else:
+            cleared = 0
             blastn = readblast(blast) # synbio parts
             for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]

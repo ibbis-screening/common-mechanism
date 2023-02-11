@@ -161,6 +161,9 @@ else
         # cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
     fi
     echo -e "\t...checking diamond results"
+    if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
+        rm "${OUTPUT}".reg_path_coords.csv
+    fi
     python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH
 fi
 

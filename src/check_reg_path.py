@@ -63,7 +63,6 @@ def main():
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     blast2 = trimblast(blast)
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes 
-    # print(blast2[['subject acc.', 'q. start', 'q. end', 'subject tax ids', 'evalue', 'bit score', '% identity', 'regulated']])
 
     reg_bac = 0
     reg_vir = 0
@@ -74,18 +73,18 @@ def main():
         # print(blast[['subject acc.', 'regulated', 'genus', 'species']])
         # for each hit (subject acc) linked with at least one regulated taxid
         for site in set(blast2['q. start'][blast2['regulated'] == True]): 
-            # go back to blast - the full set of hits
-            subset = blast[(blast['q. start'] == site)]
+            subset = blast2[(blast2['q. start'] == site)]
             subset = subset.sort_values(by=['regulated'], ascending=False)
             subset = subset.reset_index(drop=True)
             org = ""
             
             if sum(subset['regulated']) > 0: # if there's at least one regulated hit
-                n_reg = blast['regulated'][blast['q. start'] == site].sum()
-                n_total = len(blast['regulated'][blast['q. start'] == site])
+                n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
+                n_total = len(blast2['regulated'][blast2['q. start'] == site])
                 gene_names = ", ".join(set(subset['subject acc.']))
-                species_list = textwrap.fill(", ".join(set(blast['species'][blast['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
-                taxid_list = textwrap.fill(", ".join(map(str, set(blast['subject tax ids'][blast['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
+                species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
+                percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
 
                 # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
@@ -109,7 +108,7 @@ def main():
                             reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, (" ".join(map(str, set(blast['% identity'][blast['q. start'] == site]))))))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene_names)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))

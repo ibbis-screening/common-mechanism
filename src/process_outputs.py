@@ -184,7 +184,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = trimblast(blast)
-    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = tophits(blast)
     print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     

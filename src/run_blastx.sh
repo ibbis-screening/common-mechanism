@@ -72,4 +72,4 @@ then
 fi      
 
 echo -e "\t...running protein search..."
-blastx -db ${DB} -query ${QUERY} -out ${OUTPUT}.blastx -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -culling_limit 5 -evalue 1e-10 -word_size 6 -threshold 21 -window_size 40 -matrix BLOSUM62 -gapopen 11 -gapextend 1 -seg yes -num_threads ${THREADS} ${FURTHEROPT}
+blastx -db ${DB} -query ${QUERY} -out ${OUTPUT}.blastx -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 500 -culling_limit 50 -evalue 1e-10 -word_size 6 -threshold 21 -window_size 40 -matrix BLOSUM62 -gapopen 11 -gapextend 1 -seg yes -num_threads ${THREADS} ${FURTHEROPT}

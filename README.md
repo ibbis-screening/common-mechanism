@@ -12,6 +12,13 @@ Table of Contents:
 # Installation 
 In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies
 
+## HMMER search
+The CommonMechanism pipeline requires:
+ * hmmer 
+ * transeq
+
+to run the biorisk search.
+
 ## Python Packages 
 The CommonMechanism pipeline has the following python package dependencies:
  * pandas

@@ -95,16 +95,18 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
     else:
         yax=nhits+1
     fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,max], colorscale="Greys",colorbar=dict(title="Similarity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white"))
+    # fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,max], colorscale="Blues",colorbar=dict(title="Similarity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white"))
     fig.add_shape(type="rect", name = 'Query', x0 = 1, x1 = qlen, y0=0.5, y1=1.3, line=dict(color="white"), fillcolor='grey')
     fig.add_annotation(xanchor='left', text='Query', x=qlen, y=(0.5+1.3)/2,font=dict(family="Arial Narrow", size=int(100/yax), color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
     for i in range(0, starts.shape[0]): # for each hit
         start = starts[i]
         end = ends[i]
-        max_name_length = 100
+        max_name_length = 600
         if len(names[i]) > max_name_length:
             hit_description = names[i][:max_name_length] + "..."
         else:
             hit_description = names[i][:max_name_length]
+        # hit_description = names[i]
         colour = colours[i]
         fig.add_shape(type="rect", name = hit_description, x0 = start, x1 = end, y0=0.5+i+1, y1=1.3+i+1, line=dict(color="white"), fillcolor=colour)
         fig.add_trace(go.Scatter(text = str(colour), x = [start, end, end, start, start], y=[0.5+i+1, 0.5+i+1, 1.3+i+1, 1.3+i+1, 0.5+i+1], fill="toself", line=dict(color="white")))
@@ -159,7 +161,7 @@ def plot_hmmer(file, lookup, nhits=10):
     
     # print(hmmer)
     fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description"], colours, nhits, hmmer['score'].max())
-    fig.update_layout(showlegend=False, title={'text': 'HMMER Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
+    fig.update_layout(showlegend=False, title={'text': 'HMM Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     # print("Path specified: ", file + ".png")
     fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
@@ -187,15 +189,46 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     blast = tophits(blast)
     # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     
-    blast = blast.drop_duplicates('subject title') # drop hits with the same gene name
+    blast = blast.drop_duplicates('subject acc.') # drop hits with the same gene name
     blast = blast.reset_index()
-    blast = blast.iloc[0:nhits,:]
         
+    drop = []
+    names = []
+    regulated = []
+    for site in set(blast['q. start']): 
+        subset = blast[(blast['q. start'] == site)]
+        subset = subset.sort_values(by=['subject acc.'], ascending=True)
+        subset = subset.reset_index(drop=True)
+
+        if sum(subset['regulated']) > 0:
+            regulated.append(1)
+        else:
+            regulated.append(0)
+
+        # print(subset.shape)
+        
+        name = ", ".join(subset['subject acc.'] + ": " + subset['subject title'])
+        name = textwrap.fill(name, 200).replace("\n", "<br>")
+        names.append(name)
+        # species_list = textwrap.fill(", ".join(set(blast['species'][blast['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+        # percent_ids = (" ".join(map(str, set(blast['% identity'][blast['q. start'] == site]))))
+        if(subset.shape[0] > 1):
+            drop.extend(subset.index[1:])
+
+    blast = blast.drop(drop, axis = 0)
+    blast = blast.reset_index()
+    # print(blast)
+
+    colours = colourscale(regulated, [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
     
-    colours = colourscale(blast['regulated'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
-    names = blast['subject acc.'] + ": " + blast['subject title']
+    blast = blast.iloc[0:nhits,:]
+    names = names[0:nhits]
+    colours = colours[0:nhits]
+
+    # names = blast['subject acc.'] + ": " + blast['subject title']
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
     fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)

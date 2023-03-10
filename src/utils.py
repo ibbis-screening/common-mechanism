@@ -53,7 +53,7 @@ def check_blastfile(filename):
 #   separate colours for regulated orgs (OrRd) and non-regulated (Blues)
 #input:
 #   - reg_status: regulatory status
-#   - counts: counts to evaluate
+#   - counts: count of hits to evaluate
 #   - averages: averages to evaluate 
 def colourscale(reg_status, counts, averages):
     rmap = cm.get_cmap('OrRd', 100)
@@ -156,6 +156,8 @@ def readhmmer(fileh):
 
     with open(fileh, 'r') as f:
         for line in f:
+            if "# Program:         hmmscan" in line:
+                break
             if "#" in line:
                 continue
             bits = re.split('\s+', line)

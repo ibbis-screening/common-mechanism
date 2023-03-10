@@ -120,10 +120,6 @@ else
         echo " ERROR: database folder does not contain benign database" 
         exit 1 
     fi 
-    if [ ! -f "$split_nr_test" ]; then 
-        echo " ERROR: database folder does not contain diamond database"
-        exit 1
-    fi 
 fi
 # export DB_PATH=${DB_PATH}
 
@@ -132,11 +128,15 @@ CM_DIR="$( dirname "$0" )"
 
 start_time=$(date)
 echo -e " >> STARTED AT $start_time"
+echo -e " >> Screening $QUERY"
 
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Running biorisk hmm scan..." 
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
+if [ ! -f "${OUTPUT}".faa ]; then
+    echo -e "\t ERROR: transeq failed"
+fi
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 echo -e "\t...checking hmmscan results"

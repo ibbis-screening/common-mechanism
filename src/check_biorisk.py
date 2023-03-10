@@ -34,6 +34,7 @@ def main():
     # sys.stdout.write("\t...checking %s\n" % in_file) 
 
     lookup = pd.read_csv(args.db + "/biorisk_annotations.csv")
+    lookup.fillna(False, inplace=True)
     # print(lookup)
 
     # read in HMMER output and check for valid hits
@@ -42,25 +43,23 @@ def main():
         sys.stdout.write("\t...ERROR: biorisk search results empty\n")
     if res == 1:
         hmmer = readhmmer(in_file)
+        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
+        hmmer = hmmer.iloc[keep1,:]
         hmmer = trimhmmer(hmmer)
         hmmer['description'] = ''
+        hmmer['Must flag'] = False
         hmmer = hmmer.reset_index(drop=True)
-        # hmmer['target name'] = hmmer['target name'].str.replace("\.", "")
-        new_names = []
+        # print(hmmer)
         for model in range(hmmer.shape[0]):
             name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
             # print(name_index)
-            # hmmer['description'][model] = lookup['Description'][name_index[0]]
-            try:
-                new_names.append(lookup['Annotation'][name_index[0]])
-            except:
-                new_names.append("")
-            # print(lookup['Description'][name_index[0]])
-        hmmer['description'] = new_names
-        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
-        hmmer = hmmer.iloc[keep1,:]
+            hmmer.loc[model, 'description'] = lookup.iloc[name_index[0], 1]
+            hmmer.loc[model, 'Must flag'] = lookup.iloc[name_index[0], 2]
         if hmmer.shape[0] > 0:
-            sys.stdout.write("\t\t --> Biorisks: FLAG\n\t\t     Gene: " + ", ".join(set(hmmer['description'])) + "\n")
+            if (sum(hmmer['Must flag']) > 0):
+                sys.stdout.write("\t\t --> Biorisks: FLAG\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
+            if (sum(hmmer['Must flag']) != hmmer.shape[0]):
+                sys.stdout.write("\t\t --> Biorisks: Virulence factor found\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
         else: 
             sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")
     if res == 2:

@@ -98,6 +98,8 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
     # fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,max], colorscale="Blues",colorbar=dict(title="Similarity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white"))
     fig.add_shape(type="rect", name = 'Query', x0 = 1, x1 = qlen, y0=0.5, y1=1.3, line=dict(color="white"), fillcolor='grey')
     fig.add_annotation(xanchor='left', text='Query', x=qlen, y=(0.5+1.3)/2,font=dict(family="Arial Narrow", size=int(100/yax), color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
+    # print(len(names))
+    # print(len(starts))
     for i in range(0, starts.shape[0]): # for each hit
         start = starts[i]
         end = ends[i]
@@ -186,47 +188,28 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = trimblast(blast)
     # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    blast.to_csv("test.csv")
     blast = tophits(blast)
     # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     
     blast = blast.drop_duplicates('subject acc.') # drop hits with the same gene name
     blast = blast.reset_index()
         
-    drop = []
-    names = []
-    regulated = []
-    for site in set(blast['q. start']): 
-        subset = blast[(blast['q. start'] == site)]
-        subset = subset.sort_values(by=['subject acc.'], ascending=True)
-        subset = subset.reset_index(drop=True)
-
-        if sum(subset['regulated']) > 0:
-            regulated.append(1)
-        else:
-            regulated.append(0)
-
-        # print(subset.shape)
-        
-        name = ", ".join(subset['subject acc.'] + ": " + subset['subject title'])
-        name = textwrap.fill(name, 200).replace("\n", "<br>")
-        names.append(name)
-        # species_list = textwrap.fill(", ".join(set(blast['species'][blast['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
-        # percent_ids = (" ".join(map(str, set(blast['% identity'][blast['q. start'] == site]))))
-        if(subset.shape[0] > 1):
-            drop.extend(subset.index[1:])
-
-    blast = blast.drop(drop, axis = 0)
-    blast = blast.reset_index()
-    # print(blast)
-
-    colours = colourscale(regulated, [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+    blast['label'] = blast.groupby(['q. start','q. end'])['subject acc.'].transform(lambda x: ','.join(x))
+    blast['description'] = blast.groupby(['q. start','q. end'])['subject title'].transform(lambda x: ','.join(x))
+    blast['regulated_sum'] = blast.groupby(['q. start','q. end'])['regulated'].transform(lambda x: any(x))
+    blast = blast.drop_duplicates(['q. start','q. end'])
+    blast.reset_index(inplace=True)
 
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
     
+    colours = colourscale(blast['regulated_sum'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+    names = blast['description']
+
     blast = blast.iloc[0:nhits,:]
-    names = names[0:nhits]
-    colours = colours[0:nhits]
+    names = names[0:(nhits)]
+    colours = colours[0:(nhits)]
 
     # names = blast['subject acc.'] + ": " + blast['subject title']
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)

@@ -98,6 +98,7 @@ def taxdist(blast, reg_ids, vax_ids):
     # checks which individual lines contain regulated pathogens
     missing = []
     vax = []
+    artif = []
     columns = []
 
     for x in range(0, blast.shape[0]):
@@ -109,6 +110,8 @@ def taxdist(blast, reg_ids, vax_ids):
             while t.scientific_name != 'root': #  & int(t.tax_id) not in set(vax_ids[0])
                 if int(t.tax_id) in set(reg_ids[0]):
                     blast.loc[x,'regulated'] = True
+                if int(t.tax_id) == 81077:
+                    artif.append(x)
                 if blast.columns.str.contains(t.rank.name).any():
                     blast.loc[x,t.rank.name] = t.scientific_name
                 else:
@@ -128,6 +131,7 @@ def taxdist(blast, reg_ids, vax_ids):
         blast['regulated'][vax] = False
 #
     blast = blast.drop(missing)
+    blast = blast.drop(artif)
     # if (len(missing)>0):
     #     blast.loc[missing,columns] = "missing"
         
@@ -238,12 +242,11 @@ def trimblast(blast):
         # print(df)
         for i in df.index: # run through each hit from the top
             for j in df.index[(i+1):]: # compare to each below
-                # if the beginning and end of the higher rank hit both extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
-                if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
-                    if j in blast2.index:
-                        if df.loc[i,'subject tax ids']!="32630": # don't trim a lower ranked hit if the higher ranked hit is a synthetic construct
-                            if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
-                                blast2 = blast2.drop([j])
+                if j in blast2.index:
+                    # if the beginning and end of the higher rank hit both overlap or extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
+                    if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
+                        if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
+                            blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
 #    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end']])
     
@@ -251,43 +254,44 @@ def trimblast(blast):
 
 # go through trimmed BLAST hits and only look at top protein hit for each base
 def tophits(blast2):
-    # print(blast2.loc[:10,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']])
-    
-    # set start to the lowest coordinate and end to the highest to avoid confusion
-    # for j in blast2.index:
-    #     if blast2.loc[j,'q. start'] > blast2.loc[j,'q. end']:
-    #         start = blast2.loc[j,'q. end']
-    #         end = blast2.loc[j,'q. start']
-    #         blast2.loc[j,'q. start'] = start
-    #         blast2.loc[j,'q. end'] = end
-    #         print(blast2.loc[j,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']])
     
     blast3 = blast2
+    blast3 = blast3.sort_values('q. start')
+    blast3 = blast3.sort_values('% identity', ascending=False)
+
     # only keep coordinates of each hit that are not already covered by a better hit
     for query in blast3['query acc.'].unique():
         df = blast3[blast3['query acc.'] == query]
-        # print(df)
+
         for i in df.index: # run through each hit from the top
-            # print("i = ", i)
             for j in df.index[(i+1):]: # compare to each below
-                # print("j = ", j)
+                i_start = df.loc[i,'q. start']
+                i_end = df.loc[i,'q. end']
+                j_start = df.loc[j,'q. start']
+                j_end = df.loc[j,'q. end']
+                
                 # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
-                if (df.loc[j,'q. start'] >= df.loc[i,'q. start'] and df.loc[j,'q. start'] <= df.loc[i,'q. end']):
+                if (j_start >= i_start and j_start <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
-                    if (df.loc[j,'q. start'] == df.loc[i,'q. start'] and df.loc[j,'q. end'] == df.loc[i,'q. end'] and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
-                    elif (df.loc[i,'q. end'] + 1 < df.loc[j,'q. end']):
-                        df.loc[j,'q. start'] = df.loc[i,'q. end'] + 1
+                    # if the hit extends past the end of the earlier one
+                    elif (i_end + 1 < j_end):
+                        # print("Changing j start " + str(j_start) + " to " + str(i_end + 1))
+                        df.loc[j,'q. start'] = i_end + 1
+                    # remove if the hit is contained in the earlier one
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
                 # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
-                if (df.loc[j,'q. end'] >= df.loc[i,'q. start'] and df.loc[j,'q. end'] <= df.loc[i,'q. end']):
+                if (j_end >= i_start and j_end <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
-                    if (df.loc[j,'q. start'] == df.loc[i,'q. start'] and df.loc[j,'q. end'] == df.loc[i,'q. end'] and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    # keep equivalent hits
+                    if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
-                    elif (df.loc[i,'q. start'] - 1 > df.loc[j,'q. start']):
-                        df.loc[j,'q. end'] = df.loc[i,'q. start'] - 1
+                    elif (i_start - 1 > j_start):
+                        # print("Changing j end " + str(j_end) + " to " + str(i_start - 1))
+                        df.loc[j,'q. end'] = i_start - 1
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0

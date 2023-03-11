@@ -70,7 +70,11 @@ def main():
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
-        # print(blast[['subject acc.', 'regulated', 'genus', 'species']])
+        with pd.option_context('display.max_rows', None,
+                       'display.max_columns', None,
+                       'display.precision', 3,
+                       ):
+             print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
         # for each hit (subject acc) linked with at least one regulated taxid
         for site in set(blast2['q. start'][blast2['regulated'] == True]): 
             subset = blast2[(blast2['q. start'] == site)]

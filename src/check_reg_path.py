@@ -74,48 +74,48 @@ def main():
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
-             print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
+            #  print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
         # for each hit (subject acc) linked with at least one regulated taxid
-        for site in set(blast2['q. start'][blast2['regulated'] == True]): 
-            subset = blast2[(blast2['q. start'] == site)]
-            subset = subset.sort_values(by=['regulated'], ascending=False)
-            subset = subset.reset_index(drop=True)
-            org = ""
+            for site in set(blast2['q. start'][blast2['regulated'] == True]): 
+                subset = blast2[(blast2['q. start'] == site)]
+                subset = subset.sort_values(by=['regulated'], ascending=False)
+                subset = subset.reset_index(drop=True)
+                org = ""
             
-            if sum(subset['regulated']) > 0: # if there's at least one regulated hit
-                n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
-                n_total = len(blast2['regulated'][blast2['q. start'] == site])
-                gene_names = ", ".join(set(subset['subject acc.']))
-                species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
-                taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
-                percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
+                if sum(subset['regulated']) > 0: # if there's at least one regulated hit
+                    n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
+                    n_total = len(blast2['regulated'][blast2['q. start'] == site])
+                    gene_names = ", ".join(set(subset['subject acc.']))
+                    species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                    taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
+                    percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
 
-                # if some of the organisms with this sequence aren't regulated, say so
-                if (n_reg < n_total):
-                    sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene_names)
-                    sys.stdout.write("\t\t     Species: %s\n" % species_list) 
-                    # could explicitly list which are and aren't regulated?
-                    # otherwise, raise a flag and say which superkingdom the flag belongs to
-                elif (n_reg == n_total):
-                    if subset['superkingdom'][0] == "Viruses":
-                        reg_vir = 1
-                        org = "virus"
-                    elif subset['superkingdom'][0] == "Bacteria": 
-                        reg_bac = 1
-                        org = "bacteria"
-                    elif 'kingdom' in subset:
-                        if subset['kingdom'][0] == "Fungi":
-                            org = "fungi"
-                            reg_fung = 1
-                        if subset['phylum'][0] == "Oomycota":
-                            org = "oomycete"
-                            reg_fung = 1 # sorry! to save complexity
-                    # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                    sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                else: # something is wrong, n_reg > n_total
-                    sys.stdout.write("\t...gene: %s\n" % gene_names)
-                    sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
+                    # if some of the organisms with this sequence aren't regulated, say so
+                    if (n_reg < n_total):
+                        sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene_names)
+                        sys.stdout.write("\t\t     Species: %s\n" % species_list) 
+                        # could explicitly list which are and aren't regulated?
+                        # otherwise, raise a flag and say which superkingdom the flag belongs to
+                    elif (n_reg == n_total):
+                        if subset['superkingdom'][0] == "Viruses":
+                            reg_vir = 1
+                            org = "virus"
+                        elif subset['superkingdom'][0] == "Bacteria": 
+                            reg_bac = 1
+                            org = "bacteria"
+                        elif 'kingdom' in subset:
+                            if subset['kingdom'][0] == "Fungi":
+                                org = "fungi"
+                                reg_fung = 1
+                            if subset['phylum'][0] == "Oomycota":
+                                org = "oomycete"
+                                reg_fung = 1 # sorry! to save complexity
+                        # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
+                        sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, org))
+                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                    else: # something is wrong, n_reg > n_total
+                        sys.stdout.write("\t...gene: %s\n" % gene_names)
+                        sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
         hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
         hits = hits.drop_duplicates()
         #Create output file 

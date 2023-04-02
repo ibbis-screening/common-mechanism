@@ -91,7 +91,7 @@ fi
 
 #If output not specified, set value 
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=${QUERY//.fasta/}
+    OUTPUT=${QUERY%.*}
     if [ ${#OUTPUT} -ge 200 ]; then
         OUTPUT=`echo $OUTPUT | cut -c1-200`
     fi

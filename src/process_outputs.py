@@ -136,31 +136,25 @@ def plot_hmmer(file, lookup, nhits=10):
     hmmer = readhmmer(file)
     hmmer = trimhmmer(hmmer)
     hmmer = hmmer.iloc[0:nhits,:]
-     
+        
     # check if this is a batch of sequences
     seq_names = hmmer['query name']
     seq_pres = set([i.split('_')[0] for i in seq_names])
-  
+
     if hmmer.shape[0] < nhits:
         nhits = hmmer.shape[0]
-    
+
     if re.search("biorisk", file):
         colours = colourscale([1.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
     else:
         colours = colourscale([0.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
 
+    hmmer['target name'] = hmmer['target name'].str.replace(".faa.final_tree.fa", "")
     new_names = []
-    for model in range(hmmer.shape[0]):
-        name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
-        # print(name_index)
-        # hmmer['description'][model] = lookup['Description'][name_index[0]]
-        try:
-            new_names.append(lookup['Description'][name_index[0]])
-        except:
-            new_names.append("")
-        # print(lookup['Description'][name_index[0]])
+    for model in hmmer['target name']:
+        new_names.append(lookup['Description'][lookup['ID'] == model].iloc[0])
     hmmer['description'] = new_names
-    
+
     # print(hmmer)
     fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description"], colours, nhits, hmmer['score'].max())
     fig.update_layout(showlegend=False, title={'text': 'HMM Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
@@ -188,7 +182,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = trimblast(blast)
     # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
-    blast.to_csv("test.csv")
+    # blast.to_csv("test.csv")
     blast = tophits(blast)
     # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     
@@ -218,5 +212,61 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
 
 
 
+# plot BLAST results from fragmented noncoding file
+def plot_blast_frag(file, reg_ids, vax_ids, nhits):
+    if check_blastfile(file) == 0:
+        return
+    if check_blastfile(file) == 2:
+		# generate empty plot saying "no hits"
+        fig = plt.figure(figsize=(10,3))
+        ax = fig.add_subplot(111, frameon=False)
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+        ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
+        fig.savefig(os.path.abspath(file + ".png"))
+        return
+	
+    blast = readblast(file)
+    blast['coords'] = blast['query acc.'].transform(lambda x: re.search(':(.+?)$', x).group(1))
+    coords = blast["coords"].str.split("-", n = 1, expand = True)
+    blast['start_add'] = coords[0]
+    blast['start_add'] = blast['start_add'].transform(lambda x: int(x))
+    blast['q. start'] = blast['q. start'] + blast['start_add']
+    blast['q. end'] = blast['q. end'] + blast['start_add']
+    blast['query length'] = blast['q. end'].max()
+
+    blast = taxdist(blast, reg_ids, vax_ids)
+    
+    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
+    # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    blast = trimblast(blast)
+    # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    # blast.to_csv("test.csv")
+    blast = tophits(blast)
+    # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
+    
+    blast = blast.drop_duplicates('subject acc.') # drop hits with the same gene name
+    blast = blast.reset_index()
+        
+    blast['label'] = blast.groupby(['q. start','q. end'])['subject acc.'].transform(lambda x: ','.join(x))
+    blast['description'] = blast.groupby(['q. start','q. end'])['subject title'].transform(lambda x: ','.join(x))
+    blast['regulated_sum'] = blast.groupby(['q. start','q. end'])['regulated'].transform(lambda x: any(x))
+    blast = blast.drop_duplicates(['q. start','q. end'])
+    blast.reset_index(inplace=True)
+
+    if blast.shape[0] < nhits:
+        nhits = blast.shape[0]
+    
+    colours = colourscale(blast['regulated_sum'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
+    names = blast['description']
+
+    blast = blast.iloc[0:nhits,:]
+    names = names[0:(nhits)]
+    colours = colours[0:(nhits)]
+
+    # names = blast['subject acc.'] + ": " + blast['subject title']
+    fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
+    fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
+    fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)
 
 

@@ -1,4 +1,4 @@
-#! /Users/wheelern/opt/miniconda3/bin/python
+#! /usr/bin/env python
 
 # parse all .screen.txt files in a directory and count stats on each flag and overall calls
 # Usage: parse_test_res.py (in directory of choice)
@@ -12,6 +12,7 @@ biorisk = []
 reg_virus = []
 reg_bact = []
 reg_fungi = []
+reg_nonreg = []
 benign = []
 
 def check_flags(matching, bin_list):
@@ -64,6 +65,13 @@ for res in glob.glob('*.screen'):
         else:
             reg_fungi.append("P")
 
+        # reg_nonreg screen - ID cases where the same sequence is found in regulated and non-regulated organisms
+        matching_reg_nonreg = [s for s in lines if "found in both regulated and non-regulated organisms" in s]
+        if len(matching_reg_nonreg) > 0:
+            reg_nonreg.append("F")
+        else:
+            reg_nonreg.append("P")
+
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         nohits = [s for s in lines if "no benign hits found" in s]
         fail = [s for s in lines if "Regulated region failed to clear" in s]
@@ -84,9 +92,9 @@ for res in glob.glob('*.screen'):
 
 #print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 
-breakdown = list(zip(names, biorisk, reg_virus, reg_bact, reg_fungi, benign))
+breakdown = list(zip(names, biorisk, reg_virus, reg_bact, reg_fungi, reg_nonreg, benign))
 summary = []
-for name, risk, reg_vir, reg_bac, reg_fungi, ben in breakdown:
+for name, risk, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
         # if a biorisk is flagged, flag the whole thing
     if risk == "F":
         summary.append((name, "F"))
@@ -110,7 +118,7 @@ for name, risk, reg_vir, reg_bac, reg_fungi, ben in breakdown:
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)
-breakdown.columns = ("names", "biorisk", "regulated_virus", "regulated_bacteria", "regulated_fungi/oomycetes", "benign")
+breakdown.columns = ("names", "biorisk", "regulated_virus", "regulated_bacteria", "regulated_fungi/oomycetes", "mix of reg and non-reg", "benign")
 breakdown.to_csv("test_itemized.csv", index=False)
 
 

@@ -35,7 +35,7 @@ def main():
 
     lookup = pd.read_csv(args.db + "/biorisk_annotations.csv")
     lookup.fillna(False, inplace=True)
-    # print(lookup)
+    print(lookup)
 
     # read in HMMER output and check for valid hits
     res = check_blastfile(in_file)
@@ -49,10 +49,10 @@ def main():
         hmmer['description'] = ''
         hmmer['Must flag'] = False
         hmmer = hmmer.reset_index(drop=True)
-        # print(hmmer)
+        print(hmmer)
         for model in range(hmmer.shape[0]):
             name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
-            # print(name_index)
+            print(name_index)
             hmmer.loc[model, 'description'] = lookup.iloc[name_index[0], 1]
             hmmer.loc[model, 'Must flag'] = lookup.iloc[name_index[0], 2]
         if hmmer.shape[0] > 0:

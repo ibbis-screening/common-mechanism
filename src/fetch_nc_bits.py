@@ -14,7 +14,6 @@ nc_bits = 0
 
 # check if the nr hits file is empty
 if check_blastfile(query) == 0:
-    sys.stdout.write("\tERROR: Protein search has failed\n")
     nc_bits = "all"
 elif check_blastfile(query) == 2:
     sys.stdout.write("\t...no hits to the nr database\n")

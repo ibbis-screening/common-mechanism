@@ -170,13 +170,13 @@ fi
 s2_time=$(date)
 echo -e "    STEP 2 completed at $s2_time\n" >> ${OUTPUT}.screen
 
-# nucleotide screening
+# Step 3: nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY}
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY} >> ${OUTPUT}.screen
 else
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY}
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${QUERY} >> ${OUTPUT}.screen
 fi
 
 if [ -f "${OUTPUT}".noncoding.fasta ]; then 
@@ -193,7 +193,7 @@ fi
 s3_time=$(date)
 echo -e "    STEP 3 completed at $s3_time\n" >> ${OUTPUT}.screen
 
-# Step 3: benign DB scan
+# Step 4: benign DB scan
 #date
 echo -e " >> STEP 4: Checking any pathogen regions for benign components..."
 hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp

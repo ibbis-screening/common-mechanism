@@ -56,7 +56,7 @@ if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
     # print("\t...no significant protein hits")
 elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
-    sys.stdout.write("\t...no noncoding regions >= 50 bases found, skipping nt scan\n")
+    sys.stdout.write("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
 else: 
     # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]

@@ -15,7 +15,7 @@ In addition to the CommonMechanism source code, users may need to install a numb
 ## HMMER search
 The CommonMechanism pipeline requires:
  * hmmer 
- * transeq
+ * transeq (from the EMBOSS package)
 
 to run the biorisk search.
 
@@ -28,6 +28,7 @@ The CommonMechanism pipeline has the following python package dependencies:
  * biopython
  * matplotlib
  * kaleido
+ * bedtools
  * pybedtools 
 
 ## BLAST Aligner 
@@ -47,6 +48,12 @@ The CommonMechanism pipeline requires users to install [DIAMOND](https://github.
     sudo make install
 
 Following installation of all required packages, please see [Required Data](#required-data)
+
+# RNA family search
+
+The CommonMechanism uses Infernal to search sequences for known benign RNA families. It can be installed using:
+
+`conda install -c bioconda infernal`
 
 # Required Data 
 The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder. The resulting file structure (and required storage space) will be as follows:

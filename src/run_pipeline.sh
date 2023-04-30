@@ -131,7 +131,7 @@ echo -e " >> STARTED AT $start_time" | tee -a ${OUTPUT}.screen
 echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 
 # Step 1: biorisk DB scan
-echo " >> STEP 1: Running biorisk hmm scan..."  | tee -a ${OUTPUT}.screen
+echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 if [ ! -f "${OUTPUT}".faa ]; then

@@ -15,7 +15,7 @@ In addition to the CommonMechanism source code, users may need to install a numb
 ## HMMER search
 The CommonMechanism pipeline requires:
  * hmmer 
- * transeq
+ * transeq (from the EMBOSS package)
 
 to run the biorisk search.
 

@@ -127,7 +127,7 @@ fi
 CM_DIR="$( dirname "$0" )"
 
 start_time=$(date)
-echo -e " >> STARTED AT $start_time"
+echo -e " >> STARTED AT $start_time" >> ${OUTPUT}.screen
 echo -e " >> Screening $QUERY"
 
 # Step 1: biorisk DB scan
@@ -140,10 +140,10 @@ fi
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 echo -e "\t...checking hmmscan results"
-python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/
+python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/ >> ${OUTPUT}.screen
 
 s1_time=$(date)
-echo -e "    STEP 1 completed at $s1_time\n"
+echo -e "    STEP 1 completed at $s1_time\n" >> ${OUTPUT}.screen
 
 # Step 2: taxon ID/protein screening
 echo " >> STEP 2: Checking regulated pathogen proteins..."
@@ -153,7 +153,7 @@ if [ "$BLAST" = 1 ]; then
         ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
     fi
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH >> ${OUTPUT}.screen
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
@@ -164,11 +164,11 @@ else
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
         rm "${OUTPUT}".reg_path_coords.csv
     fi
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH >> ${OUTPUT}.screen
 fi
 
 s2_time=$(date)
-echo -e "    STEP 2 completed at $s2_time\n"
+echo -e "    STEP 2 completed at $s2_time\n" >> ${OUTPUT}.screen
 
 # nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..."
@@ -185,13 +185,13 @@ if [ -f "${OUTPUT}".noncoding.fasta ]; then
         blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
     fi
     echo -e "\t...checking blastn results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH >> ${OUTPUT}.screen
 else 
     echo -e "\t...skipping nucleotide search"
 fi
 
 s3_time=$(date)
-echo -e "    STEP 3 completed at $s3_time\n"
+echo -e "    STEP 3 completed at $s3_time\n" >> ${OUTPUT}.screen
 
 # Step 3: benign DB scan
 #date
@@ -199,10 +199,10 @@ echo -e " >> STEP 4: Checking any pathogen regions for benign components..."
 hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 
-python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${QUERY} -d ${DB_PATH}/benign_db/ # added the original file path here to fetch sequence length, can tidy this
+python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${QUERY} -d ${DB_PATH}/benign_db/ >> ${OUTPUT}.screen
 
 finish_time=$(date)
-echo -e " >> COMPLETED AT $finish_time"
+echo -e " >> COMPLETED AT $finish_time" >> ${OUTPUT}.screen
 
 # Visualising outputs; functional characterization
 

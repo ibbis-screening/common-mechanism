@@ -13,6 +13,8 @@ f_open = open(result.fasta_file, "r")
 for rec in SeqIO.parse(f_open, "fasta"):
    id = rec.description
    file_id = "".join(x for x in id if x.isalnum())
+   if len(file_id) > 150:
+      file_id = file_id[:150]
    seq = rec.seq
    id_file = open(file_id+".fasta", "w")
    id_file.write(">"+str(id)+"\n"+str(seq))

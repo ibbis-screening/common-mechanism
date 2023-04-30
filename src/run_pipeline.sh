@@ -78,13 +78,13 @@ while getopts "t:d:q:o:c:b:" OPTION
 
 #INITIALIZING: Check for values
 #Check input query 
-echo " >> STEP 0: Checking for valid options..." 
+echo " >> STEP 0: Checking for valid options..." | tee -a ${OUTPUT}.screen
 if [ "$QUERY" == "" ]; then
-    echo " ERROR: no input query file specified"
+    echo " ERROR: no input query file specified" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1 
 elif [ ! -f "$QUERY" ]; then 
-    echo " ERROR: specified input query file does not exist"
+    echo " ERROR: specified input query file does not exist" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1
 fi
@@ -100,11 +100,11 @@ fi
 
 #Check input database folder 
 if [ "$DB_PATH" == "" ]; then
-    echo " ERROR: screening database path not specified"
+    echo " ERROR: screening database path not specified" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1
 elif [ ! -d "$DB_PATH" ]; then
-    echo " ERROR: specified database folder does not exist"
+    echo " ERROR: specified database folder does not exist" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1
 else
@@ -113,11 +113,11 @@ else
     benign_test=${DB_PATH}/benign_db/benign.hmm
     split_nr_test=${DB_PATH}/nr_dmnd/nr.1.dmnd
     if [ ! -f "$biorisk_test" ]; then
-        echo " ERROR: database folder does not contain biorisk database"
+        echo " ERROR: database folder does not contain biorisk database" | tee -a ${OUTPUT}.screen
         exit 1 
     fi 
     if [ ! -f "$benign_test" ]; then
-        echo " ERROR: database folder does not contain benign database" 
+        echo " ERROR: database folder does not contain benign database"  | tee -a ${OUTPUT}.screen
         exit 1 
     fi 
 fi
@@ -128,14 +128,14 @@ CM_DIR="$( dirname "$0" )"
 
 start_time=$(date)
 echo -e " >> STARTED AT $start_time" | tee -a ${OUTPUT}.screen
-echo -e " >> Screening $QUERY"
+echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 
 # Step 1: biorisk DB scan
-echo " >> STEP 1: Running biorisk hmm scan..." 
+echo " >> STEP 1: Running biorisk hmm scan..."  | tee -a ${OUTPUT}.screen
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 if [ ! -f "${OUTPUT}".faa ]; then
-    echo -e "\t ERROR: transeq failed"
+    echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
@@ -146,7 +146,7 @@ s1_time=$(date)
 echo -e "    STEP 1 completed at $s1_time\n" | tee -a ${OUTPUT}.screen
 
 # Step 2: taxon ID/protein screening
-echo " >> STEP 2: Checking regulated pathogen proteins..."
+echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.screen
 if [ "$BLAST" = 1 ]; then
     if [ ! -f "${OUTPUT}".nr.blastx ]; then
         echo -e "\t...running run_blastx.sh"
@@ -158,7 +158,6 @@ else
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
         ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $QUERY -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES 
-        # cat ${OUTPUT}.nr* > ${OUTPUT}.nr.dmnd
     fi
     echo -e "\t...checking diamond results"
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
@@ -171,7 +170,7 @@ s2_time=$(date)
 echo -e "    STEP 2 completed at $s2_time\n" | tee -a ${OUTPUT}.screen
 
 # Step 3: nucleotide screening
-echo " >> STEP 3: Checking regulated pathogen nucleotides..."
+echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
     python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${QUERY} | tee -a ${OUTPUT}.screen
@@ -195,7 +194,7 @@ echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
 
 # Step 4: benign DB scan
 #date
-echo -e " >> STEP 4: Checking any pathogen regions for benign components..."
+echo -e " >> STEP 4: Checking any pathogen regions for benign components..." | tee -a ${OUTPUT}.screen
 hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 

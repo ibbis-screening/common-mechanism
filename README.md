@@ -28,6 +28,7 @@ The CommonMechanism pipeline has the following python package dependencies:
  * biopython
  * matplotlib
  * kaleido
+ * bedtools
  * pybedtools 
 
 ## BLAST Aligner 

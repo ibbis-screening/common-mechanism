@@ -17,20 +17,19 @@ import os, sys, argparse
 import pandas as pd
 
 def check_for_benign(query, coords):
+        
+        cleared = [0] * coords.shape[0]
+        
+        # PROTEIN HITS
         # for each set of hits, need to pull out the coordinates covered by benign entries
         hmmscan = query + ".benign.hmmscan"
-        blast = query + ".benign.blastn"
-        if check_blastfile(hmmscan) == 2 and check_blastfile(blast) == 2:
-            sys.stdout.write("\t...no benign hits found")
-            exit(0)
         if check_blastfile(hmmscan) == 2:
-            sys.stdout.write("\t...no benign gene hits")
+            sys.stdout.write("\t...no housekeeping protein hits\n")
         else:
             hmmer = readhmmer(hmmscan)
     #        print(hmmer)
             for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 # look at only the hmmer hits that overlap with it
-                cleared = 0
                 htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region]) & (hmmer['ali to'] > coords['q. end'][region])) & ~((hmmer['ali from'] < coords['q. start'][region]) & (hmmer['ali to'] < coords['q. start'][region]))]
                 if htrim.shape[0] > 0:
                     htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
@@ -44,31 +43,72 @@ def check_for_benign(query, coords):
                             hit = hit.replace(".faa.final_tree.used_alg.fa", "")
                             descriptions.append(benign_desc['Annotation'][benign_desc['ID'] == hit])
                         annot_string = "\n".join(str(v) for v in descriptions)
-                        sys.stdout.write("\t...Housekeeping genes - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS")
+                        sys.stdout.write("\t...Housekeeping proteins - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
                         sys.stdout.write(annot_string)
-                        cleared = 1
+                        cleared[region] = 1
                     else:
-                        sys.stdout.write("\t...Housekeeping genes - <90% coverage achieved = FAIL")
+                        sys.stdout.write("\t...Housekeeping proteins - <90% coverage achieved = FAIL\n")
                     
-
-        # annotate (and clear?) synbio parts
-        if check_blastfile(blast) == 2:
-            sys.stdout.write("\t...no synbio parts hits")
+        # RNA HITS
+        # for each set of hits, need to pull out the coordinates covered by benign entries
+        cmscan = query + ".benign.cmscan"
+        
+        if check_blastfile(cmscan) == 2:
+            sys.stdout.write("\t...no benign gene hits\n")
         else:
-            cleared = 0
+            cmscan = readcmscan(cmscan)
+    #        print(cmscan)
+            for region in range(0, coords.shape[0]): # for each regulated pathogen region
+                # look at only the cmscan hits that overlap with it
+                qlen = abs(coords['q. start'][region] - coords['q. end'][region])
+                htrim = cmscan[~((cmscan['seq from'] > coords['q. start'][region]) & (cmscan['seq to'] > coords['q. end'][region])) & ~((cmscan['seq from'] < coords['q. end'][region]) & (cmscan['seq to'] < coords['q. start'][region]))]
+                if htrim.shape[0] > 0:
+                    htrim = htrim.assign(coverage = abs(htrim['seq to'] - htrim['seq from']) / qlen)
+                    if any(htrim['coverage'] > 0.90):
+                        htrim = htrim[htrim['coverage'] > 0.90]
+                        htrim = htrim.reset_index(drop=True)
+                        descriptions = []
+                        for row in range(htrim.shape[0]):
+                            hit = htrim['target name'][row]
+                            descriptions.append(hit)
+                        annot_string = "\n\t...".join(str(v) for v in descriptions)
+                        sys.stdout.write("\t...Housekeeping RNAs - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
+                        sys.stdout.write("\t...RNA family: " + annot_string + "\n")
+                        cleared[region] = 1
+                    else:
+                        sys.stdout.write("\t...Housekeeping RNAs - <90% coverage achieved = FAIL\n")
+
+        # SYNBIO HITS
+        # annotate and clear benign nucleotide sequences
+        blast = query + ".benign.blastn"
+        if check_blastfile(blast) == 2:
+            sys.stdout.write("\t...no Synbio sequence hits\n")
+        else:
             blastn = readblast(blast) # synbio parts
+            blastn = trimblast(blastn)
+            blastn = tophits(blastn)
             for region in range(0, coords.shape[0]): # for each regulated pathogen region
                 htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
-                htrim = htrim.assign(coverage = abs(htrim['q. end'] - htrim['q. start']) / htrim['query length'])
-                if any(htrim['coverage'] > 0.90):
-                    sys.stdout.write("\t...Synbio parts - >90% coverage achieved = PASS")
-                    cleared = 1
+                # print(htrim)
+                if any(htrim['q. coverage'] > 0.90):
+                    htrim = htrim[htrim['q. coverage'] > 0.90]
+                    htrim = htrim.reset_index(drop=True)
+                    descriptions = []
+                    for row in range(htrim.shape[0]):
+                        hit = htrim['subject title'][row]
+                        descriptions.append(hit)
+                    annot_string = "\n\t...".join(str(v) for v in descriptions)
+                    sys.stdout.write("\t...Synbio sequences - >90% coverage achieved = PASS\n")
+                    sys.stdout.write("\t...Synbio parts: " + annot_string + "\n")
+                    cleared[region] = 1
                 else:
-                    sys.stdout.write("\t...Synbio parts - <90% coverage achieved = FAIL")
+                    sys.stdout.write("\t...Synbio sequences - <90% coverage achieved = FAIL\n")
                 
-            if cleared == 0:
-                print("\t...Regulated region failed to clear")
-                sys.stdout.write("\t...regulated region failed to clear\n")
+            for region in range(0, coords.shape[0]):
+                if cleared[region] == 0:
+                    sys.stdout.write("\t...Regulated region at bases " + coords.iloc[region, 0] + " to "  + coords.iloc[region, 1] + "failed to clear: FLAG\n")
+            if sum(cleared) == len(cleared):
+                sys.stdout.write("\n\t...all regulated regions cleared: PASS\n")
 
 def main(): 
     parser = argparse.ArgumentParser()
@@ -97,13 +137,7 @@ def main():
         coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
         check_for_benign(args.sample_name, coords)
     else:
-        sys.stdout.write("\t...no regulated protein regions to clear\n")
-
-    if os.path.exists(args.sample_name + ".reg_path_coords_nt.csv"):
-        coords = pd.read_csv(args.sample_name + ".reg_path_coords_nt.csv")
-        check_for_benign(args.sample_name, coords)
-    else:
-        sys.stdout.write("\t...no regulated nucleotide regions to clear\n")
+        sys.stdout.write("\t...no regulated regions to clear\n")
     
 if __name__ == "__main__":
     main()

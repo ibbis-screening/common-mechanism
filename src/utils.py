@@ -180,6 +180,36 @@ def readhmmer(fileh):
     return hmmer
 
 #####################################################################################
+#readcmcan
+#usage:  read in cmscan output files
+#input:
+#   - hmmer output file name
+def readcmscan(fileh):
+    columns = ['target name', 'accession','query name','accession','mdl','mdl from','mdl to', 'seq from', 'seq to', 'strand', 'trunc', 'pass', 'gc', 'bias', 'score', 'E-value', 'inc', 'description of target']
+    
+    cmscan = []
+
+    with open(fileh, 'r') as f:
+        for line in f:
+            if "# Program:         cmscan" in line:
+                break
+            if "#" in line:
+                continue
+            bits = re.split('\s+', line)
+            description = " ".join(bits[17:])
+            bits = bits[:17]
+            bits.append(description)
+            cmscan.append(bits)
+    cmscan = pd.DataFrame(cmscan, columns=columns)
+    cmscan['E-value'] = pd.to_numeric(cmscan['E-value'])
+    cmscan['score'] = pd.to_numeric(cmscan['score'])
+    cmscan['seq from'] = pd.to_numeric(cmscan['seq from'])
+    cmscan['seq to'] = pd.to_numeric(cmscan['seq to'])
+
+#    print(cmscan)
+    return cmscan
+
+#####################################################################################
 def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so coordinates will be complicated
     # rank hits by bitscore
     hmmer = hmmer.sort_values(by=['score'], ascending=False)

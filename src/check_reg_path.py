@@ -41,8 +41,10 @@ def main():
     reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids", header=None)
     vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids", header=None)
 
-    sample_name = re.sub("\..*", "", args.in_file)
-    # print("Sample name: " + sample_name)
+    # sample_name = re.sub("\..*", "", args.in_file)
+    sample_name = re.sub(".nr.*", "", args.in_file)
+    sample_name = re.sub(".nt.blastn", "", sample_name)
+    print("Sample name: " + sample_name)
     
     # if there are already regulated regions written to file for this query, add to them
     hits1 = None

@@ -49,6 +49,12 @@ The CommonMechanism pipeline requires users to install [DIAMOND](https://github.
 
 Following installation of all required packages, please see [Required Data](#required-data)
 
+# RNA family search
+
+The CommonMechanism uses Infernal to search sequences for known benign RNA families. It can be installed using:
+
+`conda install -c bioconda infernal`
+
 # Required Data 
 The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder. The resulting file structure (and required storage space) will be as follows:
 

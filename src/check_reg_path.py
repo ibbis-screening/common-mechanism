@@ -94,6 +94,7 @@ def main():
 
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
+        hits = pd.DataFrame(columns=['q. start', 'q. end'])
         # print(blast2)
         # sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
         with pd.option_context('display.max_rows', None,
@@ -138,12 +139,13 @@ def main():
                                 org = "oomycete"
                                 reg_fung = 1 # sorry! to save complexity
                         # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
+                        hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                         sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                         sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                     else: # something is wrong, n_reg > n_total
                         sys.stdout.write("\t...gene: %s\n" % gene_names)
                         sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
-        hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
+        # hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
         hits = hits.drop_duplicates()
         #Create output file 
         if hits1 is not None:

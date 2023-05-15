@@ -43,11 +43,11 @@ def check_for_benign(query, coords, benign_desc):
                         hit = hit.replace(".faa.final_tree.used_alg.fa", "")
                         descriptions.append(hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit]) + "\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
-                    sys.stdout.write("\t...Housekeeping proteins - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
-                    sys.stdout.write("\t   " + annot_string)
+                    sys.stdout.write("\t\t -->Housekeeping proteins - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
+                    sys.stdout.write("\t\t   " + annot_string)
                     cleared[region] = 1
                 else:
-                    sys.stdout.write("\t...Housekeeping proteins - <90% coverage achieved = FAIL\n")
+                    sys.stdout.write("\t\t -->Housekeeping proteins - <90% coverage achieved = FAIL\n")
                 
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
@@ -72,11 +72,11 @@ def check_for_benign(query, coords, benign_desc):
                         hit = htrim['target name'][row]
                         descriptions.append(hit)
                     annot_string = "\n\t...".join(str(v) for v in descriptions)
-                    sys.stdout.write("\t...Housekeeping RNAs - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved: PASS\n")
-                    sys.stdout.write("\t...RNA family: " + annot_string + "\n")
+                    sys.stdout.write("\t\t -->Housekeeping RNAs - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved: PASS\n")
+                    sys.stdout.write("\t\t   RNA family: " + annot_string + "\n")
                     cleared[region] = 1
                 else:
-                    sys.stdout.write("\t...Housekeeping RNAs - <90% coverage achieved = FAIL\n")
+                    sys.stdout.write("\t\t -->Housekeeping RNAs - <90% coverage achieved = FAIL\n")
 
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
@@ -98,17 +98,17 @@ def check_for_benign(query, coords, benign_desc):
                     hit = htrim['subject title'][row]
                     descriptions.append(hit)
                 annot_string = "\n\t...".join(str(v) for v in descriptions)
-                sys.stdout.write("\t...Synbio sequences - >90% coverage achieved = PASS\n")
-                sys.stdout.write("\t...Synbio parts: " + annot_string + "\n")
+                sys.stdout.write("\t\t -->Synbio sequences - >90% coverage achieved = PASS\n")
+                sys.stdout.write("\t\t   Synbio parts: " + annot_string + "\n")
                 cleared[region] = 1
             else:
-                sys.stdout.write("\t...Synbio sequences - <90% coverage achieved = FAIL\n")
+                sys.stdout.write("\t\t -->Synbio sequences - <90% coverage achieved = FAIL\n")
             
     for region in range(0, coords.shape[0]):
         if cleared[region] == 0:
-            sys.stdout.write("\t...Regulated region at bases " + str(int(coords.iloc[region, 0])) + " to "  + str(int(coords.iloc[region, 1])) + " failed to clear: FLAG\n")
+            sys.stdout.write("\t\t -->Regulated region at bases " + str(int(coords.iloc[region, 0])) + " to "  + str(int(coords.iloc[region, 1])) + " failed to clear: FLAG\n")
     if sum(cleared) == len(cleared):
-        sys.stdout.write("\n\t...all regulated regions cleared: PASS\n")
+        sys.stdout.write("\n\t\t -->all regulated regions cleared: PASS\n")
 
 def main(): 
     parser = argparse.ArgumentParser()

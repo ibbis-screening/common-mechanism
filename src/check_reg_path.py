@@ -111,14 +111,14 @@ def main():
                     n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
                     n_total = len(blast2['regulated'][blast2['q. start'] == site])
                     gene_names = ", ".join(set(subset['subject acc.']))
-                    coordinates = str(int(site)) + " - " + str(int(blast2['q. end'][blast2['q. start'] == site]))
+                    coordinates = str(int(site)) + " - " + str(int(blast2['q. end'][blast2['q. start'] == site][0]))
                     species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
                     taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
                     percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
 
                     # if some of the organisms with this sequence aren't regulated, say so
                     if (n_reg < n_total):
-                        sys.stdout.write("\t\t --> %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
+                        sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
                         sys.stdout.write("\t\t     Species: %s\n" % species_list) 
                         # could explicitly list which are and aren't regulated?
                         # otherwise, raise a flag and say which superkingdom the flag belongs to
@@ -137,7 +137,7 @@ def main():
                                 org = "oomycete"
                                 reg_fung = 1 # sorry! to save complexity
                         # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                        sys.stdout.write("\t\t --> %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
+                        sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                         sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                     else: # something is wrong, n_reg > n_total
                         sys.stdout.write("\t...gene: %s\n" % gene_names)

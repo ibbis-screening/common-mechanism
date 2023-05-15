@@ -94,7 +94,8 @@ def main():
 
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
-        sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
+        # print(blast2)
+        # sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
         with pd.option_context('display.max_rows', None,
                        'display.max_columns', None,
                        'display.precision', 3,

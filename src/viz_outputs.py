@@ -26,7 +26,7 @@ def main():
     reg_ids = pd.read_csv(args.db + '/biorisk_db/reg_taxids', header=None)
     vax_ids = pd.read_csv(args.db + '/benign_db/vax_taxids', header=None)
     biorisk_desc = pd.read_csv(args.db + '/biorisk_db/biorisk_annotations.csv')
-    benign_desc = pd.read_csv(args.db + '/benign_db/benign_annotations.csv')
+    benign_desc = pd.read_csv(args.db + '/benign_db/benign_annotations.tsv', sep="\t")
 
     # define number of hits to display
     if args.n_hits is None:

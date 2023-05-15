@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 ##################################################################################################
-#check_reg_path_dmnd_prot.py checks results for regulated pathogen and prints any 
+#check_reg_path.py checks results for regulated pathogen and prints any 
 #matched coordinates
 #   This file will ignore any synthetic constructs
 #
@@ -9,7 +9,7 @@
 #This file is part of the CommonMechanism
 ##################################################################################################
 #Usage:
-#   python check_reg_path_dmnd_prot.py -i INPUT
+#   python check_reg_path.py -i INPUT -d database_folder
 #       -i, --input 
 ##################################################################################################
 from utils import *
@@ -22,7 +22,7 @@ pd.set_option("display.max_colwidth", 10000)
 def main(): 
     parser = argparse.ArgumentParser() 
     parser.add_argument("-i","--input",dest="in_file", 
-        required=True, help="Input query file (QUERY.nr.dmnd)")
+        required=True, help="Input query file (e.g. QUERY.nr.dmnd)")
     parser.add_argument("-d","--database", dest="db",
         required=True,help="database folder (must contain vax_taxids and reg_taxids file)")
     args=parser.parse_args() 
@@ -44,7 +44,7 @@ def main():
     # sample_name = re.sub("\..*", "", args.in_file)
     sample_name = re.sub(".nr.*", "", args.in_file)
     sample_name = re.sub(".nt.blastn", "", sample_name)
-    print("Sample name: " + sample_name)
+    # print("Sample name: " + sample_name)
     
     # if there are already regulated regions written to file for this query, add to them
     hits1 = None
@@ -70,6 +70,29 @@ def main():
     reg_vir = 0
     reg_fung = 0
 
+    # if this is the nucleotide screen, check if any weak protein flags can be negated with strong non-regulated nt ones
+    if re.findall(".nt.blastn", args.in_file):
+        if hits1 is not None:
+            for region in range(0, hits1.shape[0]): # for each regulated pathogen region
+                # look at only the hits that overlap it
+                qlen = abs(hits1['q. start'][region] - hits1['q. end'][region])
+                htrim = blast2[~((blast2['q. start'] > hits1['q. end'][region]) & (blast2['q. end'] > hits1['q. end'][region])) & ~((blast2['q. start'] < hits1['q. start'][region]) & (blast2['q. end'] < hits1['q. start'][region]))]
+                species_list = textwrap.fill(", ".join(set(htrim['species'])), 100).replace("\n", "\n\t\t     ")
+                taxid_list = textwrap.fill(", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
+                percent_ids = (" ".join(map(str, set(htrim['% identity']))))
+                if htrim.shape[0] > 0:
+                    if any(htrim['q. coverage'] > 0.90):
+                        htrim = htrim[htrim['q. coverage'] > 0.90]
+                        htrim = htrim.reset_index(drop=True)
+                        descriptions = []
+                        for row in range(htrim.shape[0]):
+                            hit = htrim['subject title'][row]
+                            descriptions.append(hit)
+                        annot_string = "\n\t...".join(str(v) for v in descriptions)
+                        sys.stdout.write("\t...Regulated protein region at bases " + str(int(hits1['q. start'][region])) + " to " + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n")
+                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+
+
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
         with pd.option_context('display.max_rows', None,
@@ -88,13 +111,14 @@ def main():
                     n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
                     n_total = len(blast2['regulated'][blast2['q. start'] == site])
                     gene_names = ", ".join(set(subset['subject acc.']))
+                    coordinates = str(int(site)) + " - " + str(int(blast2['q. end'][blast2['q. start'] == site]))
                     species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
                     taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
                     percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
 
                     # if some of the organisms with this sequence aren't regulated, say so
                     if (n_reg < n_total):
-                        sys.stdout.write("\t\t --> %s found in both regulated and non-regulated organisms\n" % gene_names)
+                        sys.stdout.write("\t\t --> %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
                         sys.stdout.write("\t\t     Species: %s\n" % species_list) 
                         # could explicitly list which are and aren't regulated?
                         # otherwise, raise a flag and say which superkingdom the flag belongs to
@@ -113,7 +137,7 @@ def main():
                                 org = "oomycete"
                                 reg_fung = 1 # sorry! to save complexity
                         # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                        sys.stdout.write("\t\t --> %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, org))
+                        sys.stdout.write("\t\t --> %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                         sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                     else: # something is wrong, n_reg > n_total
                         sys.stdout.write("\t...gene: %s\n" % gene_names)

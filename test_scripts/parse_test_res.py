@@ -72,6 +72,13 @@ for res in glob.glob('*.screen'):
         else:
             reg_nonreg.append("P")
 
+        homol_fail = [s for s in lines if "homology search has failed" in s]
+        if len(homol_fail) > 0:
+            reg_virus[-1] = "Err"
+            reg_bact[-1] = "Err"
+            reg_fungi[-1] = "Err"
+            reg_nonreg[-1] = "Err"
+
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]
         anyfail = [s for s in lines if "failed to clear: FLAG" in s]

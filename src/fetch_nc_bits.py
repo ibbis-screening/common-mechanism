@@ -27,7 +27,7 @@ else:
     blast = blast[blast['% identity'] >= 90]
     if blast.shape[0] > 0:
     # find noncoding bits
-        sys.stdout.write("\t...protein hits found, fetching noncoding regions\n")
+        sys.stdout.write("\t...protein hits found, fetching nt regions not covered by a 90% ID hit or better\n")
         hits = []
         for i in range(blast.shape[0]):
             pair = [blast['q. start'][i], blast['q. end'][i]]

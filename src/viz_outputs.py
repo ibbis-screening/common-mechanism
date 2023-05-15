@@ -43,7 +43,13 @@ def main():
 
     # viz taxon IDs
     plot_blast(taxid, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
-    plot_blast_frag(taxid2, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
+    # if the nc search is on fragments, treat it differently
+    with open(taxid2) as f:
+        txt=f.read()
+    if re.findall(':(.+?)-(.+?)$', txt):
+        plot_blast_frag(taxid2, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
+    else:
+        plot_blast(taxid2, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
     plot_tax(taxid, reg_ids, args.query) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
 
 

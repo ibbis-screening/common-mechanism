@@ -28,9 +28,9 @@ def plot_pie(blast, query):
     for i in range(len(levels)): 
         blast.loc[blast[levels[i]]=='',levels[i]] = blast.loc[blast[levels[i]]=='',levels[i-1]] + "  "
         blast_collapse = blast.sort_values(levels).groupby(levels[:(i+1)], sort=False)
-        averages = blast_collapse.mean()['% identity']
+        averages = blast_collapse['% identity'].mean()
         counts = list(blast_collapse.count()['% identity'])
-        colours = colourscale(blast_collapse.sum()['regulated'], counts, averages)
+        colours = colourscale(blast_collapse['regulated'].sum(), counts, averages)
         values = list(blast_collapse.count()['% identity'])
         values_scaled = np.asarray(values)/sum(np.asarray(values))*sizes[i]
         labels = np.concatenate(list(blast_collapse[levels[i]].unique()))
@@ -228,6 +228,7 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
         return
 	
     blast = readblast(file)
+    print(blast)
     blast['coords'] = blast['query acc.'].transform(lambda x: re.search(':(.+?)$', x).group(1))
     coords = blast["coords"].str.split("-", n = 1, expand = True)
     blast['start_add'] = coords[0]

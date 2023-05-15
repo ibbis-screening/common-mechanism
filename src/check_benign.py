@@ -72,7 +72,7 @@ def check_for_benign(query, coords):
                             hit = htrim['target name'][row]
                             descriptions.append(hit)
                         annot_string = "\n\t...".join(str(v) for v in descriptions)
-                        sys.stdout.write("\t...Housekeeping RNAs - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
+                        sys.stdout.write("\t...Housekeeping RNAs - >90% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved: PASS\n")
                         sys.stdout.write("\t...RNA family: " + annot_string + "\n")
                         cleared[region] = 1
                     else:

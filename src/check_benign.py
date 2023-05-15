@@ -104,11 +104,11 @@ def check_for_benign(query, coords):
                 else:
                     sys.stdout.write("\t...Synbio sequences - <90% coverage achieved = FAIL\n")
                 
-            for region in range(0, coords.shape[0]):
-                if cleared[region] == 0:
-                    sys.stdout.write("\t...Regulated region at bases " + coords.iloc[region, 0] + " to "  + coords.iloc[region, 1] + "failed to clear: FLAG\n")
-            if sum(cleared) == len(cleared):
-                sys.stdout.write("\n\t...all regulated regions cleared: PASS\n")
+        for region in range(0, coords.shape[0]):
+            if cleared[region] == 0:
+                sys.stdout.write("\t...Regulated region at bases " + str(int(coords.iloc[region, 0])) + " to "  + str(int(coords.iloc[region, 1])) + " failed to clear: FLAG\n")
+        if sum(cleared) == len(cleared):
+            sys.stdout.write("\n\t...all regulated regions cleared: PASS\n")
 
 def main(): 
     parser = argparse.ArgumentParser()

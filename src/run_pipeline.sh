@@ -197,6 +197,7 @@ echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
 echo -e " >> STEP 4: Checking any pathogen regions for benign components..." | tee -a ${OUTPUT}.screen
 hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query $QUERY -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
+cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm $QUERY
 
 python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${QUERY} -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
 
@@ -213,7 +214,15 @@ then
     then
         rm ${OUTPUT}.reg_path_coords.csv
     fi
-    rm ${OUTPUT}.*hmmscan ${OUTPUT}.*blastx ${OUTPUT}.*blastn
+
+    rm ${OUTPUT}.*hmmscan ${OUTPUT}.*blastn
+
+    if ["$BLAST" = 1 ]
+    then
+        rm ${OUTPUT}.*blastx 
+    else 
+        rm ${OUTPUT}.*dmnd
+    fi
 fi
 
 rm ${OUTPUT}*.tmp

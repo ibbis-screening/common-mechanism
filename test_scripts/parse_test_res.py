@@ -73,21 +73,19 @@ for res in glob.glob('*.screen'):
             reg_nonreg.append("P")
 
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
-        nohits = [s for s in lines if "no benign hits found" in s]
-        fail = [s for s in lines if "Regulated region failed to clear" in s]
-        toolow = [s for s in lines if "Housekeeping genes - <90% coverage achieved = FAIL" in s]
-        passs = [s for s in lines if "Housekeeping genes - >90% coverage of bases" in s]
+        allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]
+        anyfail = [s for s in lines if "failed to clear: FLAG" in s]
         clear = [s for s in lines if "No regulated protein regions to clear" in s] + [s for s in lines if "No regulated nucleotide regions to clear" in s]
         # if any region failed to clear, keep flag
-        if len(nohits) > 0 or len(fail) > 0 or len(toolow) > 0:
-            benign.append("F")
-        # if none failed and passes are observed, drop flag
-        elif len(passs) > 0:
+        if len(allpass) > 0:
             benign.append("P")
+        # if none failed and passes are observed, drop flag
+        elif len(anyfail) > 0:
+            benign.append("F")
         elif len(clear) > 1:
             benign.append("-")
         else:
-            benign.append("NA")
+            benign.append("Err")
     # print(len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 
 #print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))

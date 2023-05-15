@@ -113,7 +113,8 @@ def main():
                     n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
                     n_total = len(blast2['regulated'][blast2['q. start'] == site])
                     gene_names = ", ".join(set(subset['subject acc.']))
-                    coordinates = str(int(site)) + " - " + str(int(blast2['q. end'][blast2['q. start'] == site][0]))
+                    end = blast2['q. end'][blast2['q. start'] == site].max()
+                    coordinates = str(int(site)) + " - " + str(int(end))
                     species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
                     desc = blast2['subject title'][blast2['q. start'] == site].values[0]
                     taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")

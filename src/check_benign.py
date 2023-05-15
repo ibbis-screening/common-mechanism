@@ -33,35 +33,25 @@ def check_for_benign(query, coords, benign_desc):
             # look at only the hmmer hits that overlap with it
             htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region]) & (hmmer['ali to'] > coords['q. end'][region])) & ~((hmmer['ali from'] < coords['q. start'][region]) & (hmmer['ali to'] < coords['q. start'][region]))]
             if htrim.shape[0] > 0:
-                # htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
-                # if any(htrim['coverage'] > 0.80):
-                #     # print(htrim)
-                #     htrim = htrim[htrim['coverage'] > 0.80]
-                #     htrim = htrim.reset_index(drop=True)
-                #     descriptions = []
-                #     for row in range(htrim.shape[0]):
-                #         hit = htrim['target name'][row]
-                #         descriptions.append(hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit]) + "\n")
-                #     annot_string = "\n".join(str(v) for v in descriptions)
-                #     sys.stdout.write("\t\t -->Housekeeping proteins - >80% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
-                #     sys.stdout.write("\t\t   " + annot_string)
-                #     cleared[region] = 1
-                htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']))
-                if any(htrim['qlen'] - htrim['coverage'] < 50):
-                    htrim = htrim[htrim['coverage'] > 0.80]
+                htrim = htrim.assign(coverage = abs(htrim['ali to'] - htrim['ali from']) / htrim['qlen'])
+                if any(htrim['coverage'] > 0.90):
+                    # print(htrim)
+                    htrim = htrim[htrim['coverage'] > 0.90]
                     htrim = htrim.reset_index(drop=True)
                     descriptions = []
                     for row in range(htrim.shape[0]):
                         hit = htrim['target name'][row]
-                        # print(benign_desc['Description'][benign_desc['ID'] == hit])
+                        hit = hit.replace(".faa.final_tree.fa", "")
+                        hit = hit.replace(".faa.final_tree", "")
+                        hit = hit.replace(".faa.final_tree.used_alg.fa", "")
                         descriptions.append(hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit]) + "\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
                     sys.stdout.write("\t\t -->Housekeeping proteins covering bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved = PASS\n")
                     sys.stdout.write("\t\t   " + annot_string)
                     cleared[region] = 1
                 else:
-                    print(htrim)
-                    sys.stdout.write("\t\t -->Housekeeping proteins - not enough coverage = FAIL\n")
+                    # print(htrim)
+                    sys.stdout.write("\t\t -->Housekeeping proteins - <90% coverage achieved = FAIL\n")
                 
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
@@ -103,8 +93,8 @@ def check_for_benign(query, coords, benign_desc):
         blastn = tophits(blastn)
         for region in range(0, coords.shape[0]): # for each regulated pathogen region
             htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
-            if any(htrim['q. coverage'] > 0.80):
-                htrim = htrim[htrim['q. coverage'] > 0.80]
+            if any(htrim['q. coverage'] > 0.90):
+                htrim = htrim[htrim['q. coverage'] > 0.90]
                 htrim = htrim.reset_index(drop=True)
                 descriptions = []
                 for row in range(htrim.shape[0]):
@@ -148,6 +138,9 @@ def main():
     #Check for file - if exists, check for benign 
     if os.path.exists(args.sample_name + ".reg_path_coords.csv"):
         coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
+        if coords.shape[0] == 0:
+            sys.stdout.write("\t...no regulated regions to clear\n")
+            exit(0)
         check_for_benign(args.sample_name, coords, benign_desc)
     else:
         sys.stdout.write("\t...no regulated regions to clear\n")

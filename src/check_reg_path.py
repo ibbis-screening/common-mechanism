@@ -116,13 +116,15 @@ def main():
                     end = blast2['q. end'][blast2['q. start'] == site].max()
                     coordinates = str(int(site)) + " - " + str(int(end))
                     species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                    desc = blast2['subject title'][blast2['q. start'] == site].values[0]
                     taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
                     percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
 
                     # if some of the organisms with this sequence aren't regulated, say so
                     if (n_reg < n_total):
                         sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
-                        sys.stdout.write("\t\t     Species: %s\n" % species_list) 
+                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                        sys.stdout.write("\t\t     Description: %s\n" % (desc))
                         # could explicitly list which are and aren't regulated?
                         # otherwise, raise a flag and say which superkingdom the flag belongs to
                     elif (n_reg == n_total):
@@ -143,6 +145,7 @@ def main():
                         hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                         sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                         sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                        sys.stdout.write("\t\t     Description: %s\n" % (desc))
                     else: # something is wrong, n_reg > n_total
                         sys.stdout.write("\t...gene: %s\n" % gene_names)
                         sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))

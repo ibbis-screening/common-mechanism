@@ -149,7 +149,7 @@ def plot_hmmer(file, lookup, nhits=10):
     else:
         colours = colourscale([0.0] * hmmer.shape[0], [1.0] * hmmer.shape[0], pd.to_numeric(hmmer['score']))
 
-    hmmer['target name'] = hmmer['target name'].str.replace(".faa.final_tree.fa", "")
+    # hmmer['target name'] = hmmer['target name'].str.replace(".faa.final_tree.fa", "")
     new_names = []
     for model in hmmer['target name']:
         new_names.append(lookup['Description'][lookup['ID'] == model].iloc[0])

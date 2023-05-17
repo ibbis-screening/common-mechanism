@@ -48,31 +48,38 @@ for res in glob.glob('*.screen'):
             vfs.append("F")
         else:
             vfs.append("P")
-
-        # reg_virus screen - fetch all coding and noncoding reports
-        matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
-        # print(matching_virus)
-        if len(matching_virus) > 0:
-            reg_virus = check_flags(matching_virus, reg_virus)
-        else:
-            reg_virus.append("P")
         
-        # reg_bact screen - fetch all coding and noncoding reports
-        matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
-        # print(matching_bact)
-        if len(matching_bact) > 0:
-            reg_bact.append("F")
-            # reg_bact = check_flags(matching_bact, reg_bact)
+        homol_fail = [s for s in lines if "Homology search has failed" in s]
+        if len(homol_fail) > 0:
+            reg_virus.append("Err")
+            reg_bact.append("Err")
+            reg_fungi.append("Err")
         else:
-            reg_bact.append("P")
 
-        # reg_fungi screen - fetch all coding and noncoding reports
-        matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
-        # print(matching_fungi)
-        if len(matching_fungi) > 0:
-            reg_fungi = check_flags(matching_fungi, reg_fungi)
-        else:
-            reg_fungi.append("P")
+            # reg_virus screen - fetch all coding and noncoding reports
+            matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
+            # print(matching_virus)
+            if len(matching_virus) > 0:
+                reg_virus = check_flags(matching_virus, reg_virus)
+            else:
+                reg_virus.append("P")
+            
+            # reg_bact screen - fetch all coding and noncoding reports
+            matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
+            # print(matching_bact)
+            if len(matching_bact) > 0:
+                reg_bact.append("F")
+                # reg_bact = check_flags(matching_bact, reg_bact)
+            else:
+                reg_bact.append("P")
+
+            # reg_fungi screen - fetch all coding and noncoding reports
+            matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
+            # print(matching_fungi)
+            if len(matching_fungi) > 0:
+                reg_fungi = check_flags(matching_fungi, reg_fungi)
+            else:
+                reg_fungi.append("P")
 
         # reg_nonreg screen - ID cases where the same sequence is found in regulated and non-regulated organisms
         matching_reg_nonreg = [s for s in lines if "found in both regulated and non-regulated organisms" in s]
@@ -81,17 +88,10 @@ for res in glob.glob('*.screen'):
         else:
             reg_nonreg.append("P")
 
-        homol_fail = [s for s in lines if "homology search has failed" in s]
-        if len(homol_fail) > 0:
-            reg_virus[-1] = "Err"
-            reg_bact[-1] = "Err"
-            reg_fungi[-1] = "Err"
-            reg_nonreg[-1] = "Err"
-
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]
         anyfail = [s for s in lines if "failed to clear: FLAG" in s]
-        clear = [s for s in lines if "No regulated protein regions to clear" in s] + [s for s in lines if "No regulated nucleotide regions to clear" in s]
+        clear = [s for s in lines if "No regulated regions to clear" in s]
         # if any region failed to clear, keep flag
         if len(allpass) > 0:
             benign.append("P")
@@ -110,27 +110,30 @@ breakdown = list(zip(names, biorisk, vfs, reg_virus, reg_bact, reg_fungi, reg_no
 summary = []
 for name, risk, vf, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
         # if a biorisk is flagged, flag the whole thing
-    if risk == "F":
-        summary.append((name, "F"))
-#        print("Biorisk found")
-    elif reg_vir == "F":
-        summary.append((name, "F"))
-#        print("Regulated virus found")
-    # if it's a regulated bacterial pathogen but a known benign gene, clear it
-    elif (reg_bac == "F" and ben == "P" and vf == "P") == 1:
-        summary.append((name, "P"))
-    elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes
-        summary.append((name, "F"))
-#        print("Regulated bacterial housekeeping found")
-    elif (reg_fungi == "F" and ben == "P") == 1:
-        summary.append((name, "P"))
-    # if it's a regulated bacterial hit, flag it
-    elif reg_bac == "F":
-        summary.append((name, "F"))
-    elif reg_fungi == "F":
-        summary.append((name, "F"))
+    if risk == "Err" or reg_bac == "Err" or ben == "Err":
+        summary.append("Err")
     else:
-        summary.append((name, "P"))
+        if risk == "F":
+            summary.append((name, "F"))
+    #        print("Biorisk found")
+        elif reg_vir == "F":
+            summary.append((name, "F"))
+    #        print("Regulated virus found")
+        # if it's a regulated bacterial pathogen but a known benign gene, clear it
+        elif (reg_bac == "F" and ben == "P" and vf == "P") == 1:
+            summary.append((name, "P"))
+        elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes
+            summary.append((name, "F"))
+    #        print("Regulated bacterial housekeeping found")
+        elif (reg_fungi == "F" and ben == "P") == 1:
+            summary.append((name, "P"))
+        # if it's a regulated bacterial hit, flag it
+        elif reg_bac == "F":
+            summary.append((name, "F"))
+        elif reg_fungi == "F":
+            summary.append((name, "F"))
+        else:
+            summary.append((name, "P"))
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)

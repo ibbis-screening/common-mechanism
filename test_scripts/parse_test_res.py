@@ -49,37 +49,37 @@ for res in glob.glob('*.screen'):
         else:
             vfs.append("P")
         
-        homol_fail = [s for s in lines if "Homology search has failed" in s]
-        if len(homol_fail) > 0:
-            reg_virus.append("Err")
-            reg_bact.append("Err")
-            reg_fungi.append("Err")
+        # homol_fail = [s for s in lines if "Homology search has failed" in s]
+        # if len(homol_fail) > 0:
+        #     reg_virus.append("Err")
+        #     reg_bact.append("Err")
+        #     reg_fungi.append("Err")
+        # else:
+
+        # reg_virus screen - fetch all coding and noncoding reports
+        matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
+        # print(matching_virus)
+        if len(matching_virus) > 0:
+            reg_virus = check_flags(matching_virus, reg_virus)
         else:
+            reg_virus.append("P")
+        
+        # reg_bact screen - fetch all coding and noncoding reports
+        matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
+        # print(matching_bact)
+        if len(matching_bact) > 0:
+            reg_bact.append("F")
+            # reg_bact = check_flags(matching_bact, reg_bact)
+        else:
+            reg_bact.append("P")
 
-            # reg_virus screen - fetch all coding and noncoding reports
-            matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
-            # print(matching_virus)
-            if len(matching_virus) > 0:
-                reg_virus = check_flags(matching_virus, reg_virus)
-            else:
-                reg_virus.append("P")
-            
-            # reg_bact screen - fetch all coding and noncoding reports
-            matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
-            # print(matching_bact)
-            if len(matching_bact) > 0:
-                reg_bact.append("F")
-                # reg_bact = check_flags(matching_bact, reg_bact)
-            else:
-                reg_bact.append("P")
-
-            # reg_fungi screen - fetch all coding and noncoding reports
-            matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
-            # print(matching_fungi)
-            if len(matching_fungi) > 0:
-                reg_fungi = check_flags(matching_fungi, reg_fungi)
-            else:
-                reg_fungi.append("P")
+        # reg_fungi screen - fetch all coding and noncoding reports
+        matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
+        # print(matching_fungi)
+        if len(matching_fungi) > 0:
+            reg_fungi = check_flags(matching_fungi, reg_fungi)
+        else:
+            reg_fungi.append("P")
 
         # reg_nonreg screen - ID cases where the same sequence is found in regulated and non-regulated organisms
         matching_reg_nonreg = [s for s in lines if "found in both regulated and non-regulated organisms" in s]
@@ -91,14 +91,14 @@ for res in glob.glob('*.screen'):
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
         allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]
         anyfail = [s for s in lines if "failed to clear: FLAG" in s]
-        clear = [s for s in lines if "No regulated regions to clear" in s]
+        clear = [s for s in lines if "no regulated regions to clear" in s]
         # if any region failed to clear, keep flag
         if len(allpass) > 0:
             benign.append("P")
         # if none failed and passes are observed, drop flag
         elif len(anyfail) > 0:
             benign.append("F")
-        elif len(clear) > 1:
+        elif len(clear) > 0:
             benign.append("-")
         else:
             benign.append("Err")
@@ -111,7 +111,7 @@ summary = []
 for name, risk, vf, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
         # if a biorisk is flagged, flag the whole thing
     if risk == "Err" or reg_bac == "Err" or ben == "Err":
-        summary.append("Err")
+        summary.append((name, "Err"))
     else:
         if risk == "F":
             summary.append((name, "F"))

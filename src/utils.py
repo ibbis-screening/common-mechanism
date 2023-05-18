@@ -262,7 +262,7 @@ def trimblast(blast):
     if 'regulated' in blast:
         blast = blast.sort_values(by=['regulated'], ascending=False)
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
-    blast = blast.drop_duplicates(subset=['query acc.', 'subject acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
+    # blast = blast.drop_duplicates(subset=['query acc.', 'subject acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     blast = blast.reset_index(drop=True)
     
     blast2 = blast
@@ -286,11 +286,14 @@ def trimblast(blast):
 def tophits(blast2):
     
     blast3 = blast2
+    # print(blast2)
     blast3 = blast3.sort_values('q. start')
     blast3 = blast3.sort_values('% identity', ascending=False)
 
     # only keep coordinates of each hit that are not already covered by a better hit
     for query in blast3['query acc.'].unique():
+        # print("Filtering to top hits")
+        # print(blast3)
         df = blast3[blast3['query acc.'] == query]
 
         for i in df.index: # run through each hit from the top
@@ -303,6 +306,7 @@ def tophits(blast2):
                 # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
                 if (j_start >= i_start and j_start <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
+                    # keep equivalent hits
                     if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     # if the hit extends past the end of the earlier one
@@ -329,8 +333,12 @@ def tophits(blast2):
             blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])
             blast3.loc[j,'q. start'] = df.loc[j,'q. start']
             blast3.loc[j,'q. end'] = df.loc[j,'q. end']
+        # print("Done filtering")
+        # print(blast3)
                 
     # print(blast3[['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
+    
+    # only keep annotations covering 50 bases or more
     blast3 = blast3[blast3['subject length'] >= 50]
     # blast3 = blast3[blast3['q. start'] < blast3['q. end']]
     # print(blast3[['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])

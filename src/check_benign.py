@@ -64,7 +64,7 @@ def check_for_benign(query, coords, benign_desc):
                     cleared[region] = 1
                 else:
                     # print(htrim)
-                    sys.stdout.write("\t\t -->Housekeeping proteins - <90% coverage achieved = FAIL\n")
+                    sys.stdout.write("\t\t -->Housekeeping proteins - not enough coverage = FAIL\n")
                 
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
@@ -78,7 +78,9 @@ def check_for_benign(query, coords, benign_desc):
         for region in range(0, coords.shape[0]): # for each regulated pathogen region
             # look at only the cmscan hits that overlap with it
             qlen = abs(coords['q. start'][region] - coords['q. end'][region])
-            htrim = cmscan[~((cmscan['seq from'] > coords['q. start'][region]) & (cmscan['seq to'] > coords['q. end'][region])) & ~((cmscan['seq from'] < coords['q. end'][region]) & (cmscan['seq to'] < coords['q. start'][region]))]
+            # filter hits for ones that overlap with the regulated region
+            htrim = cmscan[~((cmscan['seq from'] < coords['q. start'][region]) & (cmscan['seq to'] < coords['q. start'][region])) & ~((cmscan['seq from'] > coords['q. end'][region]) & (cmscan['seq to'] > coords['q. end'][region]))]
+            # print(htrim)
             if htrim.shape[0] > 0:
                 htrim = htrim.assign(coverage = abs(htrim['seq to'] - htrim['seq from']) / qlen)
                 if any(htrim['coverage'] > 0.80):

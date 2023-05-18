@@ -63,8 +63,11 @@ def main():
     blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
+    # print(blast)
     blast2 = trimblast(blast)
-    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes 
+    # print(blast2)
+    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    # print(blast2)
 
     reg_bac = 0
     reg_vir = 0
@@ -80,6 +83,7 @@ def main():
                 species_list = textwrap.fill(", ".join(set(htrim['species'])), 100).replace("\n", "\n\t\t     ")
                 taxid_list = textwrap.fill(", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
                 percent_ids = (" ".join(map(str, set(htrim['% identity']))))
+                # print(htrim)
                 if htrim.shape[0] > 0:
                     if any(htrim['q. coverage'] > 0.90):
                         htrim = htrim[htrim['q. coverage'] > 0.90]
@@ -108,6 +112,7 @@ def main():
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
                 org = ""
+                # print(subset)
             
                 if sum(subset['regulated']) > 0: # if there's at least one regulated hit
                     n_reg = blast2['regulated'][blast2['q. start'] == site].sum()

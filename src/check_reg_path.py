@@ -63,11 +63,14 @@ def main():
     blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    # print(blast)
+    # print("Original blast")
+    # print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
     blast2 = trimblast(blast)
-    # print(blast2)
+    # print("Trim blast")
+    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
-    # print(blast2)
+    # print("Top blast")
+    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
 
     reg_bac = 0
     reg_vir = 0
@@ -78,7 +81,6 @@ def main():
         if hits1 is not None:
             for region in range(0, hits1.shape[0]): # for each regulated pathogen region
                 # look at only the hits that overlap it
-                qlen = abs(hits1['q. start'][region] - hits1['q. end'][region])
                 htrim = blast2[~((blast2['q. start'] > hits1['q. end'][region]) & (blast2['q. end'] > hits1['q. end'][region])) & ~((blast2['q. start'] < hits1['q. start'][region]) & (blast2['q. end'] < hits1['q. start'][region]))]
                 species_list = textwrap.fill(", ".join(set(htrim['species'])), 100).replace("\n", "\n\t\t     ")
                 taxid_list = textwrap.fill(", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
@@ -107,53 +109,58 @@ def main():
                        ):
             #  print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
         # for each hit (subject acc) linked with at least one regulated taxid
-            for site in set(blast2['q. start'][blast2['regulated'] == True]): 
+            for site in set(blast2['q. start'][blast2['regulated'] != False]):
                 subset = blast2[(blast2['q. start'] == site)]
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
                 org = ""
-                # print(subset)
             
-                if sum(subset['regulated']) > 0: # if there's at least one regulated hit
-                    n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
-                    n_total = len(blast2['regulated'][blast2['q. start'] == site])
-                    gene_names = ", ".join(set(subset['subject acc.']))
-                    end = blast2['q. end'][blast2['q. start'] == site].max()
-                    coordinates = str(int(site)) + " - " + str(int(end))
-                    species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
-                    desc = blast2['subject title'][blast2['q. start'] == site].values[0]
-                    taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
-                    percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
+                # if sum(subset['regulated']) > 0: # if there's at least one regulated hit
+                # print("screening at " + str(site))
+                # print(subset[['subject acc.', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
+                blast2 = blast2.dropna(subset = ['species'])
+                n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
+                n_total = len(blast2['regulated'][blast2['q. start'] == site])
+                gene_names = ", ".join(set(subset['subject acc.']))
+                end = blast2['q. end'][blast2['q. start'] == site].max()
+                coordinates = str(int(site)) + " - " + str(int(end))
 
-                    # if some of the organisms with this sequence aren't regulated, say so
-                    if (n_reg < n_total):
-                        sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
-                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                        sys.stdout.write("\t\t     Description: %s\n" % (desc))
-                        # could explicitly list which are and aren't regulated?
-                        # otherwise, raise a flag and say which superkingdom the flag belongs to
-                    elif (n_reg == n_total):
-                        if subset['superkingdom'][0] == "Viruses":
-                            reg_vir = 1
-                            org = "virus"
-                        elif subset['superkingdom'][0] == "Bacteria": 
-                            reg_bac = 1
-                            org = "bacteria"
-                        elif 'kingdom' in subset:
-                            if subset['kingdom'][0] == "Fungi":
-                                org = "fungi"
-                                reg_fung = 1
-                            if subset['phylum'][0] == "Oomycota":
-                                org = "oomycete"
-                                reg_fung = 1 # sorry! to save complexity
-                        # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
-                        hits = pd.concat([hits, subset[['q. start', 'q. end']]])
-                        sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
-                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                        sys.stdout.write("\t\t     Description: %s\n" % (desc))
-                    else: # something is wrong, n_reg > n_total
-                        sys.stdout.write("\t...gene: %s\n" % gene_names)
-                        sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
+                species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                desc = blast2['subject title'][blast2['q. start'] == site].values[0]
+                taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
+                percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
+                reg_ids = (" ".join(map(str, set(blast2['regulated'][(blast2['q. start'] == site) & (blast2['regulated'] != False)]))))
+
+                # if some of the organisms with this sequence aren't regulated, say so
+                if (n_reg < n_total):
+                    sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                    sys.stdout.write("\t\t     Description: %s\n" % (desc))
+                    # could explicitly list which are and aren't regulated?
+                    # otherwise, raise a flag and say which superkingdom the flag belongs to
+                elif (n_reg == n_total):
+                    if subset['superkingdom'][0] == "Viruses":
+                        reg_vir = 1
+                        org = "virus"
+                    elif subset['superkingdom'][0] == "Bacteria": 
+                        reg_bac = 1
+                        org = "bacteria"
+                    elif 'kingdom' in subset:
+                        if subset['kingdom'][0] == "Fungi":
+                            org = "fungi"
+                            reg_fung = 1
+                        if subset['phylum'][0] == "Oomycota":
+                            org = "oomycete"
+                            reg_fung = 1 # sorry! to save complexity
+                    # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
+                    hits = pd.concat([hits, subset[['q. start', 'q. end']]])
+                    sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
+                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                    sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
+                    sys.stdout.write("\t\t     Description: %s\n" % (desc))
+                else: # something is wrong, n_reg > n_total
+                    sys.stdout.write("\t...gene: %s\n" % gene_names)
+                    sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
         # hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
         hits = hits.drop_duplicates()
         #Create output file 

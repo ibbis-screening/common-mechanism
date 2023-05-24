@@ -106,10 +106,12 @@ def taxdist(blast, reg_ids, vax_ids):
             t = taxoniq.Taxon(int(blast['subject tax ids'][x]))
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
-                blast.loc[x,'regulated'] = True
+                # blast.loc[x,'regulated'] = True
+                blast.loc[x,'regulated'] = int(blast['subject tax ids'][x])
             while t.scientific_name != 'root': #  & int(t.tax_id) not in set(vax_ids[0])
                 if int(t.tax_id) in set(reg_ids[0]):
-                    blast.loc[x,'regulated'] = True
+                    # blast.loc[x,'regulated'] = True
+                    blast.loc[x,'regulated'] = int(t.tax_id)
                 if int(t.tax_id) == 81077:
                     artif.append(x)
                 if blast.columns.str.contains(t.rank.name).any():
@@ -250,13 +252,7 @@ def readblast(fileh):
 # trim BLAST results to the most interesting ones
 def trimblast(blast):
     # set start to the lowest coordinate and end to the highest to avoid confusion
-    for j in blast.index:
-        if blast.loc[j,'q. start'] > blast.loc[j,'q. end']:
-            start = blast.loc[j,'q. end']
-            end = blast.loc[j,'q. start']
-            blast.loc[j,'q. start'] = start
-            blast.loc[j,'q. end'] = end
-            # print(blast.loc[j,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']])
+    blast = shift_hits_pos_strand(blast)
 
     # rank hits by PID, if any multispecies hits contain regulated pathogens, put the regulated up top
     if 'regulated' in blast:
@@ -264,7 +260,8 @@ def trimblast(blast):
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     # blast = blast.drop_duplicates(subset=['query acc.', 'subject acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     blast = blast.reset_index(drop=True)
-    
+    # print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
+
     blast2 = blast
     # only keep  top ranked hits that don't overlap
     for query in blast['query acc.'].unique():
@@ -276,27 +273,48 @@ def trimblast(blast):
                     # if the beginning and end of the higher rank hit both overlap or extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
                     if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
                         if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
+                            # print(str(i) + " " + str(j))
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
-#    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end']])
+    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
     
     return blast2
 
-# go through trimmed BLAST hits and only look at top protein hit for each base
-def tophits(blast2):
+def trim_to_top(df):
+    keep_rows = []
+    df = df.sort_values('% identity', ascending=False)
+    df.reset_index(inplace=True)
+    df = shift_hits_pos_strand(df)
+    prev_hit = None
+    for base in range(1, df['query length'][0]):
+        # identify the row index of the top scoring hit
+        if df[(df['q. start'] <= base) & (df['q. end'] >= base).all()].shape[0] > 0:
+            top_hit = df[(df['q. start'] <= base) & (df['q. end'] >= base).all()].index[0]
+            # if this hit hasn't been top before, set the start of the query coverage to this base
+            if top_hit not in keep_rows:
+                df.loc[top_hit,'q. start'] = base
+                keep_rows.append(top_hit)
+            # if the top hit just changed, set the end of query coverage for the last hit to the previous base
+            if (top_hit != prev_hit) & (prev_hit != None):
+                df.loc[prev_hit, 'q. end'] = base - 1
+            prev_hit = top_hit
     
-    blast3 = blast2
-    # print(blast2)
-    blast3 = blast3.sort_values('q. start')
-    blast3 = blast3.sort_values('% identity', ascending=False)
+    print(keep_rows)
+    return df.iloc[keep_rows]
 
-    # only keep coordinates of each hit that are not already covered by a better hit
-    for query in blast3['query acc.'].unique():
-        # print("Filtering to top hits")
-        # print(blast3)
-        df = blast3[blast3['query acc.'] == query]
+def shift_hits_pos_strand(blast):
+    for j in blast.index:
+        if blast.loc[j,'q. start'] > blast.loc[j,'q. end']:
+            start = blast.loc[j,'q. end']
+            end = blast.loc[j,'q. start']
+            blast.loc[j,'q. start'] = start
+            blast.loc[j,'q. end'] = end
+    return blast
 
-        for i in df.index: # run through each hit from the top
+def trim_edges(df):
+    for i in df.index: # run through each hit from the top
+            # if [df['subject acc.'][i] == "EOB10733.1"]:
+            #     print("EOB10733.1")
             for j in df.index[(i+1):]: # compare to each below
                 i_start = df.loc[i,'q. start']
                 i_end = df.loc[i,'q. end']
@@ -307,28 +325,74 @@ def tophits(blast2):
                 if (j_start >= i_start and j_start <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
                     # keep equivalent hits
-                    if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    # if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     # if the hit extends past the end of the earlier one
                     elif (i_end + 1 < j_end):
-                        # print("Changing j start " + str(j_start) + " to " + str(i_end + 1))
+                        # if df['subject acc.'][j] == 'WP_235443889.1':
+                        #     print('Trimming')
                         df.loc[j,'q. start'] = i_end + 1
                     # remove if the hit is contained in the earlier one
+                    elif (i_end == j_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                        pass
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
+                
                 # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
                 if (j_end >= i_start and j_end <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
                     # keep equivalent hits
-                    if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    # if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     elif (i_start - 1 > j_start):
-                        # print("Changing j end " + str(j_end) + " to " + str(i_start - 1))
+                        # if df['subject acc.'][j] == 'WP_235443889.1':
+                        #     print('Trimming')
+                        #     print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
                         df.loc[j,'q. end'] = i_start - 1
+                    elif (i_start == j_start and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                        pass
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
+    
+    rerun = 0
+    mix_starts = 0
+    for start in set(df['q. start']):
+        if len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))) > 1:
+            if len(set(df['% identity'][df['q. start'] == start])) > 1: # if there are overlapping annotations with different % identities, re-run
+                # print(df[df['q. start'] == start])
+                # print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
+                # print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
+                rerun = 1
+                mix_starts = mix_starts + 1
+    # if rerun == 1:
+    #     print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
+    return df, rerun
+        
+
+# go through trimmed BLAST hits and only look at top protein hit for each base
+def tophits(blast2):
+    
+    blast3 = blast2
+    # print(blast2)
+    # blast3 = blast3.sort_values('q. start')
+    blast3 = blast3.sort_values('% identity', ascending=False)
+
+    # only keep coordinates of each hit that are not already covered by a better hit
+    for query in blast3['query acc.'].unique():
+        # print("Filtering to top hits")
+        # print(blast3)
+        df = blast3[blast3['query acc.'] == query]
+        # df.reset_index(inplace=True) # don't do this - the right line in blast3 won't get edited
+        # print(df[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].head(20))
+
+        rerun = 1
+        while rerun == 1: # edges of hits can be moved within a higher scoring hit in the first pass
+            df, rerun = trim_edges(df)
+
         for j in df.index: 
             blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])
             blast3.loc[j,'q. start'] = df.loc[j,'q. start']
@@ -336,6 +400,9 @@ def tophits(blast2):
         # print("Done filtering")
         # print(blast3)
                 
+    # print("Results of tophit")
+    blast3 = blast3.sort_values('q. start')
+    blast3 = blast3[blast3['q. start'] != 0]
     # print(blast3[['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
     
     # only keep annotations covering 50 bases or more

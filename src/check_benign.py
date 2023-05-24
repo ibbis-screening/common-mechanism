@@ -58,7 +58,6 @@ def check_for_benign(query, coords, benign_desc):
                         # print(benign_desc['Description'][benign_desc['ID'] == hit])
                         descriptions.append(hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit]) + " (E-value: " + '{:.3g}'.format(htrim['E-value'][row], 3) + ")\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
-                    eval_string = "\n".join(str(v) for v in htrim['E-value'])
                     sys.stdout.write("\t\t -->Housekeeping proteins covering " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " = PASS\n")
                     sys.stdout.write("\t\t   " + annot_string)
                     cleared[region] = 1
@@ -69,9 +68,8 @@ def check_for_benign(query, coords, benign_desc):
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     cmscan = query + ".benign.cmscan"
-    
     if check_blastfile(cmscan) == 2:
-        sys.stdout.write("\t...no benign gene hits\n")
+        sys.stdout.write("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
         # print(cmscan)

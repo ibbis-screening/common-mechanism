@@ -156,3 +156,4 @@ breakdown.to_csv("test_itemized.csv", index=False)
 #plt.savefig("Test_set.png",bbox_inches='tight')
 
 print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))
+print("Errors: ", (pd.DataFrame(summary)[1]=="Err").sum())

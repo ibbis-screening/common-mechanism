@@ -65,9 +65,10 @@ def main():
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     # print(blast)
     blast2 = trimblast(blast)
+    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']][blast2['q. start'] == 4200])
     # print(blast2)
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
-    # print(blast2)
+    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']][blast2['q. start'] == 4200])
 
     reg_bac = 0
     reg_vir = 0
@@ -107,7 +108,7 @@ def main():
                        ):
             #  print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
         # for each hit (subject acc) linked with at least one regulated taxid
-            for site in set(blast2['q. start'][blast2['regulated'] == True]): 
+            for site in set(blast2[['q. start', 'q. end']][blast2['regulated'] == True]): 
                 subset = blast2[(blast2['q. start'] == site)]
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)

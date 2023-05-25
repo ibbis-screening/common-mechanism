@@ -360,11 +360,12 @@ def trim_edges(df):
     mix_starts = 0
     for start in set(df['q. start']):
         if len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))) > 1:
-            print(df[df['q. start'] == start])
-            print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
-            print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
-            rerun = 1
-            mix_starts = mix_starts + 1
+            if len(set(df['% identity'][df['q. start'] == start])) > 1: # if there are overlapping annotations with different % identities, re-run
+                # print(df[df['q. start'] == start])
+                # print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
+                # print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
+                rerun = 1
+                mix_starts = mix_starts + 1
     if rerun == 1:
         print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
     return df, rerun

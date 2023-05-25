@@ -323,12 +323,17 @@ def trim_edges(df):
                 if (j_start >= i_start and j_start <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
                     # keep equivalent hits
-                    if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    # if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     # if the hit extends past the end of the earlier one
                     elif (i_end + 1 < j_end):
+                        # if df['subject acc.'][j] == 'WP_235443889.1':
+                        #     print('Trimming')
                         df.loc[j,'q. start'] = i_end + 1
                     # remove if the hit is contained in the earlier one
+                    elif (i_end == j_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                        pass
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
@@ -337,10 +342,16 @@ def trim_edges(df):
                 if (j_end >= i_start and j_end <= i_end):
                     # print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
                     # keep equivalent hits
-                    if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    # if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     elif (i_start - 1 > j_start):
+                        # if df['subject acc.'][j] == 'WP_235443889.1':
+                        #     print('Trimming')
+                        #     print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
                         df.loc[j,'q. end'] = i_start - 1
+                    elif (i_start == j_start and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                        pass
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
@@ -349,13 +360,13 @@ def trim_edges(df):
     mix_starts = 0
     for start in set(df['q. start']):
         if len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))) > 1:
-            # print(df[df['q. start'] == start])
-            # print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
-            # print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
+            print(df[df['q. start'] == start])
+            print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
+            print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
             rerun = 1
             mix_starts = mix_starts + 1
-    # if rerun == 1:
-    #     print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
+    if rerun == 1:
+        print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
     return df, rerun
         
 

@@ -178,7 +178,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     blast = readblast(file)
     blast = taxdist(blast, reg_ids, vax_ids)
     
-    blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
+    # blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     # print(blast[['subject acc.', 'subject tax ids', 'regulated', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
     blast = trimblast(blast)
     # print(blast[['subject acc.', 'subject tax ids', '% identity', 'q. start', 'q. end', 's. start', 's. end']])
@@ -193,6 +193,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     blast['description'] = blast.groupby(['q. start','q. end'])['subject title'].transform(lambda x: ','.join(x))
     blast['regulated_sum'] = blast.groupby(['q. start','q. end'])['regulated'].transform(lambda x: any(x))
     blast = blast.drop_duplicates(['q. start','q. end'])
+    blast = blast.sort_values(by=['q. start'], ascending=True)
     blast.reset_index(inplace=True)
 
     if blast.shape[0] < nhits:
@@ -227,7 +228,7 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
         return
 	
     blast = readblast(file)
-    print(blast)
+    # print(blast)
     blast['coords'] = blast['query acc.'].transform(lambda x: re.search(':(.+?)$', x).group(1))
     coords = blast["coords"].str.split("-", n = 1, expand = True)
     blast['start_add'] = coords[0]

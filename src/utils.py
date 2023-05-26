@@ -312,10 +312,12 @@ def shift_hits_pos_strand(blast):
     return blast
 
 def trim_edges(df):
-    for i in df.index: # run through each hit from the top
+    for top in range(len(df.index)): # run through each hit from the top
+            i = df.index[top]
             # if [df['subject acc.'][i] == "EOB10733.1"]:
             #     print("EOB10733.1")
-            for j in df.index[(i+1):]: # compare to each below
+            for next in range(top+1, len(df.index)): # compare to each below
+                j = df.index[next]
                 i_start = df.loc[i,'q. start']
                 i_end = df.loc[i,'q. end']
                 j_start = df.loc[j,'q. start']
@@ -331,11 +333,12 @@ def trim_edges(df):
                     # if the hit extends past the end of the earlier one
                     elif (i_end + 1 < j_end):
                         # if df['subject acc.'][j] == 'WP_235443889.1':
-                        #     print('Trimming')
+                        # print('Trimming ' + str(j) + " based on " + str(i))
                         df.loc[j,'q. start'] = i_end + 1
-                    # remove if the hit is contained in the earlier one
+                        # print(df.loc[j,['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
                     elif (i_end == j_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
+                    # remove if the hit is contained in the earlier one
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
@@ -363,7 +366,8 @@ def trim_edges(df):
     for start in set(df['q. start']):
         if len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))) > 1:
             if len(set(df['% identity'][df['q. start'] == start])) > 1: # if there are overlapping annotations with different % identities, re-run
-                # print(df[df['q. start'] == start])
+                # print("Found a length discrepancy\n\n")
+                # print(df[df['q. start'] == start][['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
                 # print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
                 # print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
                 rerun = 1
@@ -386,12 +390,13 @@ def tophits(blast2):
         # print("Filtering to top hits")
         # print(blast3)
         df = blast3[blast3['query acc.'] == query]
-        # df.reset_index(inplace=True) # don't do this - the right line in blast3 won't get edited
+        # df.reset_index(inplace=True)
         # print(df[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].head(20))
 
         rerun = 1
         while rerun == 1: # edges of hits can be moved within a higher scoring hit in the first pass
             df, rerun = trim_edges(df)
+        # df, rerun = trim_edges(df)
 
         for j in df.index: 
             blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])

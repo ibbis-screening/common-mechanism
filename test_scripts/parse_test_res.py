@@ -122,8 +122,8 @@ for name, risk, vf, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
         # if it's a regulated bacterial pathogen but a known benign gene, clear it
         elif (reg_bac == "F" and ben == "P" and vf == "P") == 1:
             summary.append((name, "P"))
-        elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes
-            summary.append((name, "F"))
+        elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes, but these seem to be poorly supported Victors genes
+            summary.append((name, "P"))
     #        print("Regulated bacterial housekeeping found")
         elif (reg_fungi == "F" and ben == "P") == 1:
             summary.append((name, "P"))

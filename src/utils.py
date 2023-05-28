@@ -106,10 +106,12 @@ def taxdist(blast, reg_ids, vax_ids):
             t = taxoniq.Taxon(int(blast['subject tax ids'][x]))
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
-                blast.loc[x,'regulated'] = True
+                # blast.loc[x,'regulated'] = True
+                blast.loc[x,'regulated'] = int(blast['subject tax ids'][x])
             while t.scientific_name != 'root': #  & int(t.tax_id) not in set(vax_ids[0])
                 if int(t.tax_id) in set(reg_ids[0]):
-                    blast.loc[x,'regulated'] = True
+                    # blast.loc[x,'regulated'] = True
+                    blast.loc[x,'regulated'] = int(t.tax_id)
                 if int(t.tax_id) == 81077:
                     artif.append(x)
                 if blast.columns.str.contains(t.rank.name).any():
@@ -370,8 +372,8 @@ def trim_edges(df):
                 # print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
                 rerun = 1
                 mix_starts = mix_starts + 1
-    if rerun == 1:
-        print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
+    # if rerun == 1:
+    #     print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
     return df, rerun
         
 
@@ -388,7 +390,7 @@ def tophits(blast2):
         # print("Filtering to top hits")
         # print(blast3)
         df = blast3[blast3['query acc.'] == query]
-        # df.reset_index(inplace=True)
+        # df.reset_index(inplace=True) # don't do this - the right line in blast3 won't get edited
         # print(df[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].head(20))
 
         rerun = 1

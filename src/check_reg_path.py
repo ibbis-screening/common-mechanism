@@ -109,7 +109,7 @@ def main():
                        ):
             #  print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
         # for each hit (subject acc) linked with at least one regulated taxid
-            for site in set(blast2['q. start'][blast2['regulated'] == True]):
+            for site in set(blast2['q. start'][blast2['regulated'] != False]):
                 subset = blast2[(blast2['q. start'] == site)]
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
@@ -118,15 +118,18 @@ def main():
                 # if sum(subset['regulated']) > 0: # if there's at least one regulated hit
                 # print("screening at " + str(site))
                 # print(subset[['subject acc.', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
-                n_reg = blast2['regulated'][blast2['q. start'] == site].sum()
+                blast2 = blast2.dropna(subset = ['species'])
+                n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
                 n_total = len(blast2['regulated'][blast2['q. start'] == site])
                 gene_names = ", ".join(set(subset['subject acc.']))
                 end = blast2['q. end'][blast2['q. start'] == site].max()
                 coordinates = str(int(site)) + " - " + str(int(end))
+
                 species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
                 desc = blast2['subject title'][blast2['q. start'] == site].values[0]
                 taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
                 percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
+                reg_ids = (" ".join(map(str, set(blast2['regulated'][(blast2['q. start'] == site) & (blast2['regulated'] != False)]))))
 
                 # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
@@ -153,6 +156,7 @@ def main():
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                    sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene_names)

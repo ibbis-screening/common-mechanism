@@ -39,7 +39,7 @@ for res in glob.glob('*.screen'):
         lines = f.readlines()
         
         # biorisk screen
-        matching = [s for s in lines if "Biorisk" in s]
+        matching = [s for s in lines if "Regulated gene" in s]
         biorisk = check_flags(matching, biorisk)
 
         # VF screen

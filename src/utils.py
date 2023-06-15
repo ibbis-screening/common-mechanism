@@ -299,7 +299,7 @@ def trim_to_top(df):
                 df.loc[prev_hit, 'q. end'] = base - 1
             prev_hit = top_hit
     
-    print(keep_rows)
+    # print(keep_rows)
     return df.iloc[keep_rows]
 
 def shift_hits_pos_strand(blast):

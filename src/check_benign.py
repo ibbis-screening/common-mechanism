@@ -134,20 +134,20 @@ def main():
     parser.add_argument("-s","--sequence", dest="seq_file",
         required=True, help="FASTA sequence file")
     parser.add_argument("-d","--database", dest="db",
-        required=True, help="Benign HMM database folder (must contain benign_annotations.tsv)")
+        required=True, help="Benign HMM database folder (must contain benign_annotations.csv)")
     args=parser.parse_args()
 
     #check input files
     if (not os.path.exists(args.seq_file)):
         sys.stderr.write("\t...sequence file does not exist\n")
         exit(1)
-    if (not os.path.exists(args.db + "/benign_annotations.tsv")):
-        sys.stderr.write("\t...benign_annotations.tsv does not exist\n")
+    if (not os.path.exists(args.db + "/benign_annotations.csv")):
+        sys.stderr.write("\t...benign_annotations.csv does not exist\n")
         exit(1) 
     
     #Read in database file
     pd.set_option('max_colwidth',200)
-    benign_desc = pd.read_csv(args.db + "/benign_annotations.tsv", sep="\t")
+    benign_desc = pd.read_csv(args.db + "/benign_annotations.csv", sep="\t")
         
     #Check for file - if exists, check for benign 
     if os.path.exists(args.sample_name + ".reg_path_coords.csv"):

@@ -169,7 +169,7 @@ def main():
         # print(hits)
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
-    if reg_vir == 0 and reg_bac == 0 and reg_fung == 0:
+    if reg_vir == 0 and reg_bac == 0 and reg_fung == 0 and reg_fung == 0:
         sys.stdout.write("\t\t --> no top hit exclusive to a regulated pathogen: PASS\n")
 
 if __name__ == "__main__":

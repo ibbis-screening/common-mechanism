@@ -43,7 +43,7 @@ def main():
         sys.stdout.write("\t...ERROR: biorisk search results empty\n")
     if res == 1:
         hmmer = readhmmer(in_file)
-        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
+        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-20]
         hmmer = hmmer.iloc[keep1,:]
         hmmer = trimhmmer(hmmer)
         hmmer['description'] = ''

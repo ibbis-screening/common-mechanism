@@ -43,7 +43,7 @@ def main():
         sys.stdout.write("\t...ERROR: biorisk search results empty\n")
     if res == 1:
         hmmer = readhmmer(in_file)
-        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-25]
+        keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-20]
         hmmer = hmmer.iloc[keep1,:]
         hmmer = trimhmmer(hmmer)
         hmmer['description'] = ''
@@ -57,11 +57,13 @@ def main():
             hmmer.loc[model, 'Must flag'] = lookup.iloc[name_index[0], 2]
         if hmmer.shape[0] > 0:
             if (sum(hmmer['Must flag']) > 0):
-                for region in hmmer.index[hmmer['Must flag'] == 0]:
-                    sys.stdout.write("\t\t --> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ", FLAG\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
+                for region in hmmer.index[hmmer['Must flag'] != 0]:
+                    sys.stdout.write("\t\t --> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ": FLAG\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
+            else:
+                sys.stdout.write("\t\t --> Biorisks: Regulated genes not found, PASS\n")
             if (sum(hmmer['Must flag']) != hmmer.shape[0]):
                 for region in hmmer.index[hmmer['Must flag'] == 0]:
-                    sys.stdout.write("\t\t --> Biorisks: Virulence factor found in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
+                    sys.stdout.write("\t\t --> Virulence factor found in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
         else: 
             sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")
     if res == 2:

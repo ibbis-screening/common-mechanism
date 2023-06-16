@@ -21,7 +21,7 @@ def check_flags(matching, bin_list):
         hit = 0
         for match in matching:
             if hit == 0:
-                if ': FLAG' in match:
+                if 'FLAG' in match:
                     hit = 1
                     bin_list.append("F")
         if hit == 0:

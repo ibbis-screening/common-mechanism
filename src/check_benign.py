@@ -147,7 +147,7 @@ def main():
     
     #Read in database file
     pd.set_option('max_colwidth',200)
-    benign_desc = pd.read_csv(args.db + "/benign_annotations.csv", sep="\t")
+    benign_desc = pd.read_csv(args.db + "/benign_annotations.csv")
         
     #Check for file - if exists, check for benign 
     if os.path.exists(args.sample_name + ".reg_path_coords.csv"):

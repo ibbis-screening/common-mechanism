@@ -4,8 +4,9 @@
 
 from utils import *
 import sys, shutil
-import pybedtools
+# import pybedtools
 import re
+from Bio import SeqIO
 
 query = sys.argv[1]
 f_file = sys.argv[2]
@@ -48,9 +49,27 @@ else:
 
 # fetch noncoding sequences
 
-# print("Outfile: " + outfile)
 outfile = re.sub(".nr.*", "", query) + '.noncoding.fasta'
-# print(outfile)
+# print("Outfile: " + outfile)
+
+def fetch_sequences(seqid, nc_bits, f_file, outfile):
+    tofetch = []
+    for (start, stop) in nc_bits:
+        tofetch.append((seqid, start, stop))
+
+    if tofetch:
+        with open(f_file, "r") as fasta_file:
+            records = list(SeqIO.parse(fasta_file, "fasta"))
+            sequences = []
+            for (seqid, start, stop) in tofetch:
+                for record in records:
+                    if record.id == seqid:
+                        sequence = record.seq[start - 1 : stop]  # Adjust start to 0-based index
+                        sequences.append(f">{seqid} {start}-{stop}\n{sequence}\n")
+                        break
+
+        with open(outfile, "w") as output_file:
+            output_file.writelines(sequences)
 
 if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
@@ -60,17 +79,10 @@ elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered
 else: 
     # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]
+    fetch_sequences(seqid, nc_bits, f_file, outfile)
 
-    tofetch = ""
-    for (start, stop) in nc_bits:
-        tofetch = tofetch + str(seqid) + " " + str(start) + " " + str(stop) + "\n"
 
-    if tofetch != "":
-        a = pybedtools.BedTool(tofetch, from_string=True)
-        fasta = f_file
-        a = a.sequence(fi=fasta, fo=outfile)
-    else:
-        print("Error")
-        print(nc_bits)
+
+
 
 

@@ -24,5 +24,3 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
 )
-
-print("Almost done! Please run: gdown https://drive.google.com/uc?id=1INLOrC_vLMxEmtFCW4rzyZe5z6hWD1Qu and decompress")

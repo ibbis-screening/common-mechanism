@@ -43,7 +43,7 @@ The CommonMechanism pipeline requires users to install [DIAMOND](https://github.
     tar xzf v2.0.13.tar.gz
     mkdir diamond-2.0.13/bin
     cd diamond-2.0.13/bin
-    cmake 
+    cmake ..
     make -j8
     sudo make install
 

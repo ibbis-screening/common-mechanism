@@ -62,6 +62,8 @@ def fetch_sequences(seqid, nc_bits, f_file, outfile):
             records = list(SeqIO.parse(fasta_file, "fasta"))
             sequences = []
             for (seqid, start, stop) in tofetch:
+                start = int(start)
+                stop = int(stop)
                 for record in records:
                     if record.id == seqid:
                         sequence = record.seq[start - 1 : stop]  # Adjust start to 0-based index

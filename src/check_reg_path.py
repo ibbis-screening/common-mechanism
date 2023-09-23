@@ -63,14 +63,14 @@ def main():
     blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    print("Original blast")
-    print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
+    # print("Original blast")
+    # print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
     blast2 = trimblast(blast)
-    print("Trim blast")
-    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
+    # print("Trim blast")
+    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
-    print("Top blast")
-    print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
+    # print("Top blast")
+    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
 
     reg_bac = 0
     reg_vir = 0

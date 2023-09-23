@@ -32,7 +32,7 @@ function print_usage() {
     echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS]"
     echo "    QUERY           query file to align to each database (required)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
-    echo "    DB_PATH         path to detabases (required)"
+    echo "    DB_PATH         path to databases (required)"
     echo "    THREADS         number of threads for each database run (default: 1)"
     echo " OPTIONAL FLAGS" 
     echo "    -c              tidy up intermediate screening files afterward"

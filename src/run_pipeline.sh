@@ -84,7 +84,7 @@ if [ "$QUERY" == "" ]; then
     print_usage
     exit 1 
 elif [ ! -f "$QUERY" ]; then 
-    echo " ERROR: specified input query file does not exist" | tee -a ${OUTPUT}.screen
+    echo " ERROR: specified input query file $QUERY does not exist" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1
 fi

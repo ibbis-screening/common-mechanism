@@ -89,7 +89,7 @@ for res in glob.glob('*.screen'):
             reg_nonreg.append("P")
         
         homol_fail = [s for s in lines if "ERROR: Homology search has failed" in s]
-        if len(matching_reg_nonreg) > 0:
+        if len(homol_fail) > 0:
             reg_virus[-1:] = "Err"
             reg_bact[-1:] = "Err"
             reg_fungi[-1:] = "Err"

@@ -61,12 +61,10 @@ def fetch_sequences(seqid, nc_bits, f_file, outfile):
         with open(f_file, "r") as fasta_file:
             records = list(SeqIO.parse(fasta_file, "fasta"))
             sequences = []
-            print(tofetch)
             for (seqid, start, stop) in tofetch:
                 start = int(start)
                 stop = int(stop)
                 for record in records:
-                    print("$" + str(seqid) + "$ $" + str(record.id))
                     if str(record.id) == str(seqid):
                         sequence = record.seq[start - 1 : stop]  # Adjust start to 0-based index
                         print(sequence, record.seq)
@@ -74,7 +72,6 @@ def fetch_sequences(seqid, nc_bits, f_file, outfile):
                         break
                     else:
                         print("Error")
-        print(sequences)
         with open(outfile, "w") as output_file:
             output_file.writelines(sequences)
 
@@ -84,7 +81,7 @@ if nc_bits == "all":
 elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
     sys.stdout.write("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
 else: 
-    print("pulling out noncoding bits")
+    # print("pulling out noncoding bits")
     seqid = blast.iloc[0][0]
     fetch_sequences(seqid, nc_bits, f_file, outfile)
 

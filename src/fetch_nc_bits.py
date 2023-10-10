@@ -65,11 +65,12 @@ def fetch_sequences(seqid, nc_bits, f_file, outfile):
                 start = int(start)
                 stop = int(stop)
                 for record in records:
-                    if record.id == seqid:
+                    if str(record.id) == str(seqid):
                         sequence = record.seq[start - 1 : stop]  # Adjust start to 0-based index
                         sequences.append(f">{seqid} {start}-{stop}\n{sequence}\n")
                         break
-
+                    else:
+                        print("Error")
         with open(outfile, "w") as output_file:
             output_file.writelines(sequences)
 

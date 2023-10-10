@@ -72,6 +72,8 @@ def fetch_sequences(seqid, nc_bits, f_file, outfile):
                         print(sequence, record.seq)
                         sequences.append(f">{seqid} {start}-{stop}\n{sequence}\n")
                         break
+                    else:
+                        print("Error")
         print(sequences)
         with open(outfile, "w") as output_file:
             output_file.writelines(sequences)

@@ -123,8 +123,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
             if tax_lin[tax_lin['TaxID'].isin(vax_ids)].shape[0] > 0:
                 blast.loc[x,'regulated'] = False
 
-            blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'FullLineage']
-            blast.loc[x,'species'] = tax_lin.loc['species', 'FullLineage']
+            blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+            blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
 
             # for taxid in tax_lin['TaxID']['genus', 'species']:
 

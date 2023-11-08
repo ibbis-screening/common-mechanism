@@ -20,7 +20,7 @@ import taxoniq
 import matplotlib.cm as cm
 import re
 import sys
-import tqdm
+from tqdm import tqdm
 
 ##############################################################################
 #check_blastfile 

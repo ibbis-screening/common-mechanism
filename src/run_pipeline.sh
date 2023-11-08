@@ -15,7 +15,7 @@
 #   Optional parameters:
 #       -c = clean up intermediate files (default: no cleanup)
 #       -b = use blast instead of diamond (default: diamond) 
-# Example Usage: src/run_pipeline.sh-q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
+# Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
 ##############################################################################
 # set parameters for the run
 #set -eu 

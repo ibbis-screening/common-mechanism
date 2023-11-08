@@ -20,6 +20,7 @@ import taxoniq
 import matplotlib.cm as cm
 import re
 import sys
+import tqdm
 
 ##############################################################################
 #check_blastfile 
@@ -105,7 +106,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
     vax = []
     artif = []
     columns = []
-    for x in range(0, blast.shape[0]): # for each entry
+    for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
         try:
             # fetch the full lineage for that taxID
             t = pytaxonkit.lineage([int(blast['subject tax ids'][x])], data_dir=db_path)
@@ -118,7 +119,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
                 blast.loc[x,'regulated'] = True
             if tax_lin[tax_lin['TaxID'].isin(vax_ids)].shape[0] > 0:
                 blast.loc[x,'regulated'] = False
-            
+
             # for taxid in tax_lin['TaxID']['genus', 'species']:
 
             # while t['Name'][0] != 'root':

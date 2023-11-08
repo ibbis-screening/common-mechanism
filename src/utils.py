@@ -86,7 +86,72 @@ def split_taxa(blast):
 
 ##############################################################################
 #taxdist 
+Import pytaxonkit
+ 
 def taxdist(blast, reg_ids, vax_ids):
+    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
+    # blast here is a dataframe of blast results
+    blast = split_taxa(blast)
+    blast['subject tax ids'] = blast['subject tax ids'].astype('int')
+    blast = blast[blast['subject tax ids'] != 32630]
+    blast = blast.reset_index(drop=True)
+    # print(blast)
+  
+    # checks which individual lines contain regulated pathogens
+    missing = []
+    vax = []
+    artif = []
+    columns = []
+    for x in range(0, blast.shape[0]):
+        try:
+            t = pytaxonkit.lineage([int(blast['subject tax ids'][x])])
+            # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
+            if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
+                # blast.loc[x,'regulated'] = True
+                blast.loc[x,'regulated'] = int(blast['subject tax ids'][x])
+            while t['Name'][0] != 'root':
+                if int(t['TaxID'][0]) in set(reg_ids[0]):
+                     blast.loc[x,'regulated'] = int(t['TaxID'][0])
+                if int(t['TaxID'][0]) == 81077:
+                    artif.append(x)
+                if bast.columns.str.contains(t['Rank'][0]).any():
+                     blast.loc[x,t['Rank'][0]] = t['Name'][0]
+                else:
+                     blast[t['Rank'][0]] = ""
+                     blast.loc[x,t['Rank'][0]] = t['Name'][0]
+                     columns.append(t['Rank'][0])
+                t_lin = t['LineageTaxIDs'][0]
+                t_split = t_lin.split(';')
+                t_parent = t_split[t_split.index(str(t['TaxID'][0]))-1]
+                if int(t_parent) in set(vax_ids[0]):
+                    vax.append(x)
+                # print(t.rank.name)
+                # print(t.scientific_name)
+        except:
+            sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxonkit database\n')
+            missing.append(x)
+  
+    if (len(vax)>0):
+        blast['regulated'][vax] = False
+#
+    blast = blast.drop(missing)
+    blast = blast.drop(artif)
+    # if (len(missing)>0):
+    #     blast.loc[missing,columns] = "missing"
+      
+    blast = blast.sort_values(by=['% identity'], ascending=False)
+    # print(blast)
+  
+    # simplify output by putting all single instances of a species in an 'other' category
+    singletons = blast.species.value_counts().index[blast.species.value_counts()==1]
+    blast['species_simplified'] = blast['species']
+    blast.loc[blast.species.isin(singletons), 'species_simplified'] = 'other'
+  
+    blast = blast.reset_index(drop=True)
+  
+    return blast
+
+def taxdist_old(blast, reg_ids, vax_ids):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)

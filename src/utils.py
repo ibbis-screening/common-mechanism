@@ -88,7 +88,7 @@ def split_taxa(blast):
 #taxdist 
 import pytaxonkit
  
-def taxdist(blast, reg_ids, vax_ids):
+def taxdist(blast, reg_ids, vax_ids, db_path):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
@@ -104,7 +104,7 @@ def taxdist(blast, reg_ids, vax_ids):
     columns = []
     for x in range(0, blast.shape[0]):
         try:
-            t = pytaxonkit.lineage([int(blast['subject tax ids'][x])])
+            t = pytaxonkit.lineage([int(blast['subject tax ids'][x])], data_dir=db_path)
             # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
             if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
                 # blast.loc[x,'regulated'] = True

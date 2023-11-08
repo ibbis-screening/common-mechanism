@@ -82,6 +82,7 @@ def split_taxa(blast):
     blast = blast2.drop(cutrows)
     blast = blast.reset_index(drop=True)
     blast['regulated'] = False
+    blast['superkingdom'] = ""
 
     return blast
 
@@ -119,6 +120,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
                 blast.loc[x,'regulated'] = True
             if tax_lin[tax_lin['TaxID'].isin(vax_ids)].shape[0] > 0:
                 blast.loc[x,'regulated'] = False
+
+            blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'FullLineage']
 
             # for taxid in tax_lin['TaxID']['genus', 'species']:
 

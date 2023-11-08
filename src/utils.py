@@ -109,13 +109,14 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
     artif = []
     columns = []
     for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
-        try:
+        # try:
             # fetch the full lineage for that taxID
             t = pytaxonkit.lineage([int(blast['subject tax ids'][x])], data_dir=db_path)
 
             # go through each taxonomy level and check for regulated taxIDs
             tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])
             tax_lin.set_index('Rank', inplace=True)
+            print(tax_lin)
 
             if tax_lin[tax_lin['TaxID'].isin(reg_ids)].shape[0] > 0:
                 blast.loc[x,'regulated'] = True
@@ -145,9 +146,9 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
             #         vax.append(x)
             #     # print(t.rank.name)
             #     # print(t.scientific_name)
-        except:
-            sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxonkit database\n')
-            missing.append(x)
+        # except:
+        #     sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxonkit database\n')
+        #     missing.append(x)
   
     # if (len(vax)>0):
     #     blast['regulated'][vax] = False

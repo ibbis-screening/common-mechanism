@@ -9,7 +9,7 @@
 #This file is part of the CommonMechanism
 ##################################################################################################
 #Usage:
-#   python check_reg_path.py -i INPUT -d database_folder
+#   python check_reg_path.py -i INPUT -d database_folder -t threads
 #       -i, --input 
 ##################################################################################################
 from utils import *
@@ -25,6 +25,8 @@ def main():
         required=True, help="Input query file (e.g. QUERY.nr.dmnd)")
     parser.add_argument("-d","--database", dest="db",
         required=True,help="database folder (must contain vax_taxids and reg_taxids file)")
+    parser.add_argument("-t","--threads", dest="threads",
+        required=True,help="number of threads")
     args=parser.parse_args() 
     
     #check input files
@@ -58,9 +60,10 @@ def main():
         sys.stdout.write("\t...no hits\n")
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py
-    blast = taxdist(blast, reg_ids, vax_ids) #function in utils.py
+    blast = taxdist(blast, reg_ids, vax_ids, args.db, args.threads) #function in utils.py
     # print(blast['subject tax ids'])
-    blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
+    # blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
+    blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     # print("Original blast")

@@ -15,7 +15,7 @@
 #   Optional parameters:
 #       -c = clean up intermediate files (default: no cleanup)
 #       -b = use blast instead of diamond (default: diamond) 
-# Example Usage: src/run_pipeline.sh-q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
+# Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
 ##############################################################################
 # set parameters for the run
 #set -eu 
@@ -153,7 +153,7 @@ if [ "$BLAST" = 1 ]; then
         ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
     fi
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
@@ -163,7 +163,7 @@ else
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
         rm "${OUTPUT}".reg_path_coords.csv
     fi
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 fi
 
 s2_time=$(date)
@@ -184,7 +184,7 @@ if [ -f "${OUTPUT}".noncoding.fasta ]; then
         blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
     fi
     echo -e "\t...checking blastn results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     echo -e "\t...skipping nucleotide search"
 fi

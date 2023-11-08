@@ -16,10 +16,13 @@
 import pandas as pd
 import numpy as np
 import os
-import taxoniq
+# import taxoniq
 import matplotlib.cm as cm
 import re
 import sys
+from tqdm import tqdm
+import pytaxonkit
+
 
 ##############################################################################
 #check_blastfile 
@@ -64,7 +67,7 @@ def colourscale(reg_status, counts, averages):
     return colours
 
 ##############################################################################
-#split_taxa 
+#split_taxa: splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their own taxon ID
 def split_taxa(blast):
     blast2 = blast
     cutrows = []
@@ -81,12 +84,65 @@ def split_taxa(blast):
     blast = blast2.drop(cutrows)
     blast = blast.reset_index(drop=True)
     blast['regulated'] = False
+    blast['superkingdom'] = ""
+    blast['species'] = ""
+    blast['phylum'] = ""
 
     return blast
 
 ##############################################################################
 #taxdist 
-def taxdist(blast, reg_ids, vax_ids):
+ 
+def taxdist(blast, reg_ids, vax_ids, db_path, threads):
+    # prevent truncation of taxonomy results
+    pd.set_option('display.max_colwidth', None)
+
+    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
+    # blast here is a dataframe of blast results
+    blast = split_taxa(blast)
+    blast['subject tax ids'] = blast['subject tax ids'].astype('int')
+    blast = blast[blast['subject tax ids'] != 32630]
+    blast = blast.reset_index(drop=True)
+    # print(blast)
+    
+    # checks which individual lines contain regulated pathogens
+    t = pytaxonkit.lineage(blast['subject tax ids'], data_dir=db_path, threads=threads)
+    reg = list(map(str, reg_ids[0]))
+    vax = list(map(str, vax_ids[0]))
+
+    for x in range(0, blast.shape[0]): # for each hit taxID
+        # fetch the full lineage for that taxID
+        
+
+        # go through each taxonomy level and check for regulated taxIDs
+        tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])
+        tax_lin.set_index('Rank', inplace=True)
+        # print(tax_lin)
+
+        taxlist = list(map(str, tax_lin['TaxID']))
+
+        if any(x in reg for x in taxlist):
+            blast.loc[x,'regulated'] = True
+        if any(x in vax for x in taxlist):
+            blast.loc[x,'regulated'] = False
+
+        blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+        if 'species' in tax_lin.index:
+            blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
+        else:
+            blast.loc[x,'species'] = ""
+        if 'phylum' in tax_lin.index:
+            blast.loc[x,'phylum'] = tax_lin.loc['phylum', 'Lineage']
+        else:
+            blast.loc[x,'phylum'] = ""
+      
+    blast = blast.sort_values(by=['% identity'], ascending=False)
+  
+    blast = blast.reset_index(drop=True)
+  
+    return blast
+
+def taxdist_old(blast, reg_ids, vax_ids):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)

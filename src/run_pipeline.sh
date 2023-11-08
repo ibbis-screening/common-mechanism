@@ -163,7 +163,7 @@ else
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
         rm "${OUTPUT}".reg_path_coords.csv
     fi
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 fi
 
 s2_time=$(date)
@@ -184,7 +184,7 @@ if [ -f "${OUTPUT}".noncoding.fasta ]; then
         blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
     fi
     echo -e "\t...checking blastn results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     echo -e "\t...skipping nucleotide search"
 fi

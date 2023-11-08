@@ -91,7 +91,7 @@ def split_taxa(blast):
 #taxdist 
 import pytaxonkit
  
-def taxdist(blast, reg_ids, vax_ids, db_path):
+def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
     pd.set_option('display.max_colwidth', None)
 
@@ -104,13 +104,10 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
     # print(blast)
     
     # checks which individual lines contain regulated pathogens
-    missing = []
-    vax = []
-    artif = []
-    columns = []
+    t = pytaxonkit.lineage(blast['subject tax ids'][x], data_dir=db_path, threads=threads)
     for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
         # fetch the full lineage for that taxID
-        t = pytaxonkit.lineage([int(blast['subject tax ids'][x])], data_dir=db_path)
+        
 
         # go through each taxonomy level and check for regulated taxIDs
         tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])

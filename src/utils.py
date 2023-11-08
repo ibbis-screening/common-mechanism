@@ -109,62 +109,23 @@ def taxdist(blast, reg_ids, vax_ids, db_path):
     artif = []
     columns = []
     for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
-        # try:
-            # fetch the full lineage for that taxID
-            t = pytaxonkit.lineage([int(blast['subject tax ids'][x])], data_dir=db_path)
+        # fetch the full lineage for that taxID
+        t = pytaxonkit.lineage([int(blast['subject tax ids'][x])], data_dir=db_path)
 
-            # go through each taxonomy level and check for regulated taxIDs
-            tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])
-            tax_lin.set_index('Rank', inplace=True)
-            print(tax_lin)
+        # go through each taxonomy level and check for regulated taxIDs
+        tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])
+        tax_lin.set_index('Rank', inplace=True)
+        # print(tax_lin)
 
-            if tax_lin[tax_lin['TaxID'].isin(reg_ids)].shape[0] > 0:
-                blast.loc[x,'regulated'] = True
-            if tax_lin[tax_lin['TaxID'].isin(vax_ids)].shape[0] > 0:
-                blast.loc[x,'regulated'] = False
+        if tax_lin[tax_lin['TaxID'].isin(reg_ids)].shape[0] > 0:
+            blast.loc[x,'regulated'] = True
+        if tax_lin[tax_lin['TaxID'].isin(vax_ids)].shape[0] > 0:
+            blast.loc[x,'regulated'] = False
 
-            blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
-            blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
-
-            # for taxid in tax_lin['TaxID']['genus', 'species']:
-
-            # while t['Name'][0] != 'root':
-            #     if int(t['TaxID'][0]) in set(reg_ids[0]):
-            #          blast.loc[x,'regulated'] = int(t['TaxID'][0])
-            #     if int(t['TaxID'][0]) == 81077:
-            #         artif.append(x)
-            #     if bast.columns.str.contains(t['Rank'][0]).any():
-            #          blast.loc[x,t['Rank'][0]] = t['Name'][0]
-            #     else:
-            #          blast[t['Rank'][0]] = ""
-            #          blast.loc[x,t['Rank'][0]] = t['Name'][0]
-            #          columns.append(t['Rank'][0])
-            #     t_lin = t['LineageTaxIDs'][0]
-            #     t_split = t_lin.split(';')
-            #     t_parent = t_split[t_split.index(str(t['TaxID'][0]))-1]
-            #     if int(t_parent) in set(vax_ids[0]):
-            #         vax.append(x)
-            #     # print(t.rank.name)
-            #     # print(t.scientific_name)
-        # except:
-        #     sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxonkit database\n')
-        #     missing.append(x)
-  
-    # if (len(vax)>0):
-    #     blast['regulated'][vax] = False
-#
-    # blast = blast.drop(missing)
-    # blast = blast.drop(artif)
-    # if (len(missing)>0):
-    #     blast.loc[missing,columns] = "missing"
+        blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+        blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
       
     blast = blast.sort_values(by=['% identity'], ascending=False)
-    # print(blast)
-  
-    # simplify output by putting all single instances of a species in an 'other' category
-    # singletons = blast.species.value_counts().index[blast.species.value_counts()==1]
-    # blast['species_simplified'] = blast['species']
-    # blast.loc[blast.species.isin(singletons), 'species_simplified'] = 'other'
   
     blast = blast.reset_index(drop=True)
   

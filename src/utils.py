@@ -86,7 +86,7 @@ def split_taxa(blast):
 
 ##############################################################################
 #taxdist 
-Import pytaxonkit
+import pytaxonkit
  
 def taxdist(blast, reg_ids, vax_ids):
     # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids

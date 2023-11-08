@@ -83,6 +83,7 @@ def split_taxa(blast):
     blast = blast.reset_index(drop=True)
     blast['regulated'] = False
     blast['superkingdom'] = ""
+    blast['species'] = ""
 
     return blast
 

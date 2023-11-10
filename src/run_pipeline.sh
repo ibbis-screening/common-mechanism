@@ -153,7 +153,7 @@ if [ "$BLAST" = 1 ]; then
         ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $QUERY -o ${OUTPUT}.nr -t $THREADS
     fi
     echo -e "\t...checking blast results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"

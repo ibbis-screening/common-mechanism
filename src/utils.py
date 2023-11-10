@@ -124,6 +124,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         if any(x in reg for x in taxlist):
             # blast.loc[x,'regulated'] = ",".join([x for x in taxlist if x in reg])
             blast.loc[x,'regulated'] = True
+            print("Flag")
         if any(x in vax for x in taxlist):
             blast.loc[x,'regulated'] = False
 

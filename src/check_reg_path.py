@@ -60,7 +60,7 @@ def main():
         sys.stdout.write("\t...no hits\n")
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py
-    blast = taxdist(blast, reg_ids, vax_ids, args.db, threads) #function in utils.py
+    blast = taxdist(blast, reg_ids, vax_ids, args.db, args.threads) #function in utils.py
     # print(blast['subject tax ids'])
     blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
 

@@ -117,7 +117,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         # go through each taxonomy level and check for regulated taxIDs
         tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])
         tax_lin.set_index('Rank', inplace=True)
-        # print(tax_lin)
+        print(tax_lin)
 
         taxlist = list(map(str, tax_lin['TaxID']))
 

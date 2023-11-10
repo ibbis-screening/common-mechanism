@@ -109,7 +109,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
 
-    for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
+    for x in range(0, blast.shape[0]): # for each hit taxID
         # fetch the full lineage for that taxID
         
 

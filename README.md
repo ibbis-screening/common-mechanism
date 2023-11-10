@@ -87,7 +87,7 @@ The CommonMechanism database will be provided via Amazon AWS. Please email Jenni
 Please download the NCBI taxonomy database using the following commands:
 
       wget -c ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz 
-      tar -zxvf taxdump.tar.gz`
+      tar -zxvf taxdump.tar.gz
 
 # Running the Common Mechanism 
 The basic command line for running the Common Mechanism is as follows:

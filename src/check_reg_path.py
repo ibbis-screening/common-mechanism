@@ -75,7 +75,7 @@ def main():
     # print(blast2[interesting_cols].sort_values('q. start').head(40))
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
     # print("Top blast")
-    print(blast2[interesting_cols].sort_values('q. start').head(40))
+    # print(blast2[interesting_cols].sort_values('q. start').head(40))
 
     reg_bac = 0
     reg_vir = 0

@@ -86,6 +86,7 @@ def split_taxa(blast):
     blast['regulated'] = False
     blast['superkingdom'] = ""
     blast['species'] = ""
+    blast['phylum'] = ""
 
     return blast
 
@@ -126,7 +127,14 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
             blast.loc[x,'regulated'] = False
 
         blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
-        blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
+        if 'species' in tax_lin.index:
+            blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
+        else:
+            blast.loc[x,'species'] = ""
+        if 'phylum' in tax_lin.index:
+            blast.loc[x,'phylum'] = tax_lin.loc['phylum', 'Lineage']
+        else:
+            blast.loc[x,'phylum'] = ""
       
     blast = blast.sort_values(by=['% identity'], ascending=False)
   

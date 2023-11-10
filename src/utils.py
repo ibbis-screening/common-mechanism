@@ -105,7 +105,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # print(blast)
     
     # checks which individual lines contain regulated pathogens
-    t = pytaxonkit.lineage(blast['subject tax ids'][x], data_dir=db_path, threads=threads)
+    t = pytaxonkit.lineage(blast['subject tax ids'], data_dir=db_path, threads=threads)
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
 

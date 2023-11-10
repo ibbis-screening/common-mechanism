@@ -126,7 +126,10 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         if any(x in vax for x in taxlist):
             blast.loc[x,'regulated'] = False
 
-        blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+        if 'superkingdom' in tax_lin.index:
+            blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+        else:
+            blast.loc[x,'superkingdom'] = ""
         if 'species' in tax_lin.index:
             blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
         else:

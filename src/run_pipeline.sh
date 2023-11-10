@@ -134,6 +134,7 @@ echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
+cat ${OUTPUT}.faa | sed -E 's/[[:space:]]|\xc2\xa0//g' > ${OUTPUT}.faa
 if [ ! -f "${OUTPUT}".faa ]; then
     echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi

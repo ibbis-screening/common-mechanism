@@ -66,14 +66,16 @@ def main():
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
+    interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
+
     # print("Original blast")
-    # print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
+    # print(blast[interesting_cols].sort_values('q. start').head(40))
     blast2 = trimblast(blast)
     # print("Trim blast")
-    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
+    # print(blast2[interesting_cols].sort_values('q. start').head(40))
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
     # print("Top blast")
-    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].sort_values('q. start').head(40))
+    # print(blast2[interesting_cols].sort_values('q. start').head(40))
 
     reg_bac = 0
     reg_vir = 0
@@ -155,11 +157,14 @@ def main():
                     if subset['phylum'][0] == "Oomycota":
                         org = "oomycete"
                         reg_fung = 1 # sorry! to save complexity
+                    if subset['phylum'][0] == "Ascomycota":
+                        org = "ascomycete"
+                        reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
+                    # sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene_names)

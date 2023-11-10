@@ -101,7 +101,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast['subject tax ids'] = blast['subject tax ids'].astype('int')
-    blast = blast[blast['subject tax ids'] != 32630]
+    blast = blast[blast['subject tax ids'] != 32630] # synthetic constructs
+    blast = blast[blast['subject tax ids'] != 29278] # vectors
     blast = blast.reset_index(drop=True)
     # print(blast)
     
@@ -115,18 +116,28 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         
 
         # go through each taxonomy level and check for regulated taxIDs
-        tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[0], t['FullLineageTaxIDs'].str.split(';')[0], t['FullLineageRanks'].str.split(';')[0])), columns=['Lineage', 'TaxID', 'Rank'])
+        tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[x], t['FullLineageTaxIDs'].str.split(';')[x], t['FullLineageRanks'].str.split(';')[x])), columns=['Lineage', 'TaxID', 'Rank'])
         tax_lin.set_index('Rank', inplace=True)
         # print(tax_lin)
 
         taxlist = list(map(str, tax_lin['TaxID']))
+        exlist = ['32630', '29278']    
 
+        if any(x in exlist for x in taxlist):
+            blast.drop(x, axis=0, inplace=True)
+            print("Drop")
+            continue
         if any(x in reg for x in taxlist):
+            # blast.loc[x,'regulated'] = ",".join([x for x in taxlist if x in reg])
             blast.loc[x,'regulated'] = True
+            # print("Flag")
         if any(x in vax for x in taxlist):
             blast.loc[x,'regulated'] = False
 
-        blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+        if 'superkingdom' in tax_lin.index:
+            blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']
+        else:
+            blast.loc[x,'superkingdom'] = ""
         if 'species' in tax_lin.index:
             blast.loc[x,'species'] = tax_lin.loc['species', 'Lineage']
         else:

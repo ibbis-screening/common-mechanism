@@ -16,11 +16,13 @@
 import pandas as pd
 import numpy as np
 import os
-import taxoniq
+# import taxoniq
 import matplotlib.cm as cm
 import re
 import sys
 from tqdm import tqdm
+import pytaxonkit
+
 
 ##############################################################################
 #check_blastfile 
@@ -89,7 +91,6 @@ def split_taxa(blast):
 
 ##############################################################################
 #taxdist 
-import pytaxonkit
  
 def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
@@ -105,6 +106,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     
     # checks which individual lines contain regulated pathogens
     t = pytaxonkit.lineage(blast['subject tax ids'][x], data_dir=db_path, threads=threads)
+    
     for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
         # fetch the full lineage for that taxID
         

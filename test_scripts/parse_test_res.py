@@ -127,7 +127,6 @@ for name, risk, vf, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
             summary.append((name, "F"))
         elif (reg_vir == "F" and ben == "P"):
             summary.append((name, "P"))
-    #        print("Regulated virus found")
         # if it's a regulated bacterial pathogen but a known benign gene, clear it
         elif (reg_bac == "F" and ben == "P" and vf == "P") == 1:
             summary.append((name, "P"))

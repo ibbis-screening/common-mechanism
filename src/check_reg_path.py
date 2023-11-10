@@ -161,7 +161,7 @@ def main():
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
+                    # sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene_names)

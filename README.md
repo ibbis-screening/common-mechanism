@@ -23,7 +23,7 @@ to run the biorisk search.
 The CommonMechanism pipeline has the following python package dependencies:
  * pandas
  * plotly 
- * taxoniq 
+ * pytaxonkit 
  * ncbi-taxon-db
  * biopython
  * matplotlib
@@ -64,6 +64,8 @@ The following databases will need to be installed prior to running the CommonMec
     databases/nt_blast (~280 Gb) 
     databases/benign_db (~2.2 Gb)
     databases/biorisk_db (~1.0 Gb)
+    databases/nodes.dmp (~100 Mb)
+    databases/names.dmp (~200 Mb)
 
 ## Benign and Biorisk Databases 
 To download the benign_db and biorisk_db files, please contact Nicole Wheeler (n.wheeler@bham.ac.uk) and she will send you a download link.
@@ -80,6 +82,12 @@ Users can also download the BLAST nr database to check the relative speed of BLA
 
 ## DIAMOND Database
 The CommonMechanism database will be provided via Amazon AWS. Please email Jennifer Lu (jennifer.lu717@gmail.com) for instructions to download the database. 
+
+## NCBI taxonomy database
+Please download the NCBI taxonomy database using the following commands:
+
+      wget -c ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz 
+      tar -zxvf taxdump.tar.gz`
 
 # Running the Common Mechanism 
 The basic command line for running the Common Mechanism is as follows:

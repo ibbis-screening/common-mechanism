@@ -106,7 +106,9 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     
     # checks which individual lines contain regulated pathogens
     t = pytaxonkit.lineage(blast['subject tax ids'][x], data_dir=db_path, threads=threads)
-    
+    reg = list(map(str, reg_ids[0]))
+    vax = list(map(str, vax_ids[0]))
+
     for x in tqdm(range(0, blast.shape[0])): # for each hit taxID
         # fetch the full lineage for that taxID
         
@@ -116,9 +118,11 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         tax_lin.set_index('Rank', inplace=True)
         # print(tax_lin)
 
-        if tax_lin[tax_lin['TaxID'].isin(reg_ids)].shape[0] > 0:
+        taxlist = list(map(str, tax_lin['TaxID']))
+
+        if any(x in reg for x in taxlist):
             blast.loc[x,'regulated'] = True
-        if tax_lin[tax_lin['TaxID'].isin(vax_ids)].shape[0] > 0:
+        if any(x in vax for x in taxlist):
             blast.loc[x,'regulated'] = False
 
         blast.loc[x,'superkingdom'] = tax_lin.loc['superkingdom', 'Lineage']

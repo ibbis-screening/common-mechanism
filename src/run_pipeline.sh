@@ -130,11 +130,14 @@ start_time=$(date)
 echo -e " >> STARTED AT $start_time" | tee -a ${OUTPUT}.screen
 echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 
+# remove any spaces or blank characters
+cp ${QUERY} ${QUERY}.tmp
+cat ${QUERY}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
+
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
-cat ${OUTPUT}.faa | sed -E 's/[[:space:]]|\xc2\xa0//g' > ${OUTPUT}.faa
 if [ ! -f "${OUTPUT}".faa ]; then
     echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi
@@ -216,7 +219,7 @@ then
         rm ${OUTPUT}.reg_path_coords.csv
     fi
 
-    rm ${OUTPUT}.*hmmscan ${OUTPUT}.*blastn
+    rm ${OUTPUT}.*hmmscan ${OUTPUT}.*blastn ${OUTPUT}.faa
 
     if ["$BLAST" = 1 ]
     then

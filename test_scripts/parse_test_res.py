@@ -77,7 +77,7 @@ for res in glob.glob('*.screen'):
         matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
         matching_fungi.append([s for s in lines if "found in only regulated organisms: FLAG (oomycete)" in s])
         matching_fungi.append([s for s in lines if "found in only regulated organisms: FLAG (ascomycete)" in s])
-        # print(matching_fungi)
+        print(matching_fungi)
         if len(matching_fungi) > 0:
             reg_fungi = check_flags(matching_fungi, reg_fungi)
         else:

@@ -101,7 +101,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast['subject tax ids'] = blast['subject tax ids'].astype('int')
-    blast = blast[blast['subject tax ids'] != 32630]
+    blast = blast[blast['subject tax ids'] != 32630] # synthetic constructs
+    blast = blast[blast['subject tax ids'] != 394040] # vectors
     blast = blast.reset_index(drop=True)
     # print(blast)
     

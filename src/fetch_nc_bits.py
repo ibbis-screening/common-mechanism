@@ -71,6 +71,7 @@ def fetch_sequences(seqid, nc_bits, f_file, outfile):
                         break
                     else:
                         print("Error")
+                        print(record.id, str(seqid))
         with open(outfile, "w") as output_file:
             output_file.writelines(sequences)
 

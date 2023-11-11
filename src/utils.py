@@ -102,7 +102,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     blast = split_taxa(blast)
     blast['subject tax ids'] = blast['subject tax ids'].astype('int')
     blast = blast[blast['subject tax ids'] != 32630] # synthetic constructs
-    blast = blast[blast['subject tax ids'] != 394040] # vectors
+    blast = blast[blast['subject tax ids'] != 29278] # vectors
     blast = blast.reset_index(drop=True)
     # print(blast)
     
@@ -121,7 +121,12 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         # print(tax_lin)
 
         taxlist = list(map(str, tax_lin['TaxID']))
+        exlist = ['32630', '29278']    
 
+        if any(x in exlist for x in taxlist):
+            blast.drop(x, axis=0, inplace=True)
+            print("Drop")
+            continue
         if any(x in reg for x in taxlist):
             # blast.loc[x,'regulated'] = ",".join([x for x in taxlist if x in reg])
             blast.loc[x,'regulated'] = True

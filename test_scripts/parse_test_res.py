@@ -12,7 +12,7 @@ biorisk = []
 vfs = []
 reg_virus = []
 reg_bact = []
-reg_fungi = []
+reg_euk = []
 reg_nonreg = []
 benign = []
 
@@ -53,7 +53,7 @@ for res in glob.glob('*.screen'):
         # if len(homol_fail) > 0:
         #     reg_virus.append("Err")
         #     reg_bact.append("Err")
-        #     reg_fungi.append("Err")
+        #     reg_euk.append("Err")
         # else:
 
         # reg_virus screen - fetch all coding and noncoding reports
@@ -73,15 +73,13 @@ for res in glob.glob('*.screen'):
         else:
             reg_bact.append("P")
 
-        # reg_fungi screen - fetch all coding and noncoding reports
-        matching_fungi = [s for s in lines if "found in only regulated organisms: FLAG (fungi)" in s]
-        matching_fungi.extend([s for s in lines if "found in only regulated organisms: FLAG (oomycete)" in s])
-        matching_fungi.extend([s for s in lines if "found in only regulated organisms: FLAG (ascomycete)" in s])
-        # print(matching_fungi)
-        if len(matching_fungi) > 0:
-            reg_fungi = check_flags(matching_fungi, reg_fungi)
+        # reg_euk screen - fetch all coding and noncoding reports
+        matching_euk = [s for s in lines if "found in only regulated organisms: FLAG (eukaryote)" in s]
+        # print(matching_euk)
+        if len(matching_euk) > 0:
+            reg_euk = check_flags(matching_euk, reg_euk)
         else:
-            reg_fungi.append("P")
+            reg_euk.append("P")
 
         # reg_nonreg screen - ID cases where the same sequence is found in regulated and non-regulated organisms
         matching_reg_nonreg = [s for s in lines if "found in both regulated and non-regulated organisms" in s]
@@ -94,7 +92,7 @@ for res in glob.glob('*.screen'):
         if len(homol_fail) > 0:
             reg_virus[-1:] = ["Err"]
             reg_bact[-1:] = ["Err"]
-            reg_fungi[-1:] = ["Err"]
+            reg_euk[-1:] = ["Err"]
             reg_nonreg[-1:] = ["Err"]
 
         # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
@@ -115,9 +113,9 @@ for res in glob.glob('*.screen'):
 
 #print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 
-breakdown = list(zip(names, biorisk, vfs, reg_virus, reg_bact, reg_fungi, reg_nonreg, benign))
+breakdown = list(zip(names, biorisk, vfs, reg_virus, reg_bact, reg_euk, reg_nonreg, benign))
 summary = []
-for name, risk, vf, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
+for name, risk, vf, reg_vir, reg_bac, reg_euk, reg_nonreg, ben in breakdown:
         # if a biorisk is flagged, flag the whole thing
     if risk == "Err" or reg_bac == "Err" or ben == "Err":
         summary.append((name, "Err"))
@@ -135,19 +133,19 @@ for name, risk, vf, reg_vir, reg_bac, reg_fungi, reg_nonreg, ben in breakdown:
         elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes, but these seem to be poorly supported Victors genes
             summary.append((name, "P"))
     #        print("Regulated bacterial housekeeping found")
-        elif (reg_fungi == "F" and ben == "P") == 1:
+        elif (reg_euk == "F" and ben == "P") == 1:
             summary.append((name, "P"))
         # if it's a regulated bacterial hit, flag it
         elif reg_bac == "F":
             summary.append((name, "F"))
-        elif reg_fungi == "F":
+        elif reg_euk == "F":
             summary.append((name, "F"))
         else:
             summary.append((name, "P"))
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)
-breakdown.columns = ("names", "biorisk", "virulence factor", "regulated_virus", "regulated_bacteria", "regulated_fungi/oomycetes", "mix of reg and non-reg", "benign")
+breakdown.columns = ("names", "biorisk", "virulence factor", "regulated_virus", "regulated_bacteria", "regulated_eukaryotes", "mix of reg and non-reg", "benign")
 breakdown.to_csv("test_itemized.csv", index=False)
 
 

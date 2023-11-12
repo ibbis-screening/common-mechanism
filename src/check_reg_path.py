@@ -34,14 +34,14 @@ def main():
         sys.stderr.write("\t...input query file %s does not exist\n" % args.in_file)
         exit(1)
     if (not os.path.exists(args.db + "/benign_db/vax_taxids")):
-        sys.stderr.write("\t...benign db file %s does not exist\n" % (args.db + "/benign_db/vax_taxids"))
+        sys.stderr.write("\t...benign db file %s does not exist\n" % (args.db + "/benign_db/vax_taxids.txt"))
         exit(1)
     if (not os.path.exists(args.db + "/biorisk_db/reg_taxids")):
-        sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.db + "/biorisk_db/reg_taxids"))
+        sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.db + "/biorisk_db/reg_taxids.txt"))
         exit(1)
     # read in files
-    reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids", header=None)
-    vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids", header=None)
+    reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids.txt", header=None)
+    vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids.txt", header=None)
 
     # sample_name = re.sub("\..*", "", args.in_file)
     sample_name = re.sub(".nr.*", "", args.in_file)
@@ -150,16 +150,10 @@ def main():
                     elif subset['superkingdom'][0] == "Bacteria": 
                         reg_bac = 1
                         org = "bacteria"
-                    elif 'kingdom' in subset:
-                        if subset['kingdom'][0] == "Fungi":
-                            org = "fungi"
+                    elif 'superkingdom' in subset:
+                        if subset['superkingdom'][0] == "Eukaryota":
+                            org = "eukaryote"
                             reg_fung = 1
-                    if subset['phylum'][0] == "Oomycota":
-                        org = "oomycete"
-                        reg_fung = 1 # sorry! to save complexity
-                    if subset['phylum'][0] == "Ascomycota":
-                        org = "ascomycete"
-                        reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))

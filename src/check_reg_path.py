@@ -150,16 +150,10 @@ def main():
                     elif subset['superkingdom'][0] == "Bacteria": 
                         reg_bac = 1
                         org = "bacteria"
-                    elif 'kingdom' in subset:
-                        if subset['kingdom'][0] == "Fungi":
-                            org = "fungi"
+                    elif 'superkingdom' in subset:
+                        if subset['superkingdom'][0] == "Eukaryota":
+                            org = "eukaryote"
                             reg_fung = 1
-                    if subset['phylum'][0] == "Oomycota":
-                        org = "oomycete"
-                        reg_fung = 1 # sorry! to save complexity
-                    if subset['phylum'][0] == "Ascomycota":
-                        org = "ascomycete"
-                        reg_fung = 1 # sorry! to save complexity
                     # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))

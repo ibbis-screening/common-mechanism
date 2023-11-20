@@ -123,6 +123,9 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         taxlist = list(map(str, tax_lin['TaxID']))
         exlist = ['32630', '29278']    
 
+        if str(blast.loc[x,'subject tax ids']) not in taxlist:
+            print("Problem with taxID " + str(blast.loc[x,'subject tax ids']) + " - check that your taxID and protein database are up to date")
+
         if any(x in exlist for x in taxlist):
             blast.drop(x, axis=0, inplace=True)
             print("Drop")

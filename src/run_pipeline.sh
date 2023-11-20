@@ -131,8 +131,8 @@ echo -e " >> STARTED AT $start_time" | tee -a ${OUTPUT}.screen
 echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 
 # remove any spaces or blank characters
-cp ${QUERY} ${QUERY}.tmp
-cat ${QUERY}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
+cp ${QUERY} ${OUPUT}.tmp
+cat ${OUTPUT}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
 
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen

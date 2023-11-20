@@ -136,6 +136,7 @@ cat ${QUERY}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
 
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
+
 echo -e "\t...running transeq" 
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 if [ ! -f "${OUTPUT}".faa ]; then
@@ -151,6 +152,7 @@ echo -e "    STEP 1 completed at $s1_time\n" | tee -a ${OUTPUT}.screen
 
 # Step 2: taxon ID/protein screening
 echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.screen
+
 if [ "$BLAST" = 1 ]; then
     if [ ! -f "${OUTPUT}".nr.blastx ]; then
         echo -e "\t...running run_blastx.sh"
@@ -178,6 +180,7 @@ echo -e "    STEP 2 completed at $s2_time\n" | tee -a ${OUTPUT}.screen
 
 # Step 3: nucleotide screening
 echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
+
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
     python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT} | tee -a ${OUTPUT}.screen
@@ -202,11 +205,12 @@ echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
 # Step 4: benign DB scan
 #date
 echo -e " >> STEP 4: Checking any pathogen regions for benign components..." | tee -a ${OUTPUT}.screen
+
 hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query $OUTPUT -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm $OUTPUT &>> ${OUTPUT}.tmp
 
-python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${OUTPUT} -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
+python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${OUTPUT}.fasta -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
 
 finish_time=$(date)
 echo -e " >> COMPLETED AT $finish_time" | tee -a ${OUTPUT}.screen

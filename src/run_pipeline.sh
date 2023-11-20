@@ -183,9 +183,9 @@ echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}
 
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT} | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
 else
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT} | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
 fi
 
 if [ -f "${OUTPUT}".noncoding.fasta ]; then 

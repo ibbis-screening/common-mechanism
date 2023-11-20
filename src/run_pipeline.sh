@@ -156,7 +156,7 @@ echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.sc
 if [ "$BLAST" = 1 ]; then
     if [ ! -f "${OUTPUT}".nr.blastx ]; then
         echo -e "\t...running run_blastx.sh"
-        ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $OUTPUT -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
+        ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
     fi
     echo -e "\t...checking blast results"
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
@@ -166,7 +166,7 @@ if [ "$BLAST" = 1 ]; then
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
-        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $OUTPUT -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES # use the shortened filename rather than the original
+        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES # use the shortened filename rather than the original
     fi
     echo -e "\t...checking diamond results"
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 

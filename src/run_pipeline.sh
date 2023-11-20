@@ -131,8 +131,8 @@ echo -e " >> STARTED AT $start_time" | tee -a ${OUTPUT}.screen
 echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 
 # remove any spaces or blank characters
-cp ${QUERY} ${QUERY}.tmp
-cat ${QUERY}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
+cp ${QUERY} ${OUTPUT}.tmp
+cat ${OUTPUT}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
 
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
@@ -156,7 +156,7 @@ echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.sc
 if [ "$BLAST" = 1 ]; then
     if [ ! -f "${OUTPUT}".nr.blastx ]; then
         echo -e "\t...running run_blastx.sh"
-        ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $OUTPUT -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
+        ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
     fi
     echo -e "\t...checking blast results"
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
@@ -166,7 +166,7 @@ if [ "$BLAST" = 1 ]; then
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
-        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i $OUTPUT -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES # use the shortened filename rather than the original
+        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES # use the shortened filename rather than the original
     fi
     echo -e "\t...checking diamond results"
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
@@ -183,9 +183,9 @@ echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}
 
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT} | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
 else
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT} | tee -a ${OUTPUT}.screen
+    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
 fi
 
 if [ -f "${OUTPUT}".noncoding.fasta ]; then 
@@ -207,7 +207,7 @@ echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
 echo -e " >> STEP 4: Checking any pathogen regions for benign components..." | tee -a ${OUTPUT}.screen
 
 hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
-blastn -db ${DB_PATH}/benign_db/benign.fasta -query $OUTPUT -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
+blastn -db ${DB_PATH}/benign_db/benign.fasta -query $OUTPUT.fasta -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm $OUTPUT &>> ${OUTPUT}.tmp
 
 python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${OUTPUT}.fasta -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen

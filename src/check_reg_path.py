@@ -33,10 +33,10 @@ def main():
     if (not os.path.exists(args.in_file)):
         sys.stderr.write("\t...input query file %s does not exist\n" % args.in_file)
         exit(1)
-    if (not os.path.exists(args.db + "/benign_db/vax_taxids")):
+    if (not os.path.exists(args.db + "/benign_db/vax_taxids.txt")):
         sys.stderr.write("\t...benign db file %s does not exist\n" % (args.db + "/benign_db/vax_taxids.txt"))
         exit(1)
-    if (not os.path.exists(args.db + "/biorisk_db/reg_taxids")):
+    if (not os.path.exists(args.db + "/biorisk_db/reg_taxids.txt")):
         sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.db + "/biorisk_db/reg_taxids.txt"))
         exit(1)
     # read in files

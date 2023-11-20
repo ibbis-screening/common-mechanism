@@ -157,6 +157,9 @@ if [ "$BLAST" = 1 ]; then
         ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q $OUTPUT -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
     fi
     echo -e "\t...checking blast results"
+    if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
+        rm "${OUTPUT}".reg_path_coords.csv
+    fi
     python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then

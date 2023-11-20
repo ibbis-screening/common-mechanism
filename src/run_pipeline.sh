@@ -131,7 +131,7 @@ echo -e " >> STARTED AT $start_time" | tee -a ${OUTPUT}.screen
 echo -e " >> Screening $QUERY" | tee -a ${OUTPUT}.screen
 
 # remove any spaces or blank characters
-cp ${QUERY} ${OUPUT}.tmp
+cp ${QUERY} ${OUTPUT}.tmp
 cat ${OUTPUT}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
 
 # Step 1: biorisk DB scan

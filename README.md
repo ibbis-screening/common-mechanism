@@ -105,7 +105,8 @@ The following required parameters must be specified:
 - `${THREADS}` - Number of threads to be used when running the analysis
 
 # User survey
-https://docs.google.com/forms/d/1LqzEH3XkFHBtMHNzGW9i4vRU7TyabBnNIDOFQBXa-4s/edit?usp=sharing
+We would love to hear your feedback on the software. Please use the link below to provide your response:
+https://forms.gle/JMY5jBQvWdSu4W6L9
 
 # Author information 
 Nicole Wheeler (n.wheeler@bham.ac.uk)

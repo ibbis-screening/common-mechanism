@@ -49,7 +49,7 @@ The CommonMechanism pipeline requires users to install [DIAMOND](https://github.
 
 Following installation of all required packages, please see [Required Data](#required-data)
 
-# RNA family search
+## RNA family search
 
 The CommonMechanism uses Infernal to search sequences for known benign RNA families. It can be installed using:
 
@@ -68,15 +68,19 @@ The following databases will need to be installed prior to running the CommonMec
     databases/names.dmp (~200 Mb)
 
 ## Benign and Biorisk Databases 
-To download the benign_db and biorisk_db files, please contact Nicole Wheeler (n.wheeler@bham.ac.uk) and she will send you a download link.
+To download the benign_db files, please contact Nicole Wheeler (n.wheeler@bham.ac.uk) and she will send you a download link.
+
+The biorisk_db files can be downloaded here: https://19ec3326-010b-48cf-a51c-14fe19940f13.godaddysites.com - please make sure the files are downloaded to the right folder, so the Common Mechanism can find them. 
 
 ## BLAST Database
-The Common Mechanism requires the BLAST nt database. The files for the BLAST nt database are located at https://ftp.ncbi.nlm.nih.gov/blast/db/. Users may download the BLAST database (including 700+ files) within the `nt_blast/` folder by using the following command:
+The Common Mechanism requires the BLAST nt database. The files for the BLAST nt database are located at https://ftp.ncbi.nlm.nih.gov/blast/db/. Users can download the BLAST database (including 700+ files) within the `nt_blast/` folder by using the following command:
 
       update_blastdb.pl --passive --decompress nt
    
 This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
-Users can also download the BLAST nr database to check the relative speed of BLAST vs DIAMOND search on their machine:
+
+
+Users can also download the BLAST nr database to check the relative speed and accuracy of BLAST vs DIAMOND search on their machine:
 
       update_blastdb.pl --passive --decompress nr
 
@@ -90,17 +94,19 @@ Please download the NCBI taxonomy database using the following commands:
       tar -zxvf taxdump.tar.gz
 
 # Running the Common Mechanism 
-The basic command line for running the Common Mechanism is as follows:
+The basic command line argument for running the Common Mechanism is as follows:
 
-      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER}
+      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER} -t %{THREADS}
 
 The following required parameters must be specified:
 - `${QUERY}` - The sequence file to test
 - `${OUTPUT}` - User-specified output prefix (All output files will begin with ${OUTPUT})
 - `${DATABASE FOLDER}` - The path to the `databases/` folder setup as described in [Required Data](#required-data)
+- `${THREADS}` - Number of threads to be used when running the analysis
 
 # User survey
-https://docs.google.com/forms/d/1LqzEH3XkFHBtMHNzGW9i4vRU7TyabBnNIDOFQBXa-4s/edit?usp=sharing
+We would love to hear your feedback on the software. Please use the link below to provide your response:
+https://forms.gle/JMY5jBQvWdSu4W6L9
 
 # Author information 
 Nicole Wheeler (n.wheeler@bham.ac.uk)

@@ -68,9 +68,9 @@ The following databases will need to be installed prior to running the CommonMec
     databases/names.dmp (~200 Mb)
 
 ## Benign and Biorisk Databases 
-To download the benign_db files, please contact Nicole Wheeler (n.wheeler@bham.ac.uk) and she will send you a download link.
+The benign_db database can be downloaded [here](https://bham-my.sharepoint.com/personal/n_wheeler_bham_ac_uk/_layouts/15/guestaccess.aspx?share=EixvesiY0ylNlUWP6-KxR1sBFruv5mRBbWIdTharAR2xgA&e=gywBC9).
 
-The biorisk_db files can be downloaded here: http://biodata.digital/ - please make sure the files are downloaded to the right folder, so the Common Mechanism can find them. 
+The biorisk_db files can be downloaded [here](http://biodata.digital/) - please make sure the files are downloaded to the right folder, so the Common Mechanism can find them. 
 
 ## BLAST Database
 The Common Mechanism requires the BLAST nt database. The files for the BLAST nt database are located at https://ftp.ncbi.nlm.nih.gov/blast/db/. Users can download the BLAST database (including 700+ files) within the `nt_blast/` folder by using the following command:

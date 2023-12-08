@@ -15,7 +15,7 @@ In addition to the CommonMechanism source code, users may need to install a numb
 ## HMMER search
 The CommonMechanism pipeline requires:
  * hmmer 
- * transeq (from the EMBOSS package)
+ * transeq (from the EMBOSS package - can be installed via [conda](https://anaconda.org/bioconda/emboss))
 
 to run the biorisk search.
 

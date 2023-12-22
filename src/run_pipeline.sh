@@ -145,7 +145,7 @@ fi
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 echo -e "\t...checking hmmscan results"
-python ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/ | tee -a ${OUTPUT}.screen
+python3 ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/ | tee -a ${OUTPUT}.screen
 
 s1_time=$(date)
 echo -e "    STEP 1 completed at $s1_time\n" | tee -a ${OUTPUT}.screen
@@ -162,7 +162,7 @@ if [ "$BLAST" = 1 ]; then
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
         rm "${OUTPUT}".reg_path_coords.csv
     fi
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
+    python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
@@ -172,7 +172,7 @@ else
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
         rm "${OUTPUT}".reg_path_coords.csv
     fi
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
+    python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 fi
 
 s2_time=$(date)
@@ -183,9 +183,9 @@ echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}
 
 echo -e "\t...fetching noncoding regions"
 if [ "$BLAST" = 1 ]; then
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
+    python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
 else
-    python ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
+    python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
 fi
 
 if [ -f "${OUTPUT}".noncoding.fasta ]; then 
@@ -194,7 +194,7 @@ if [ -f "${OUTPUT}".noncoding.fasta ]; then
         blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
     fi
     echo -e "\t...checking blastn results"
-    python ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
+    python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
 else 
     echo -e "\t...skipping nucleotide search"
 fi
@@ -210,14 +210,14 @@ hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${O
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query $OUTPUT.fasta -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm $OUTPUT &>> ${OUTPUT}.tmp
 
-python ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${OUTPUT}.fasta -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
+python3 ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${OUTPUT}.fasta -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
 
 finish_time=$(date)
 echo -e " >> COMPLETED AT $finish_time" | tee -a ${OUTPUT}.screen
 
 # Visualising outputs; functional characterization
 
-#python ${CM_DIR}/viz_outputs.py ${OUTPUT} # turning off until file write permissions are resolved
+#python3 ${CM_DIR}/viz_outputs.py ${OUTPUT} # turning off until file write permissions are resolved
 
 if [ "$CLEANUP" == 1 ]
 then

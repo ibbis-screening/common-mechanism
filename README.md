@@ -27,7 +27,6 @@ The CommonMechanism pipeline has the following python package dependencies:
  * ncbi-taxon-db
  * biopython
  * matplotlib
- * kaleido
  * bedtools
  * pybedtools 
 

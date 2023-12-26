@@ -7,15 +7,15 @@ From: ubuntu:latest
 %post
 apt-get update
 
-apt-get install python3
-apt-get install pip
-apt-get install emboss
-apt-get install git
-apt-get install bedtools
-apt-get install ncbi-blast+
-apt-get install cmake
-apt-get install parallel
-apt-get install infernal
+apt-get install -y python3
+apt-get install -y pip
+apt-get install -y emboss
+apt-get install -y git
+apt-get install -y bedtools
+apt-get install -y ncbi-blast+
+apt-get install -y cmake
+apt-get install -y parallel
+apt-get install -y infernal
 
 pip install --upgrade pip
 pip install pandas
@@ -25,4 +25,14 @@ pip install biopython
 pip install matplotlib
 pip install pybedtools
 
-# still missing pytaxonkit, which needs to be installed using conda or pip from the github repo, or moved into the bin
+pip install git+git://github.com/bioforensics/pytaxonkit
+
+wget https://github.com/bbuchfink/diamond/archive/v2.0.13.tar.gz
+tar xzf v2.0.13.tar.gz
+mkdir diamond-2.0.13/bin
+cd diamond-2.0.13/bin
+cmake ..
+make -j8
+sudo make install
+
+git clone https://github.com/DNA-Screening/CommonMechanism.git

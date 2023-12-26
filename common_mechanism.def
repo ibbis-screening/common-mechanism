@@ -34,6 +34,6 @@ mkdir diamond-2.0.13/bin
 cd diamond-2.0.13/bin
 cmake ..
 make -j8
-sudo make install
+make install
 
 # git clone https://github.com/DNA-Screening/CommonMechanism.git

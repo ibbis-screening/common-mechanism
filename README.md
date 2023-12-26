@@ -12,12 +12,18 @@ Table of Contents:
 # Installation 
 In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies
 
-## HMMER search
+## HMMER Search
 The CommonMechanism pipeline requires:
  * hmmer 
  * transeq (from the EMBOSS package - can be installed via [conda](https://anaconda.org/bioconda/emboss))
 
 to run the biorisk search.
+
+## Other Programs
+These can be installed using conda:
+ * bedtools
+ * taxonkit
+ * parallel
 
 ## Python Packages 
 The CommonMechanism pipeline has the following python package dependencies:
@@ -27,7 +33,6 @@ The CommonMechanism pipeline has the following python package dependencies:
  * ncbi-taxon-db
  * biopython
  * matplotlib
- * bedtools
  * pybedtools 
 
 ## BLAST Aligner 

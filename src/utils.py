@@ -20,7 +20,6 @@ import os
 import matplotlib.cm as cm
 import re
 import sys
-from tqdm import tqdm
 import pytaxonkit
 
 

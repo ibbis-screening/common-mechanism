@@ -1,4 +1,28 @@
 Bootstrap: docker
 From: ubuntu:latest
 
+%setup
 
+
+%post
+apt-get update
+
+apt-get install python3
+apt-get install pip
+apt-get install emboss
+apt-get install git
+apt-get install bedtools
+apt-get install ncbi-blast+
+apt-get install cmake
+apt-get install parallel
+apt-get install infernal
+
+pip install --upgrade pip
+pip install pandas
+pip install plotly
+pip install ncbi-taxon-db
+pip install biopython
+pip install matplotlib
+pip install pybedtools
+
+# still missing pytaxonkit, which needs to be installed using conda or pip from the github repo, or moved into the bin

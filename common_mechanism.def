@@ -16,6 +16,7 @@ apt-get install -y ncbi-blast+
 apt-get install -y cmake
 apt-get install -y parallel
 apt-get install -y infernal
+apt-get install -y wget
 
 pip install --upgrade pip
 pip install pandas

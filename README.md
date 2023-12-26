@@ -12,12 +12,18 @@ Table of Contents:
 # Installation 
 In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies
 
-## HMMER search
+## HMMER Search
 The CommonMechanism pipeline requires:
  * hmmer 
  * transeq (from the EMBOSS package - can be installed via [conda](https://anaconda.org/bioconda/emboss))
 
 to run the biorisk search.
+
+## Other Programs
+These can be installed using conda:
+ * bedtools
+ * taxonkit
+ * parallel
 
 ## Python Packages 
 The CommonMechanism pipeline has the following python package dependencies:
@@ -27,7 +33,6 @@ The CommonMechanism pipeline has the following python package dependencies:
  * ncbi-taxon-db
  * biopython
  * matplotlib
- * bedtools
  * pybedtools 
 
 ## BLAST Aligner 
@@ -104,6 +109,9 @@ The following required parameters must be specified:
 - `${OUTPUT}` - User-specified output prefix (All output files will begin with ${OUTPUT})
 - `${DATABASE FOLDER}` - The path to the `databases/` folder setup as described in [Required Data](#required-data)
 - `${THREADS}` - Number of threads to be used when running the analysis
+
+# System requirements
+While most jobs run with 20GB RAM or less, it is best to allow 100GB for RAM-intensive queries. 8 or more threads are also recommended to improve protein homology search speed. 
 
 # User survey
 We would love to hear your feedback on the software. Please use the link below to provide your response:

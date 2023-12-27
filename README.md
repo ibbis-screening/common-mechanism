@@ -110,6 +110,9 @@ The following required parameters must be specified:
 - `${DATABASE FOLDER}` - The path to the `databases/` folder setup as described in [Required Data](#required-data)
 - `${THREADS}` - Number of threads to be used when running the analysis
 
+# System requirements
+While most jobs run with 20GB RAM or less, it is best to allow 100GB for RAM-intensive queries. 8 or more threads are also recommended to improve protein homology search speed. 
+
 # User survey
 We would love to hear your feedback on the software. Please use the link below to provide your response:
 https://forms.gle/JMY5jBQvWdSu4W6L9

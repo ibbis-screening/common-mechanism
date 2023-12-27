@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 # parse all .screen.txt files in a directory and count stats on each flag and overall calls
 # Usage: parse_test_res.py (in directory of choice)

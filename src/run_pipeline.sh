@@ -19,8 +19,8 @@
 ##############################################################################
 # set parameters for the run
 #set -eu 
-PROCESSES=5         #number of processes to run at once
-THREADS=1           #threads per process
+PROCESSES=6         #number of processes to run at once
+THREADS=1           #threads available
 QUERY=""            #query input file 
 OUTPUT=""           #output prefix
 CLEANUP=0           #cleanup files (default: false)" 
@@ -33,7 +33,7 @@ function print_usage() {
     echo "    QUERY           query file to align to each database (required)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
     echo "    DB_PATH         path to databases (required)"
-    echo "    THREADS         number of threads for each database run (default: 1)"
+    echo "    THREADS         threads available (default: 1)"
     echo " OPTIONAL FLAGS" 
     echo "    -c              tidy up intermediate screening files afterward"
     echo "    -b              run blast for protein screen [default: diamond]"
@@ -166,7 +166,7 @@ if [ "$BLAST" = 1 ]; then
 else 
     if [ ! -f "${OUTPUT}".nr.dmnd ]; then
        echo -e "\t...running run_diamond.sh"
-        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS -p $PROCESSES # use the shortened filename rather than the original
+        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $((THREADS/PROCESSES)) -p $PROCESSES # use the shortened filename rather than the original
     fi
     echo -e "\t...checking diamond results"
     if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 

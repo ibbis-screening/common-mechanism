@@ -10,7 +10,7 @@ Table of Contents:
 5. [Author Information](#author-information)
 
 # Installation 
-In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies
+In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies. Alternatively, contact Nicole (N.Wheeler@bham.ac.uk) if you would like to receive an Apptainer with all the required dependencies set up.
 
 ## HMMER Search
 The CommonMechanism pipeline requires:

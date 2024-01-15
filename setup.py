@@ -12,7 +12,7 @@ setup(
     author_email = "N.Wheeler@bham.ac.uk",
     description = ("An International Common Mechanism for DNA Synthesis Screening"),
     keywords = "",
-    url = "https://github.com/nwheeler443/CommonMechanism",
+    url = "https://github.com/DNA-Screening/CommonMechanism",
     packages = setuptools.find_packages(where="common_mechanism", exclude=("tests",)),
     package_data = { 'src/databases': ['*'] },
     install_requires=["Biopython", "pandas", "plotly", "matplotlib", "kaleido", "pybedtools", "pytaxonkit"],

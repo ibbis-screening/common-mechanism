@@ -210,7 +210,7 @@ hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${O
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query ${OUTPUT}.fasta -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
 cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm ${OUTPUT}.fasta &>> ${OUTPUT}.tmp
 
-python3 ${CM_DIR}/check_benign.py -i ${OUTPUT} --sequence ${OUTPUT}.fasta -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
+python3 ${CM_DIR}/check_benign.py -i ${OUTPUT} -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
 
 finish_time=$(date)
 echo -e " >> COMPLETED AT $finish_time" | tee -a ${OUTPUT}.screen

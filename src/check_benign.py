@@ -129,18 +129,13 @@ def check_for_benign(query, coords, benign_desc):
 
 def main(): 
     parser = argparse.ArgumentParser()
+
     parser.add_argument("-i","--input", dest="sample_name",
         required=True, help="Sample name")
-    parser.add_argument("-s","--sequence", dest="seq_file",
-        required=True, help="FASTA sequence file")
     parser.add_argument("-d","--database", dest="db",
         required=True, help="Benign HMM database folder (must contain benign_annotations.tsv)")
     args=parser.parse_args()
 
-    #check input files
-    if (not os.path.exists(args.seq_file)):
-        sys.stderr.write("\t...sequence file does not exist\n")
-        exit(1)
     if (not os.path.exists(args.db + "/benign_annotations.tsv")):
         sys.stderr.write("\t...benign_annotations.tsv does not exist\n")
         exit(1) 

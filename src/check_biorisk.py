@@ -49,7 +49,7 @@ def main():
         hmmer['description'] = ''
         hmmer['Must flag'] = False
         hmmer = hmmer.reset_index(drop=True)
-        # print(hmmer)
+        print(hmmer)
         for model in range(hmmer.shape[0]):
             name_index = [i for i, x in enumerate([lookup['ID'] == hmmer['target name'][model]][0]) if x]
             # print(name_index)
@@ -58,9 +58,9 @@ def main():
         if hmmer.shape[0] > 0:
             if (sum(hmmer['Must flag']) > 0):
                 for region in hmmer.index[hmmer['Must flag'] != 0]:
-                    if hmmer['ali from'][region] > hmmer['tlen']:
-                        hmmer['ali from'][region] = divmod(hmmer['ali from'][region], hmmer['tlen'])[0]
-                        hmmer['ali to'][region] = divmod(hmmer['ali to'][region], hmmer['tlen'])[0]
+                    if (hmmer['ali from'][region] > hmmer['qlen']):
+                        hmmer['ali from'][region] = divmod(hmmer['ali from'][region], hmmer['qlen'])[0]
+                        hmmer['ali to'][region] = divmod(hmmer['ali to'][region], hmmer['qlen'])[0]
                     sys.stdout.write("\t\t --> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ": FLAG\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
             else:
                 sys.stdout.write("\t\t --> Biorisks: Regulated genes not found, PASS\n")

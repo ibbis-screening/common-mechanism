@@ -41,7 +41,7 @@ function print_usage() {
 }
 
 #Get options from user
-while getopts "t:d:q:o:c:b:" OPTION
+while getopts "t:d:q:o:c:b" OPTION
     do
         case $OPTION in
             t)
@@ -142,6 +142,9 @@ transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
 if [ ! -f "${OUTPUT}".faa ]; then
     echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi
+
+python3 ${CM_DIR}/concat_seqs.py ${OUTPUT}.faa
+
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
 echo -e "\t...checking hmmscan results"

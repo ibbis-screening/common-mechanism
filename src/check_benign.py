@@ -80,20 +80,37 @@ def check_for_benign(query, coords, benign_desc):
             htrim = cmscan[~((cmscan['seq from'] < coords['q. start'][region]) & (cmscan['seq to'] < coords['q. start'][region])) & ~((cmscan['seq from'] > coords['q. end'][region]) & (cmscan['seq to'] > coords['q. end'][region]))]
             # print(htrim)
             if htrim.shape[0] > 0:
-                htrim = htrim.assign(coverage = abs(htrim['seq to'] - htrim['seq from']) / qlen)
-                if any(htrim['coverage'] > 0.80):
-                    htrim = htrim[htrim['coverage'] > 0.80]
+                # percent coverage based method
+                # htrim = htrim.assign(coverage = abs(htrim['seq to'] - htrim['seq from']) / qlen)
+                # if any(htrim['coverage'] > 0.80):
+                #     htrim = htrim[htrim['coverage'] > 0.80]
+                #     htrim = htrim.reset_index(drop=True)
+                #     descriptions = []
+                #     for row in range(htrim.shape[0]):
+                #         hit = htrim['target name'][row]
+                #         descriptions.append(hit)
+                #     annot_string = "\n\t...".join(str(v) for v in descriptions)
+                #     sys.stdout.write("\t\t -->Housekeeping RNAs - >80% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved: PASS\n")
+                #     sys.stdout.write("\t\t   RNA family: " + annot_string + "\n")
+                #     cleared[region] = 1
+                # else:
+                #     sys.stdout.write("\t\t -->Housekeeping RNAs - <80% coverage achieved = FAIL\n")
+                
+                # bases unaccounted for based method
+                htrim = htrim.assign(coverage = qlen - abs(htrim['seq to'] - htrim['seq from']))
+                if any(htrim['coverage'] < 50):
+                    htrim = htrim[htrim['coverage'] < 50]
                     htrim = htrim.reset_index(drop=True)
                     descriptions = []
                     for row in range(htrim.shape[0]):
                         hit = htrim['target name'][row]
                         descriptions.append(hit)
                     annot_string = "\n\t...".join(str(v) for v in descriptions)
-                    sys.stdout.write("\t\t -->Housekeeping RNAs - >80% coverage of bases " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " achieved: PASS\n")
+                    sys.stdout.write("\t\t -->Housekeeping RNAs - <50 bases unaccounted for: PASS\n")
                     sys.stdout.write("\t\t   RNA family: " + annot_string + "\n")
                     cleared[region] = 1
                 else:
-                    sys.stdout.write("\t\t -->Housekeeping RNAs - <80% coverage achieved = FAIL\n")
+                    sys.stdout.write("\t\t -->Housekeeping RNAs - >50 bases unaccounted for = FAIL\n")
 
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences

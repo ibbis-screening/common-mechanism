@@ -23,6 +23,7 @@ conda install -c bioconda pytaxonkit
 conda install -c bioconda infernal
 conda install -c bioconda blast
 conda install -c bioconda diamond
+conda install -c bioconda perl-list-moreutils
 conda install parallel
 ```
 
@@ -62,6 +63,8 @@ The Common Mechanism requires the BLAST nt database. The files for the BLAST nt 
       update_blastdb.pl --passive --decompress nt
    
 This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
+
+If you are having trouble running the command after installing BLAST with conda, edit the first line of the update_blastdb.pl script in your environment bin to use /usr/bin/env perl instead of /usr/bin/perl.
 
 
 Users can also download the BLAST nr database to check the relative speed and accuracy of BLAST vs DIAMOND search on their machine:

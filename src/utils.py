@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 ##############################################################################
 #utils.py provides functions used across multiple python scripts in the 

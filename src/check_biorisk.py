@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 ##############################################################################
 #check_biorisk.py checks the output from hmmscan and prints to screen the results

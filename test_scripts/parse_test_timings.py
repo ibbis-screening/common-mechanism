@@ -1,4 +1,4 @@
-#! /Users/wheelern/opt/miniconda3/bin/python
+#! /usr/bin/env python3
 
 # parse all .stats files in a folder to plot the distribution of time taken to screen
 # Usage: parse_test_timings.py (in directory of choice)

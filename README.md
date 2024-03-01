@@ -5,62 +5,41 @@ pose a significant biorisk. In order to run this pipeline, please first see [Ins
 Table of Contents:
 1. [Installation](#installation) 
 2. [Required Data](#required-data) 
-3. [Running the CommonMechanism](#running-the-commonmechanism)
+3. [Running the CommonMechanism](#running-the-common-mechanism)
 4. [User Survey](#user-survey)
 5. [Author Information](#author-information)
 
 # Installation 
 In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies. Alternatively, contact Nicole (N.Wheeler@bham.ac.uk) if you would like to receive an Apptainer with all the required dependencies set up.
 
-## HMMER Search
-The CommonMechanism pipeline requires:
- * hmmer 
- * transeq (from the EMBOSS package - can be installed via [conda](https://anaconda.org/bioconda/emboss))
+## Recommended to install with conda
 
-to run the biorisk search.
+```
+conda install -c bioconda hmmer
+conda install -c bioconda emboss
+conda install -c bioconda bedtools
+conda install -c bioconda taxonkit
+conda install -c bioconda pytaxonkit
+conda install -c bioconda infernal
+conda install -c bioconda blast
+conda install -c bioconda diamond
+conda install -c bioconda perl-list-moreutils
+conda install parallel
+```
 
-## Other Programs
-These can be installed using conda:
- * bedtools
- * taxonkit
- * parallel
-
-## Python Packages 
+## Recommended to install with pip 
 The CommonMechanism pipeline has the following python package dependencies:
- * pandas
- * plotly 
- * pytaxonkit 
- * ncbi-taxon-db
- * biopython
- * matplotlib
- * pybedtools 
 
-## BLAST Aligner 
-The CommonMechanism requires the BLAST code executable which is found at https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/. 
-
-For more details on BLAST, see https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html. 
-
-## DIAMOND Aligner 
-The CommonMechanism pipeline requires users to install [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND github") by the following commands: 
-   
-    wget https://github.com/bbuchfink/diamond/archive/v2.0.13.tar.gz
-    tar xzf v2.0.13.tar.gz
-    mkdir diamond-2.0.13/bin
-    cd diamond-2.0.13/bin
-    cmake ..
-    make -j8
-    sudo make install
-
-Following installation of all required packages, please see [Required Data](#required-data)
-
-## RNA family search
-
-The CommonMechanism uses Infernal to search sequences for known benign RNA families. It can be installed using:
-
-`conda install -c bioconda infernal`
+```
+pip install pandas
+pip install plotly
+pip install ncbi-taxon-db
+pip install matplotlib
+pip install pybedtools
+```
 
 # Required Data 
-The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder. The resulting file structure (and required storage space) will be as follows:
+The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder (this folder can contain other databases or scripts). The resulting file structure (and required storage space) will be as follows:
 
     databases/
     databases/nr_dmnd (~276 Gb) 
@@ -85,6 +64,8 @@ The Common Mechanism requires the BLAST nt database. The files for the BLAST nt 
    
 This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
 
+If you are having trouble running the command after installing BLAST with conda, edit the first line of the update_blastdb.pl script in your environment bin to use /usr/bin/env perl instead of /usr/bin/perl.
+
 
 Users can also download the BLAST nr database to check the relative speed and accuracy of BLAST vs DIAMOND search on their machine:
 
@@ -102,7 +83,7 @@ Please download the NCBI taxonomy database using the following commands:
 # Running the Common Mechanism 
 The basic command line argument for running the Common Mechanism is as follows:
 
-      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER} -t %{THREADS}
+      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER} -t ${THREADS}
 
 The following required parameters must be specified:
 - `${QUERY}` - The sequence file to test

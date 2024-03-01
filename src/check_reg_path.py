@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 ##################################################################################################
 #check_reg_path.py checks results for regulated pathogen and prints any 

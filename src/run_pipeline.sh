@@ -10,6 +10,7 @@
 #   src/run_pipeline.sh
 #       -q INPUT_FILE
 #       -d DATBASE_FOLDER 
+#       -f FAST_MODE (default: false)
 #       -t THREADS (default: 1) 
 #       -o OUTPUT (output prefix, default: query name) 
 #   Optional parameters:
@@ -23,8 +24,9 @@ PROCESSES=6         #number of processes to run at once
 THREADS=1           #threads available
 QUERY=""            #query input file 
 OUTPUT=""           #output prefix
-CLEANUP=0           #cleanup files (default: false)" 
+CLEANUP=0           #cleanup files (default: off)" 
 BLAST=0             #blast or diamond (default: diamond) 
+FAST_MODE=0         #fast mode (default: off)
 DB_PATH="" 
 
 function print_usage() {
@@ -32,16 +34,17 @@ function print_usage() {
     echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS]"
     echo "    QUERY           query file to align to each database (required)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
+    echo "    FAST_MODE       turn on fast mode (no bast match function) (default: off)"
     echo "    DB_PATH         path to databases (required)"
     echo "    THREADS         threads available (default: 1)"
     echo " OPTIONAL FLAGS" 
-    echo "    -c              tidy up intermediate screening files afterward"
-    echo "    -b              run blast for protein screen [default: diamond]"
+    echo "    -c              tidy up intermediate screening files afterward (default: off)"
+    echo "    -b              run blast for protein screen (default: diamond)"
     
 }
 
 #Get options from user
-while getopts "t:d:q:o:c:b" OPTION
+while getopts "t:d:fq:o:cb" OPTION
     do
         case $OPTION in
             t)
@@ -55,6 +58,9 @@ while getopts "t:d:q:o:c:b" OPTION
                 ;;
             o)
                 OUTPUT=$OPTARG
+                ;;
+            b)
+                BLAST=1
                 ;;
             c)
                 CLEANUP=1
@@ -153,57 +159,63 @@ python3 ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_
 s1_time=$(date)
 echo -e "    STEP 1 completed at $s1_time\n" | tee -a ${OUTPUT}.screen
 
-# Step 2: taxon ID/protein screening
-echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.screen
+if [ "$FAST_MODE" = 0 ]; then
+    # Step 2: taxon ID/protein screening
+    echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.screen
 
-if [ "$BLAST" = 1 ]; then
-    if [ ! -f "${OUTPUT}".nr.blastx ]; then
-        echo -e "\t...running run_blastx.sh"
-        ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
+    if [ "$BLAST" = 1 ]; then
+        if [ ! -f "${OUTPUT}".nr.blastx ]; then
+            echo -e "\t...running run_blastx.sh"
+            ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
+        fi
+        echo -e "\t...checking blast results"
+        if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
+            rm "${OUTPUT}".reg_path_coords.csv
+        fi
+        python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
+    else 
+        if [ ! -f "${OUTPUT}".nr.dmnd ]; then
+        echo -e "\t...running run_diamond.sh"
+            ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $((THREADS/PROCESSES)) -p $PROCESSES # use the shortened filename rather than the original
+        fi
+        echo -e "\t...checking diamond results"
+        if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
+            rm "${OUTPUT}".reg_path_coords.csv
+        fi
+        python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
     fi
-    echo -e "\t...checking blast results"
-    if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
-        rm "${OUTPUT}".reg_path_coords.csv
-    fi
-    python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
-else 
-    if [ ! -f "${OUTPUT}".nr.dmnd ]; then
-       echo -e "\t...running run_diamond.sh"
-        ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $((THREADS/PROCESSES)) -p $PROCESSES # use the shortened filename rather than the original
-    fi
-    echo -e "\t...checking diamond results"
-    if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
-        rm "${OUTPUT}".reg_path_coords.csv
-    fi
-    python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
-fi
 
-s2_time=$(date)
-echo -e "    STEP 2 completed at $s2_time\n" | tee -a ${OUTPUT}.screen
+    s2_time=$(date)
+    echo -e "    STEP 2 completed at $s2_time\n" | tee -a ${OUTPUT}.screen
 
-# Step 3: nucleotide screening
-echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
+    # Step 3: nucleotide screening
+    echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
 
-echo -e "\t...fetching noncoding regions"
-if [ "$BLAST" = 1 ]; then
-    python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
+    echo -e "\t...fetching noncoding regions"
+    if [ "$BLAST" = 1 ]; then
+        python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
+    else
+        python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
+    fi
+
+    if [ -f "${OUTPUT}".noncoding.fasta ]; then 
+        if [ ! -f "${OUTPUT}".nt.blastn ]; then
+            echo -e "\t...running blastn"
+            blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+        fi
+        echo -e "\t...checking blastn results"
+        python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
+    else 
+        echo -e "\t...skipping nucleotide search"
+    fi
+
+    s3_time=$(date)
+    echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
+
 else
-    python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
-fi
+    echo " >> FAST MODE: Skipping steps 2-3" | tee -a ${OUTPUT}.screen
 
-if [ -f "${OUTPUT}".noncoding.fasta ]; then 
-    if [ ! -f "${OUTPUT}".nt.blastn ]; then
-        echo -e "\t...running blastn"
-        blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
-    fi
-    echo -e "\t...checking blastn results"
-    python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
-else 
-    echo -e "\t...skipping nucleotide search"
 fi
-
-s3_time=$(date)
-echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
 
 # Step 4: benign DB scan
 #date

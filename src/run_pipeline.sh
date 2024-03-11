@@ -213,7 +213,7 @@ if [ "$FAST_MODE" = 0 ]; then
     echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
 
 else
-    echo " >> FAST MODE: Skipping steps 2-3" | tee -a ${OUTPUT}.screen
+    echo " >> FAST MODE: Skipping steps 2-3\n" | tee -a ${OUTPUT}.screen
 
 fi
 

@@ -59,8 +59,8 @@ while getopts "t:d:fq:o:cb" OPTION
             o)
                 OUTPUT=$OPTARG
                 ;;
-            b)
-                BLAST=1
+            f)
+                FAST_MODE=1
                 ;;
             c)
                 CLEANUP=1

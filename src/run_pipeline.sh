@@ -10,12 +10,13 @@
 #   src/run_pipeline.sh
 #       -q INPUT_FILE
 #       -d DATBASE_FOLDER 
-#       -f FAST_MODE (default: false)
 #       -t THREADS (default: 1) 
 #       -o OUTPUT (output prefix, default: query name) 
 #   Optional parameters:
-#       -c = clean up intermediate files (default: no cleanup)
 #       -b = use blast instead of diamond (default: diamond) 
+#       -f = use fast mode (default: false)
+#       -m = run multiple queries (default: false)
+#       -c = clean up intermediate files (default: no cleanup)
 # Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
 ##############################################################################
 # set parameters for the run
@@ -24,6 +25,7 @@ PROCESSES=6         #number of processes to run at once
 THREADS=1           #threads available
 QUERY=""            #query input file 
 OUTPUT=""           #output prefix
+MULTIQUERY=0        #multiple query files (default: off)
 CLEANUP=0           #cleanup files (default: off)" 
 BLAST=0             #blast or diamond (default: diamond) 
 FAST_MODE=0         #fast mode (default: off)
@@ -31,20 +33,21 @@ DB_PATH=""
 
 function print_usage() {
     echo ""
-    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS]"
+    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -f -b -m -c]"
     echo "    QUERY           query file to align to each database (required)"
-    echo "    OUTPUT          output prefix for alignments (default: query prefix)"
-    echo "    FAST_MODE       turn on fast mode (no bast match function) (default: off)"
     echo "    DB_PATH         path to databases (required)"
     echo "    THREADS         threads available (default: 1)"
+    echo "    OUTPUT          output prefix for alignments (default: query prefix)"
     echo " OPTIONAL FLAGS" 
-    echo "    -c              tidy up intermediate screening files afterward (default: off)"
     echo "    -b              run blast for protein screen (default: diamond)"
+    echo "    -f              turn on fast mode (no bast match function) (default: off)"
+    echo "    -m              input contains multiple queries (default: off)"
+    echo "    -c              tidy up intermediate screening files afterward (default: off)"
     
 }
 
 #Get options from user
-while getopts "t:d:fq:o:cb" OPTION
+while getopts "t:d:fq:o:cbm" OPTION
     do
         case $OPTION in
             t)
@@ -59,24 +62,29 @@ while getopts "t:d:fq:o:cb" OPTION
             o)
                 OUTPUT=$OPTARG
                 ;;
+            b)
+                BLAST=1
+                ;;
             f)
                 FAST_MODE=1
+                ;;
+            m)
+                MULTIQUERY=1
                 ;;
             c)
                 CLEANUP=1
                 ;;
-            b)
-                BLAST=1
-                ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS]"
+                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -b -f -m -c]"
                 echo "  QUERY           query file to align to each database (required)"
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  DB_PATH         path to detabases (required)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
                 echo "OPTIONAL FLAGS" 
-                echo "  -c              tidy up intermediate screening files afterward"
                 echo "  -b              run blast for protein screen [default: diamond]"
+                echo "  -f              run fast mode (default: off)"
+                echo "  -m              input contains multiple queries (default: off)"
+                echo "  -c              tidy up intermediate screening files afterward"
                 exit
                 ;;
         esac
@@ -93,6 +101,16 @@ elif [ ! -f "$QUERY" ]; then
     echo " ERROR: specified input query file $QUERY does not exist" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1
+fi
+
+#Split files if multiquery is true
+if [ "$MULTIQUERY" == 1 ]; then
+    echo " >> Splitting multiquery file $QUERY" | tee -a ${OUTPUT}.screen
+    python3 ${CM_DIR}/split_query.py -f $QUERY > split_list.txt
+    echo "Output split list: split_list.txt"
+    echo "Please run the pipeline on each file in split_list.txt with your chosen options" 
+    # alternative: have the script run each file according to options chosen - ignores any job management system
+    exit 0
 fi
 
 #If output not specified, set value 

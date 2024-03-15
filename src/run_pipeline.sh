@@ -15,6 +15,7 @@
 #   Optional parameters:
 #       -b = use blast instead of diamond (default: diamond) 
 #       -f = use fast mode (default: false)
+#       -n = run a nucleotide search if no protein hits are found in a region (default: true)
 #       -m = run multiple queries (default: false)
 #       -c = clean up intermediate files (default: no cleanup)
 # Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
@@ -29,6 +30,7 @@ MULTIQUERY=0        #multiple query files (default: off)
 CLEANUP=0           #cleanup files (default: off)" 
 BLAST=0             #blast or diamond (default: diamond) 
 FAST_MODE=0         #fast mode (default: off)
+NT_SEARCH="on"         #nucleotide search (default: on)
 DB_PATH="" 
 
 function print_usage() {
@@ -41,13 +43,14 @@ function print_usage() {
     echo " OPTIONAL FLAGS" 
     echo "    -b              run blast for protein screen (default: diamond)"
     echo "    -f              turn on fast mode (no bast match function) (default: off)"
+    echo "    -n              run a nucleotide search if no protein hits are found in a region (default: on)"
     echo "    -m              input contains multiple queries (default: off)"
     echo "    -c              tidy up intermediate screening files afterward (default: off)"
     
 }
 
 #Get options from user
-while getopts "t:d:fq:o:cbm" OPTION
+while getopts "t:d:fq:o:cbn:m" OPTION
     do
         case $OPTION in
             t)
@@ -64,6 +67,9 @@ while getopts "t:d:fq:o:cbm" OPTION
                 ;;
             b)
                 BLAST=1
+                ;;
+            n)
+                NT_SEARCH=$OPTARG
                 ;;
             f)
                 FAST_MODE=1
@@ -83,6 +89,7 @@ while getopts "t:d:fq:o:cbm" OPTION
                 echo "OPTIONAL FLAGS" 
                 echo "  -b              run blast for protein screen [default: diamond]"
                 echo "  -f              run fast mode (default: off)"
+                echo "  -n              run a nucleotide search if no protein hits are found in a region (default: on)"
                 echo "  -m              input contains multiple queries (default: off)"
                 echo "  -c              tidy up intermediate screening files afterward"
                 exit
@@ -162,7 +169,7 @@ cat ${OUTPUT}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
 
 echo -e "\t...running transeq" 
-transeq $QUERY ${OUTPUT}.faa -frame 6 -clean &>> ${OUTPUT}.tmp
+transeq $QUERY ${OUTPUT}.faa -frame 6 -clean >> ${OUTPUT}.tmp 2>&1
 if [ ! -f "${OUTPUT}".faa ]; then
     echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi
@@ -170,7 +177,7 @@ fi
 python3 ${CM_DIR}/concat_seqs.py ${OUTPUT}.faa
 
 echo -e "\t...running hmmscan" 
-hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa &>> ${OUTPUT}.tmp
+hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa >> ${OUTPUT}.tmp 2>&1
 echo -e "\t...checking hmmscan results"
 python3 ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/ | tee -a ${OUTPUT}.screen
 
@@ -207,28 +214,32 @@ if [ "$FAST_MODE" = 0 ]; then
     echo -e "    STEP 2 completed at $s2_time\n" | tee -a ${OUTPUT}.screen
 
     # Step 3: nucleotide screening
-    echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
+    if [ "$NT_SEARCH" = "on" ]; then
+        echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
 
-    echo -e "\t...fetching noncoding regions"
-    if [ "$BLAST" = 1 ]; then
-        python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
-    else
-        python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
-    fi
-
-    if [ -f "${OUTPUT}".noncoding.fasta ]; then 
-        if [ ! -f "${OUTPUT}".nt.blastn ]; then
-            echo -e "\t...running blastn"
-            blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+        echo -e "\t...fetching noncoding regions"
+        if [ "$BLAST" = 1 ]; then
+            python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.blastx ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
+        else
+            python3 ${CM_DIR}/fetch_nc_bits.py ${OUTPUT}.nr.dmnd ${OUTPUT}.fasta | tee -a ${OUTPUT}.screen
         fi
-        echo -e "\t...checking blastn results"
-        python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
-    else 
-        echo -e "\t...skipping nucleotide search"
-    fi
 
-    s3_time=$(date)
-    echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
+        if [ -f "${OUTPUT}".noncoding.fasta ]; then 
+            if [ ! -f "${OUTPUT}".nt.blastn ]; then
+                echo -e "\t...running blastn"
+                blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
+            fi
+            echo -e "\t...checking blastn results"
+            python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
+        else 
+            echo -e "\t...skipping nucleotide search"
+        fi
+
+        s3_time=$(date)
+        echo -e "    STEP 3 completed at $s3_time\n" | tee -a ${OUTPUT}.screen
+    else
+        echo " >> SKIPPING STEP 3: Nucleotide search" | tee -a ${OUTPUT}.screen
+    fi
 
 else
     echo " >> FAST MODE: Skipping steps 2-3\n" | tee -a ${OUTPUT}.screen
@@ -239,9 +250,9 @@ fi
 #date
 echo -e " >> STEP 4: Checking any pathogen regions for benign components..." | tee -a ${OUTPUT}.screen
 
-hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa &>>${OUTPUT}.tmp
+hmmscan --domtblout ${OUTPUT}.benign.hmmscan ${DB_PATH}/benign_db/benign.hmm ${OUTPUT}.faa >> ${OUTPUT}.tmp 2>&1
 blastn -db ${DB_PATH}/benign_db/benign.fasta -query ${OUTPUT}.fasta -out ${OUTPUT}.benign.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -evalue 1e-5
-cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm ${OUTPUT}.fasta &>> ${OUTPUT}.tmp
+cmscan --tblout ${OUTPUT}.benign.cmscan ${DB_PATH}/benign_db/benign.cm ${OUTPUT}.fasta >> ${OUTPUT}.tmp 2>&1
 
 python3 ${CM_DIR}/check_benign.py -i ${OUTPUT} -d ${DB_PATH}/benign_db/ | tee -a ${OUTPUT}.screen
 

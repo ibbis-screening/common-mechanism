@@ -14,9 +14,9 @@ f_file = sys.argv[2]
 nc_bits = 0
 
 # check if the nr hits file is empty
-if check_blastfile(query) == 0:
+if is_empty(query):
     nc_bits = "all"
-elif check_blastfile(query) == 2:
+elif not has_hits(query):
     sys.stdout.write("\t...no hits to the nr database\n")
     nc_bits = "all"
 # if not, check whether any of the hits has an E-value > 1e-30

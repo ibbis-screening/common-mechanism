@@ -33,15 +33,15 @@ def main():
     args=parser.parse_args()
 
     #check input files
-    if (not os.path.exists(args.in_file)):
-        sys.stderr.write("\t...input query file %s does not exist\n" % args.in_file)
-        exit(1)
-    if (not os.path.exists(args.db + "/benign_db/vax_taxids.txt")):
-        sys.stderr.write("\t...benign db file %s does not exist\n" % (args.db + "/benign_db/vax_taxids.txt"))
-        exit(1)
-    if (not os.path.exists(args.db + "/biorisk_db/reg_taxids.txt")):
-        sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.db + "/biorisk_db/reg_taxids.txt"))
-        exit(1)
+    if not os.path.exists(args.in_file):
+        sys.stderr.write(f"\t...input query file {args.in_file} does not exist\n")
+        sys.exit(1)
+    if not os.path.exists(args.db + "/benign_db/vax_taxids.txt"):
+        sys.stderr.write(f"\t...benign db file {args.db}/benign_db/vax_taxids.txt does not exist\n")
+        sys.exit(1)
+    if not os.path.exists(args.db + "/biorisk_db/reg_taxids.txt"):
+        sys.stderr.write(f"\t...biorisk db file {args.db}/biorisk_db/reg_taxids.txt does not exist\n")
+        sys.exit(1)
     # read in files
     reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids.txt", header=None)
     vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids.txt", header=None)
@@ -95,7 +95,7 @@ def main():
                             hit = htrim['subject title'][row]
                             descriptions.append(hit)
                         sys.stdout.write("\t...Regulated protein region at bases " + str(int(hits1['q. start'][region])) + " to " + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n")
-                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                        sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) ({percent_ids} percent identity to query)\n")
 
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
@@ -126,9 +126,9 @@ def main():
 
                 # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
-                    sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    sys.stdout.write("\t\t     Description: %s\n" % (desc))
+                    sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} found in both regulated and non-regulated organisms\n")
+                    sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) ({percent_ids} percent identity to query)\n")
+                    sys.stdout.write(f"\t\t     Description: {desc}\n")
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
@@ -143,12 +143,12 @@ def main():
                             org = "eukaryote"
                             reg_fung = 1
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
-                    sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    sys.stdout.write("\t\t     Description: %s\n" % (desc))
+                    sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} found in only regulated organisms: FLAG ({org})\n")
+                    sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) ({percent_ids} percent identity to query)\n")
+                    sys.stdout.write(f"\t\t     Description: {desc}\n")
                 else: # something is wrong, n_reg > n_total
-                    sys.stdout.write("\t...gene: %s\n" % gene_names)
-                    sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
+                    sys.stdout.write(f"\t...gene: {gene_names}\n")
+                    sys.stdout.write(f"{(blast['regulated'][blast['subject acc.'] == gene_names])}\n")
         hits = hits.drop_duplicates()
         #Create output file
         if hits1 is not None:

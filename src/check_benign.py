@@ -45,7 +45,7 @@ def check_for_benign(query, coords, benign_desc):
                     for row in [0]: # just print the top hit
                         hit = htrim['target name'][row]
                         hit_msg = (hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit])
-                                   + " (E-value: " + '{:.3g}'.format(htrim['E-value'][row], 3))
+                                   + f" (E-value: {htrim['E-value'][row]:.3g}")
                         descriptions.append(hit_msg + "\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
                     housekeeping_msg = ("-->Housekeeping proteins covering " + str(coords['q. start'][region])

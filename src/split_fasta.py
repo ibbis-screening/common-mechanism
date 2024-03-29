@@ -24,7 +24,7 @@ def main():
     count_curr = 0
     count_total = 0
     num_splits = 0
-    sys.stdout.write("\t%i sequences printed (%i splits)" % (count_total,num_splits))
+    sys.stdout.write(f"\t{count_total} sequences printed ({num_splits} splits)")
     sys.stdout.flush()
     for record in SeqIO.parse(args.i_file,"fasta"):
         if count_curr == 0:
@@ -34,13 +34,13 @@ def main():
         count_curr += 1
         count_total += 1
         if count_total % 10000 == 0:
-            sys.stdout.write("\r\t%i sequences printed (%i splits)" % (count_total,num_splits))
+            sys.stdout.write("\r\t{count_total} sequences printed ({num_splits} splits)")
             sys.stdout.flush()
         if count_curr == args.num_seqs:
             count_curr = 0
             o_file.close()
 
-    sys.stdout.write("\t%i sequences printed (%i splits)\n" % (count_total,num_splits))
+    sys.stdout.write(f"\t{count_total} sequences printed ({num_splits} splits)\n")
     sys.stdout.flush()
 
 

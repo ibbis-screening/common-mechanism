@@ -209,5 +209,3 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
     fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)
-
-\

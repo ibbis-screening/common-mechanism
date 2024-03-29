@@ -221,7 +221,7 @@ def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so
             for j in df.index[(i+1):]:
                 if (df.loc[i,'ali from'] <= df.loc[j,'ali from'] and df.loc[i,'ali to'] >= df.loc[j,'ali to']) | (df.loc[i,'ali from'] >= df.loc[j,'ali from'] and df.loc[i,'ali to'] <= df.loc[j,'ali to']):
                     if j in hmmer2.index:
-                            hmmer2 = hmmer2.drop([j])
+                        hmmer2 = hmmer2.drop([j])
         hmmer2 = hmmer2.reset_index(drop=True)
     return hmmer2
 
@@ -302,28 +302,28 @@ def shift_hits_pos_strand(blast):
 
 def trim_edges(df):
     for top in range(len(df.index)): # run through each hit from the top
-            i = df.index[top]
-            for next in range(top+1, len(df.index)): # compare to each below
-                j = df.index[next]
-                i_start = df.loc[i,'q. start']
-                i_end = df.loc[i,'q. end']
-                j_start = df.loc[j,'q. start']
-                j_end = df.loc[j,'q. end']
+        i = df.index[top]
+        for next in range(top+1, len(df.index)): # compare to each below
+            j = df.index[next]
+            i_start = df.loc[i,'q. start']
+            i_end = df.loc[i,'q. end']
+            j_start = df.loc[j,'q. start']
+            j_end = df.loc[j,'q. end']
 
-                # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
-                if (j_start >= i_start and j_start <= i_end):
-                    # keep equivalent hits
-                    if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
-                        pass
-                    # if the hit extends past the end of the earlier one
-                    elif (i_end + 1 < j_end):
-                        df.loc[j,'q. start'] = i_end + 1
-                    elif (i_end == j_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
-                        pass
-                    # remove if the hit is contained in the earlier one
-                    else:
-                        df.loc[j,'q. start'] = 0
-                        df.loc[j,'q. end'] = 0
+            # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
+            if (j_start >= i_start and j_start <= i_end):
+                # keep equivalent hits
+                if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    pass
+                # if the hit extends past the end of the earlier one
+                elif (i_end + 1 < j_end):
+                    df.loc[j,'q. start'] = i_end + 1
+                elif (i_end == j_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
+                    pass
+                # remove if the hit is contained in the earlier one
+                else:
+                    df.loc[j,'q. start'] = 0
+                    df.loc[j,'q. end'] = 0
 
                 # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
                 if (j_end >= i_start and j_end <= i_end):

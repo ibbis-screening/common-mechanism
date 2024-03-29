@@ -6,13 +6,12 @@
 # make it compatible with both individual files and a pooled one
 
 import glob
-import pandas as pd
-import seaborn as sb
-import matplotlib.pyplot as plt
-
-from datetime import datetime
-
 import re
+from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sb
+
+
 
 times = []
 memory = []

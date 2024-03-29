@@ -9,9 +9,11 @@
 # Usage:
 #  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/
 ##############################################################################
-from utils import *
-import os, sys, argparse
+import argparse
+import os
+import sys
 import pandas as pd
+from utils import *
 
 def main():
     parser = argparse.ArgumentParser()

@@ -1,9 +1,9 @@
 # function to split multifastas into individual files and screen them
 # usage: python split_query.py -f fasta_file
 
-from Bio import SeqIO
 import argparse
 import os
+from Bio import SeqIO
 
 parser = argparse.ArgumentParser(description="Split the fasta file into individual file with each gene seq")
 parser.add_argument('-f', action='store', dest='fasta_file', help='Input fasta file')

@@ -1,8 +1,8 @@
-from process_outputs import *
-from utils import *
 import argparse
 import pandas as pd
 from os.path import exists
+from process_outputs import *
+from utils import *
 
 
 def main():

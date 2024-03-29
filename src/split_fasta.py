@@ -5,7 +5,9 @@
 #This program splits a multi-fasta file based on number of sequences per file
 #Output will be input.#.fa
 
-import os, sys, argparse
+import argparse
+import os
+import sys
 from Bio import SeqIO
 
 def main():

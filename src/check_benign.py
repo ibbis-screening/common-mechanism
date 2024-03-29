@@ -12,9 +12,11 @@
 #       -s, --sequence = input sequence file
 #       -d, --database = database folder location/path (will check for benign_annotations.tsv)
 #################################################################################
-from utils import *
-import os, sys, argparse
+import argparse
+import os
+import sys
 import pandas as pd
+from utils import *
 
 def check_for_benign(query, coords, benign_desc):
 

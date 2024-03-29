@@ -1,9 +1,8 @@
 import argparse
+import re
 from os.path import exists
 import pandas as pd
-from process_outputs import *
-from utils import check_blastfile
-
+from process_outputs import plot_blast, plot_hmmer, plot_blast_frag, plot_tax
 
 def main():
     parser = argparse.ArgumentParser()

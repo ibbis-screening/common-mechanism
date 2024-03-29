@@ -84,7 +84,9 @@ def main():
                                & ~((blast2['q. start'] < hits1['q. start'][region])
                                & (blast2['q. end'] < hits1['q. start'][region]))]
                 species_list = textwrap.fill(", ".join(set(htrim['species'])), 100).replace("\n", "\n\t\t     ")
-                taxid_list = textwrap.fill(", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
+                taxid_list = (textwrap.fill(
+                                ", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
+                             )
                 percent_ids = (" ".join(map(str, set(htrim['% identity']))))
                 if htrim.shape[0] > 0:
                     if any(htrim['q. coverage'] > 0.90):
@@ -94,9 +96,11 @@ def main():
                         for row in range(htrim.shape[0]):
                             hit = htrim['subject title'][row]
                             descriptions.append(hit)
-                        sys.stdout.write("\t...Regulated protein region at bases " + str(int(hits1['q. start'][region])) + " to " + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n")
-                        sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) ({percent_ids} percent identity to query)\n")
-
+                        sys.stdout.write(("\t...Regulated protein region at bases "
+                                          + str(int(hits1['q. start'][region])) + " to "
+                                          + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n"))
+                        sys.stdout.write((f"\t\t     Species: {species_list} (taxid(s): {taxid_list})"
+                                          + f"({percent_ids} percent identity to query)\n"))
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         hits = pd.DataFrame(columns=['q. start', 'q. end'])
@@ -118,16 +122,27 @@ def main():
                 end = blast2['q. end'][blast2['q. start'] == site].max()
                 coordinates = str(int(site)) + " - " + str(int(end))
 
-                species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
+                species_list = (textwrap.fill(
+                                  ", ".join(set(blast2['species'][blast2['q. start'] == site])), 100)
+                                  .replace("\n", "\n\t\t     ")
+                               )
                 desc = blast2['subject title'][blast2['q. start'] == site].values[0]
-                taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
+                taxid_list = (textwrap.fill(
+                                ", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100)
+                                .replace("\n", "\n\t\t     ")
+                             )
                 percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
-                reg_ids = (" ".join(map(str, set(blast2['regulated'][(blast2['q. start'] == site) & (blast2['regulated'] != False)]))))
+                reg_ids = (" ".join(map(str, set(
+                            blast2['regulated'][(blast2['q. start'] == site)
+                            & (blast2['regulated'] != False)])))
+                          )
 
                 # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
-                    sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} found in both regulated and non-regulated organisms\n")
-                    sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) ({percent_ids} percent identity to query)\n")
+                    sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} "
+                                     + "found in both regulated and non-regulated organisms\n")
+                    sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) "
+                                     + "({percent_ids} percent identity to query)\n")
                     sys.stdout.write(f"\t\t     Description: {desc}\n")
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
@@ -143,8 +158,10 @@ def main():
                             org = "eukaryote"
                             reg_fung = 1
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
-                    sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} found in only regulated organisms: FLAG ({org})\n")
-                    sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) ({percent_ids} percent identity to query)\n")
+                    sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} "
+                                     + "found in only regulated organisms: FLAG ({org})\n")
+                    sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) "
+                                     + "({percent_ids} percent identity to query)\n")
                     sys.stdout.write(f"\t\t     Description: {desc}\n")
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write(f"\t...gene: {gene_names}\n")

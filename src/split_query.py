@@ -2,7 +2,6 @@
 # usage: python split_query.py -f fasta_file
 
 import argparse
-import os
 from Bio import SeqIO
 
 parser = argparse.ArgumentParser(description="Split the fasta file into individual file with each gene seq")

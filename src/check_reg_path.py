@@ -65,14 +65,6 @@ def main():
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    interesting_cols = ['query acc.',
-                        'subject title',
-                        'subject tax ids',
-                        'regulated',
-                        'q. start',
-                        'q. end',
-                        '% identity']
-
     blast2 = trimblast(blast)
     # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the
     # same hit
@@ -102,7 +94,6 @@ def main():
                         for row in range(htrim.shape[0]):
                             hit = htrim['subject title'][row]
                             descriptions.append(hit)
-                        annot_string = "\n\t...".join(str(v) for v in descriptions)
                         sys.stdout.write("\t...Regulated protein region at bases " + str(int(hits1['q. start'][region])) + " to " + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n")
                         sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
 

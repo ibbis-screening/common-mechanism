@@ -16,7 +16,6 @@ def main():
 
     biorisk = args.query + ".biorisk.hmmscan"
     benign = args.query + ".benign.hmmscan"
-    synbio = args.query + ".benign.blastn"
     taxid = args.query + ".nr.blastx"
     if not exists(taxid):
         taxid = args.query + ".nr.dmnd"

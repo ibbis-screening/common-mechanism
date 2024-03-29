@@ -129,9 +129,6 @@ def plot_hmmer(file, lookup, nhits=10):
     hmmer = hmmer.iloc[0:nhits,:]
 
     # check if this is a batch of sequences
-    seq_names = hmmer['query name']
-    seq_pres = set([i.split('_')[0] for i in seq_names])
-
     if hmmer.shape[0] < nhits:
         nhits = hmmer.shape[0]
 

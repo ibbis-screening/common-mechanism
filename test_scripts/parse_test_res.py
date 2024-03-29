@@ -113,7 +113,8 @@ for name, risk, vf, reg_vir, reg_bac, reg_euk, reg_nonreg, ben in breakdown:
         # if it's a regulated bacterial pathogen but a known benign gene, clear it
         elif (reg_bac == "F" and ben == "P" and vf == "P") == 1:
             summary.append((name, "P"))
-        elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes, but these seem to be poorly supported Victors genes
+        # some VFs are also housekeeping genes, but these seem to be poorly supported Victors genes
+        elif (reg_bac == "F" and ben == "P" and vf == "F") == 1:
             summary.append((name, "P"))
         elif (reg_euk == "F" and ben == "P") == 1:
             summary.append((name, "P"))
@@ -127,7 +128,14 @@ for name, risk, vf, reg_vir, reg_bac, reg_euk, reg_nonreg, ben in breakdown:
 pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 
 breakdown = pd.DataFrame(breakdown)
-breakdown.columns = ("names", "biorisk", "virulence factor", "regulated_virus", "regulated_bacteria", "regulated_eukaryote", "mix of reg and non-reg", "benign")
+breakdown.columns = ("names",
+                     "biorisk",
+                     "virulence factor",
+                     "regulated_virus",
+                     "regulated_bacteria",
+                     "regulated_eukaryote",
+                     "mix of reg and non-reg",
+                     "benign")
 breakdown.to_csv("test_itemized.csv", index=False)
 
 print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))

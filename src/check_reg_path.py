@@ -64,10 +64,17 @@ def main():
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
+    interesting_cols = ['query acc.',
+                        'subject title',
+                        'subject tax ids',
+                        'regulated',
+                        'q. start',
+                        'q. end',
+                        '% identity']
 
     blast2 = trimblast(blast)
-    # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the
+    # same hit
     blast2 = tophits(blast2)
 
     reg_bac = 0
@@ -79,7 +86,10 @@ def main():
         if hits1 is not None:
             for region in range(0, hits1.shape[0]): # for each regulated pathogen region
                 # look at only the hits that overlap it
-                htrim = blast2[~((blast2['q. start'] > hits1['q. end'][region]) & (blast2['q. end'] > hits1['q. end'][region])) & ~((blast2['q. start'] < hits1['q. start'][region]) & (blast2['q. end'] < hits1['q. start'][region]))]
+                htrim = blast2[~((blast2['q. start'] > hits1['q. end'][region])
+                               & (blast2['q. end'] > hits1['q. end'][region]))
+                               & ~((blast2['q. start'] < hits1['q. start'][region])
+                               & (blast2['q. end'] < hits1['q. start'][region]))]
                 species_list = textwrap.fill(", ".join(set(htrim['species'])), 100).replace("\n", "\n\t\t     ")
                 taxid_list = textwrap.fill(", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
                 percent_ids = (" ".join(map(str, set(htrim['% identity']))))

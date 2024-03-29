@@ -1,6 +1,8 @@
 # usage: fetch_nc_bits.py query_name fasta_file_path
 
-# checks whether there are any hits to nr for a query. If there aren't any over a gien significance level, prints the whole sequence to a noncoding query file. If there are hits, fetches the nucleotide regions between these hits and singles them out for nucleotide screening
+# checks whether there are any hits to nr for a query. If there aren't any over a gien significance level, prints the
+# whole sequence to a noncoding query file. If there are hits, fetches the nucleotide regions between these hits and
+# singles them out for nucleotide screening
 
 import re
 import sys

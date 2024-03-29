@@ -51,9 +51,29 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
         yax = 6
     else:
         yax=nhits+1
-    fig = go.Figure(go.Scatter(x=[0,0], y=[0,0],mode="markers",marker=dict(color=[0,max], colorscale="Greys",colorbar=dict(title="Similarity", x=-0.15, xanchor="left"))), go.Layout(plot_bgcolor="white"))
-    fig.add_shape(type="rect", name = 'Query', x0 = 1, x1 = qlen, y0=0.5, y1=1.3, line=dict(color="white"), fillcolor='grey')
-    fig.add_annotation(xanchor='left', text='Query', x=qlen, y=(0.5+1.3)/2,font=dict(family="Arial Narrow", size=int(100/yax), color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
+    fig = go.Figure(go.Scatter(x=[0,0],
+                               y=[0,0],
+                               mode="markers",
+                               marker={"color": [0,max]},
+                               colorscale="Greys",
+                               colorbar={"title": "Similarity", "x": -0.15, "xanchor":"left"}),
+                    go.Layout(plot_bgcolor="white"))
+    fig.add_shape(type="rect",
+                  name = 'Query',
+                  x0 = 1,
+                  x1 = qlen,
+                  y0 = 0.5,
+                  y1 = 1.3,
+                  line = {"color": "white"},
+                  fillcolor = 'grey')
+    fig.add_annotation(xanchor = 'left',
+                       text='Query',
+                       x=qlen,
+                       y=(0.5+1.3)/2,
+                       font={"family": "Arial Narrow", "size": int(100/yax), "color": "#000000"},
+                       bgcolor="#ffffff",
+                       showarrow=False)
+
     for i in range(0, starts.shape[0]): # for each hit
         start = starts[i]
         end = ends[i]
@@ -64,9 +84,26 @@ def plothits(starts, ends, qlen, names, colours, nhits, max):
             hit_description = names[i][:max_name_length]
         # hit_description = names[i]
         colour = colours[i]
-        fig.add_shape(type="rect", name = hit_description, x0 = start, x1 = end, y0=0.5+i+1, y1=1.3+i+1, line=dict(color="white"), fillcolor=colour)
-        fig.add_trace(go.Scatter(text = str(colour), x = [start, end, end, start, start], y=[0.5+i+1, 0.5+i+1, 1.3+i+1, 1.3+i+1, 0.5+i+1], fill="toself", line=dict(color="white")))
-        fig.add_annotation(xanchor='left', text=hit_description, x=qlen, y=(0.5+i+1+1.3+i+1)/2,font=dict(family="Arial Narrow", size=int(100/yax), color="#000000"), bgcolor="#ffffff", showarrow=False) # Courier New, monospace
+        fig.add_shape(type="rect",
+                      name = hit_description,
+                      x0 = start,
+                      x1 = end,
+                      y0=0.5+i+1,
+                      y1=1.3+i+1,
+                      line={"color": "white"},
+                      fillcolor=colour)
+        fig.add_trace(go.Scatter(text = str(colour),
+                                 x = [start, end, end, start, start],
+                                 y = [0.5+i+1, 0.5+i+1, 1.3+i+1, 1.3+i+1, 0.5+i+1],
+                                 fill="toself",
+                                 line= {"color" :"white"}))
+        fig.add_annotation(xanchor='left',
+                           text=hit_description,
+                           x=qlen,
+                           y=(0.5+i+1+1.3+i+1)/2,
+                           font={"family": "Arial Narrow", "size": (100/yax), "color": "#000000"},
+                           bgcolor="#ffffff",
+                           showarrow=False)
     fig.update_xaxes(range=[0, qlen*2+1000])
     fig.update_yaxes(range=[yax+0.5, 0.5], showticklabels=False)
     fig.update_layout(margin=dict(l=10, r=20, t=30, b=0))
@@ -108,8 +145,15 @@ def plot_hmmer(file, lookup, nhits=10):
         new_names.append(lookup['Description'][lookup['ID'] == model].iloc[0])
     hmmer['description'] = new_names
 
-    fig = plothits(hmmer["ali from"], hmmer["ali to"], hmmer['qlen'][0], hmmer["description"], colours, nhits, hmmer['score'].max())
-    fig.update_layout(showlegend=False, title={'text': 'HMM Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
+    fig = plothits(hmmer["ali from"],
+                   hmmer["ali to"],
+                   hmmer['qlen'][0],
+                   hmmer["description"],
+                   colours,
+                   nhits,
+                   hmmer['score'].max())
+    fig.update_layout(showlegend=False,
+                      title={'text': 'HMM Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'})
     fig.write_image(file + ".png", width=1000, height=60*nhits+60, scale=2)
 
 # plot BLAST results
@@ -153,7 +197,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
     colours = colours[0:(nhits)]
 
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
-    fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
+    fig.update_layout(showlegend=False)
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)
 
 
@@ -207,5 +251,5 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
     colours = colours[0:(nhits)]
 
     fig = plothits(blast['q. start'], blast['q. end'], blast['query length'][0], names, colours, nhits, 100)
-    fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
+    fig.update_layout(showlegend=False) 
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)

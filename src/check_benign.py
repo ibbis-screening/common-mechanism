@@ -34,7 +34,10 @@ def check_for_benign(query, coords, benign_desc):
         # for each regulated pathogen region
         for region in range(0, coords.shape[0]):
             # look at only the hmmer hits that overlap with it
-            htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region]) & (hmmer['ali to'] > coords['q. end'][region])) & ~((hmmer['ali from'] < coords['q. start'][region]) & (hmmer['ali to'] < coords['q. start'][region]))]
+            htrim = hmmer[~((hmmer['ali from'] > coords['q. end'][region])
+                            & (hmmer['ali to'] > coords['q. end'][region]))
+                            & ~((hmmer['ali from'] < coords['q. start'][region])
+                            & (hmmer['ali to'] < coords['q. start'][region]))]
             if htrim.shape[0] > 0:
                 if any(htrim['qlen'] - htrim['coverage'] < 50):
                     htrim = htrim[htrim['coverage'] > 0.80]
@@ -42,9 +45,13 @@ def check_for_benign(query, coords, benign_desc):
                     descriptions = []
                     for row in [0]: # just print the top hit
                         hit = htrim['target name'][row]
-                        descriptions.append(hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit]) + " (E-value: " + '{:.3g}'.format(htrim['E-value'][row], 3) + ")\n")
+                        hit_msg = (hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit])
+                                   + " (E-value: " + '{:.3g}'.format(htrim['E-value'][row], 3))
+                        descriptions.append(hit_msg + "\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
-                    sys.stdout.write("\t\t -->Housekeeping proteins covering " + str(coords['q. start'][region]) + " to " + str(coords['q. end'][region]) + " = PASS\n")
+                    housekeeping_msg = ("-->Housekeeping proteins covering " + str(coords['q. start'][region])
+                                        + " to " + str(coords['q. end'][region]))
+                    sys.stdout.write("\t\t " + housekeeping_msg + " = PASS\n")
                     sys.stdout.write("\t\t   " + annot_string)
                     cleared[region] = 1
                 else:
@@ -61,7 +68,10 @@ def check_for_benign(query, coords, benign_desc):
             # look at only the cmscan hits that overlap with it
             qlen = abs(coords['q. start'][region] - coords['q. end'][region])
             # filter hits for ones that overlap with the regulated region
-            htrim = cmscan[~((cmscan['seq from'] < coords['q. start'][region]) & (cmscan['seq to'] < coords['q. start'][region])) & ~((cmscan['seq from'] > coords['q. end'][region]) & (cmscan['seq to'] > coords['q. end'][region]))]
+            htrim = cmscan[~((cmscan['seq from'] < coords['q. start'][region])
+                           & (cmscan['seq to'] < coords['q. start'][region]))
+                           & ~((cmscan['seq from'] > coords['q. end'][region])
+                           & (cmscan['seq to'] > coords['q. end'][region]))]
             if htrim.shape[0] > 0:
                 # bases unaccounted for based method
                 htrim = htrim.assign(coverage = qlen - abs(htrim['seq to'] - htrim['seq from']))
@@ -91,7 +101,10 @@ def check_for_benign(query, coords, benign_desc):
 
         # for each regulated pathogen region
         for region in range(0, coords.shape[0]):
-            htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
+            htrim = blastn[~((blastn['q. start'] > coords['q. end'][region])
+                           & (blastn['q. end'] > coords['q. end'][region]))
+                           & ~((blastn['q. start'] < coords['q. start'][region])
+                           & (blastn['q. end'] < coords['q. start'][region]))]
             if any(htrim['q. coverage'] > 0.80):
                 htrim = htrim[htrim['q. coverage'] > 0.80]
                 htrim = htrim.reset_index(drop=True)
@@ -108,7 +121,9 @@ def check_for_benign(query, coords, benign_desc):
 
     for region in range(0, coords.shape[0]):
         if cleared[region] == 0:
-            sys.stdout.write("\t\t -->Regulated region at bases " + str(int(coords.iloc[region, 0])) + " to "  + str(int(coords.iloc[region, 1])) + " failed to clear: FLAG\n")
+            regulated_msg = ("-->Regulated region at bases " + str(int(coords.iloc[region, 0]))
+                             + " to "  + str(int(coords.iloc[region, 1])))
+            sys.stdout.write("\t\t " + regulated_msg + " failed to clear: FLAG\n")
     if sum(cleared) == len(cleared):
         sys.stdout.write("\n\t\t -->all regulated regions cleared: PASS\n")
 

@@ -65,12 +65,20 @@ def colourscale(reg_status, counts, averages):
     rmap = cm.get_cmap('OrRd', 100)
     nrmap = cm.get_cmap('Blues', 100)
     colours = []
-    for i in range(len(reg_status)):
-        colours.append('rgb' + str((np.array(nrmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')')) if reg_status[i] != counts[i] else colours.append('rgb' + str((np.array(rmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')'))
+    for i, status in enumerate(reg_status):
+        if status != counts[i]:
+            colours.append('rgb' + str(
+                (np.array(nrmap(averages[i]/averages.max()))*255)[:3].tolist()
+                ).replace('[', '(').replace(']', ')'))
+        else:
+             colours.append('rgb' + str(
+                (np.array(rmap(averages[i]/averages.max()))*255)[:3].tolist()
+                ).replace('[', '(').replace(']', ')'))
     return colours
 
 ##############################################################################
-#split_taxa: splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their own taxon ID
+# split_taxa
+# splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their owntaxon ID
 def split_taxa(blast):
     blast2 = blast
     cutrows = []
@@ -100,7 +108,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
     pd.set_option('display.max_colwidth', None)
 
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
+    # create new row for each tax id in a semicolon-separated list, then delete original row with concatenated tax ids
     # blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast['subject tax ids'] = blast['subject tax ids'].astype('int')
@@ -115,14 +123,17 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
 
     for x in range(0, blast.shape[0]): # for each hit taxID
         # go through each taxonomy level and check for regulated taxIDs
-        tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[x], t['FullLineageTaxIDs'].str.split(';')[x], t['FullLineageRanks'].str.split(';')[x])), columns=['Lineage', 'TaxID', 'Rank'])
+        tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[x],
+                                        t['FullLineageTaxIDs'].str.split(';')[x],
+                                        t['FullLineageRanks'].str.split(';')[x])), columns=['Lineage', 'TaxID', 'Rank'])
         tax_lin.set_index('Rank', inplace=True)
 
         taxlist = list(map(str, tax_lin['TaxID']))
         exlist = ['32630', '29278']
 
         if str(blast.loc[x,'subject tax ids']) not in taxlist:
-            print("Problem with taxID " + str(blast.loc[x,'subject tax ids']) + " - check that your taxID and protein database are up to date")
+            print("Problem with taxID " + str(blast.loc[x,'subject tax ids'])
+                  + " - check that your taxID and protein database are up to date")
 
         if any(x in exlist for x in taxlist):
             blast.drop(x, axis=0, inplace=True)
@@ -157,7 +168,29 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
 #input:
 #   - hmmer output file name
 def readhmmer(fileh):
-    columns = ['target name', 'accession','tlen', 'query name',' accession','qlen','E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
+    columns = ['target name',
+               'accession',
+               'tlen',
+               'query name',
+               ' accession',
+               'qlen',
+               'E-value',
+               'score',
+               'bias',
+               'hit #',
+               'of',
+               'c-Evalue',
+               'i-Evalue',
+               'score2',
+               'bias',
+               'hmm from',
+               'hmm to',
+               'ali from',
+               'ali to',
+               'env from',
+               'env to',
+               'acc',
+               'description of target']
 
     hmmer = []
 
@@ -186,7 +219,24 @@ def readhmmer(fileh):
 #input:
 #   - hmmer output file name
 def readcmscan(fileh):
-    columns = ['target name', 'accession','query name','accession','mdl','mdl from','mdl to', 'seq from', 'seq to', 'strand', 'trunc', 'pass', 'gc', 'bias', 'score', 'E-value', 'inc', 'description of target']
+    columns = ['target name',
+               'accession',
+               'query name',
+               'accession',
+               'mdl',
+               'mdl from',
+               'mdl to',
+               'seq from',
+               'seq to',
+               'strand',
+               'trunc',
+               'pass',
+               'gc',
+               'bias',
+               'score',
+               'E-value',
+               'inc',
+               'description of target']
 
     cmscan = []
 
@@ -214,12 +264,13 @@ def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so
     hmmer = hmmer.sort_values(by=['score'], ascending=False)
     drop = []
     hmmer2 = hmmer
-    # only keep  top ranked hits that don't overlap
+    # only keep top ranked hits that don't overlap
     for query in hmmer['query name'].unique():
         df = hmmer[hmmer['query name'] == query]
         for i in df.index:
             for j in df.index[(i+1):]:
-                if (df.loc[i,'ali from'] <= df.loc[j,'ali from'] and df.loc[i,'ali to'] >= df.loc[j,'ali to']) | (df.loc[i,'ali from'] >= df.loc[j,'ali from'] and df.loc[i,'ali to'] <= df.loc[j,'ali to']):
+                if ((df.loc[i,'ali from'] <= df.loc[j,'ali from'] and df.loc[i,'ali to'] >= df.loc[j,'ali to'])
+                     or (df.loc[i,'ali from'] >= df.loc[j,'ali from'] and df.loc[i,'ali to'] <= df.loc[j,'ali to'])):
                     if j in hmmer2.index:
                         hmmer2 = hmmer2.drop([j])
         hmmer2 = hmmer2.reset_index(drop=True)
@@ -230,7 +281,19 @@ def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so
 # read in BLAST/DIAMOND files and pre-format the data frame with essential info
 def readblast(fileh):
     blast = pd.read_csv(fileh, sep='\t', comment='#', header=None)
-    columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
+    columns = ['query acc.',
+               'subject title',
+               'subject acc.',
+               'subject tax ids',
+               'evalue',
+               'bit score',
+               '% identity',
+               'query length',
+               'q. start',
+               'q. end',
+               'subject length',
+               's. start',
+               's. end']
 
     blast.columns = columns
     blast = blast.sort_values(by=['% identity'], ascending=False)
@@ -262,9 +325,13 @@ def trimblast(blast):
         for i in df.index: # run through each hit from the top
             for j in df.index[(i+1):]: # compare to each below
                 if j in blast2.index:
-                    # if the beginning and end of the higher rank hit both overlap or extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
+                    # if the beginning and end of the higher rank hit both overlap or extend further than the beginning
+                    # and end of the lower ranked hit, discard the lower ranked hit
                     if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
-                        if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
+                        # don't drop hits if they have the same coordinates and % identity
+                        if (df.loc[i,'q. start'] < df.loc[j,'q. start']
+                            or df.loc[i,'q. end'] > df.loc[j,'q. end']
+                            or df.loc[i,'% identity'] > df.loc[j,'% identity']):
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
 
@@ -342,7 +409,8 @@ def trim_edges(df):
     mix_starts = 0
     for start in set(df['q. start']):
         if len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))) > 1:
-            if len(set(df['% identity'][df['q. start'] == start])) > 1: # if there are overlapping annotations with different % identities, re-run
+            # if there are overlapping annotations with different % identities, re-run
+            if len(set(df['% identity'][df['q. start'] == start])) > 1:
                 rerun = 1
                 mix_starts = mix_starts + 1
     return df, rerun
@@ -363,7 +431,8 @@ def tophits(blast2):
             df, rerun = trim_edges(df)
 
         for j in df.index:
-            blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])
+            blast3.loc[j,'subject length'] = (max([df.loc[j,'q. start'], df.loc[j,'q. end']])
+                                              - min([df.loc[j,'q. start'], df.loc[j,'q. end']]))
             blast3.loc[j,'q. start'] = df.loc[j,'q. start']
             blast3.loc[j,'q. end'] = df.loc[j,'q. end']
 

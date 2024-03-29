@@ -57,12 +57,19 @@ def main():
                     if (hmmer['ali from'][region] > hmmer['qlen'][region]):
                         hmmer['ali from'][region] = divmod(hmmer['ali from'][region], hmmer['qlen'][region])[0]
                         hmmer['ali to'][region] = divmod(hmmer['ali to'][region], hmmer['qlen'][region])[0]
-                    sys.stdout.write("\t\t --> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ": FLAG\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
+
+                    flag_msg = ("--> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region])
+                                + " to " + str(hmmer['ali to'][region]) + ": FLAG\n\t\t     Gene: "
+                                + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])))
+                    sys.stdout.write("\t\t " + flag_msg + "\n")
             else:
                 sys.stdout.write("\t\t --> Biorisks: Regulated genes not found, PASS\n")
             if (sum(hmmer['Must flag']) != hmmer.shape[0]):
                 for region in hmmer.index[hmmer['Must flag'] == 0]:
-                    sys.stdout.write("\t\t --> Virulence factor found in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
+                    flag_msg = ("--> Virulence factor found in bases " + str(hmmer['ali from'][region])
+                            + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: "
+                            + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])))
+                    sys.stdout.write("\t\t " + flag_msg + "\n")
         else:
             sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")
     else:

@@ -50,8 +50,10 @@ def main():
             plot_blast_frag(taxid2, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
         else:
             plot_blast(taxid2, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)
-    plot_tax(taxid, reg_ids, args.query) # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all queries earlier in the pipeline
 
+    # this is reusing an object already created in taxid screening, so could be accelerated if we generate viz for all
+    # queries earlier in the pipeline
+    plot_tax(taxid, reg_ids, args.query)
 
 if __name__ == "__main__":
     main()

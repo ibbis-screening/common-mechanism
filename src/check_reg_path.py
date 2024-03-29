@@ -14,10 +14,11 @@
 ##################################################################################################
 import argparse
 import os
+import re
 import sys
 import textwrap
 import pandas as pd
-from utils import *
+from utils import check_blastfile, readblast, taxdist, tophits, trimblast
 
 pd.set_option("display.max_colwidth", 10000)
 

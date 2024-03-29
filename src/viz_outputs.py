@@ -1,8 +1,8 @@
 import argparse
-import pandas as pd
 from os.path import exists
+import pandas as pd
 from process_outputs import *
-from utils import *
+from utils import check_blastfile
 
 
 def main():

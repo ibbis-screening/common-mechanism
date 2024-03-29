@@ -8,7 +8,7 @@ import re
 import sys
 import shutil
 from Bio import SeqIO
-from utils import *
+from utils import check_blastfile, readblast, trimblast
 
 query = sys.argv[1]
 f_file = sys.argv[2]

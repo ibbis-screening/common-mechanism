@@ -3,14 +3,14 @@
 ##############################################################################
 #check_biorisk.py checks the output from hmmscan and prints to screen the results
 #
-#Copyright (C) 2022-2023 NTI|Bio 
-#This file is part of the CommonMechanism 
+#Copyright (C) 2022-2023 NTI|Bio
+#This file is part of the CommonMechanism
 ##############################################################################
 # Usage:
-#  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/ 
+#  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/
 ##############################################################################
 from utils import *
-import os, sys, argparse 
+import os, sys, argparse
 import pandas as pd
 
 def main():
@@ -20,16 +20,16 @@ def main():
     parser.add_argument("-d","--database", dest="db",
         required=True, help="HMM folder (must contain biorisk_annotations.csv)")
     args = parser.parse_args()
-    
+
     #check input files
     if (not os.path.exists(args.in_file)):
-        sys.stderr.write("\t...input file does not exist\n") 
-        exit(1) 
+        sys.stderr.write("\t...input file does not exist\n")
+        exit(1)
     if (not os.path.exists(args.db + "/biorisk_annotations.csv")):
         sys.stderr.write("\t...biorisk_annotations.csv does not exist\n")
         exit(1)
-    
-    #Specify input file and read in database file 
+
+    #Specify input file and read in database file
     in_file = args.in_file
     lookup = pd.read_csv(args.db + "/biorisk_annotations.csv")
     lookup.fillna(False, inplace=True)
@@ -61,7 +61,7 @@ def main():
             if (sum(hmmer['Must flag']) != hmmer.shape[0]):
                 for region in hmmer.index[hmmer['Must flag'] == 0]:
                     sys.stdout.write("\t\t --> Virulence factor found in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
-        else: 
+        else:
             sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")
     else:
         sys.stdout.write("\t\t --> Biorisks: no hits detected, PASS\n")

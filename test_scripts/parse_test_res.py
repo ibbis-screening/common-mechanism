@@ -28,14 +28,14 @@ def check_flags(matching, bin_list):
             bin_list.append("P")
     else:
         bin_list.append("Err")
-    
+
     return bin_list
-    
+
 for res in glob.glob('*.screen'):
     names.append(res)
     with open(res) as f:
         lines = f.readlines()
-        
+
         # biorisk screen
         matching = [s for s in lines if "Biorisk" in s]
         biorisk = check_flags(matching, biorisk)
@@ -46,14 +46,14 @@ for res in glob.glob('*.screen'):
             vfs.append("F")
         else:
             vfs.append("P")
-        
+
         # reg_virus screen - fetch all coding and noncoding reports
         matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
         if len(matching_virus) > 0:
             reg_virus = check_flags(matching_virus, reg_virus)
         else:
             reg_virus.append("P")
-        
+
         # reg_bact screen - fetch all coding and noncoding reports
         matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
         if len(matching_bact) > 0:
@@ -74,7 +74,7 @@ for res in glob.glob('*.screen'):
             reg_nonreg.append("F")
         else:
             reg_nonreg.append("P")
-        
+
         homol_fail = [s for s in lines if "ERROR: Homology search has failed" in s]
         if len(homol_fail) > 0:
             reg_virus[-1:] = ["Err"]

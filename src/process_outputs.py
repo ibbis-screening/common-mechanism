@@ -1,12 +1,10 @@
+import os
+import re
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
-import re
-import os
+import numpy as np
 from utils import *
-import textwrap
-import math
 
 # taxonomic distribution plots
 def plot_tax(file, reg_ids, query):
@@ -21,7 +19,7 @@ def plot_pie(blast, query):
     traces = []
     sizes = [1,3.5,9,16,25,34]
     holes = [0,0.5,0.62,0.74,0.8,0.85]
-    for i in range(len(levels)): 
+    for i in range(len(levels)):
         blast.loc[blast[levels[i]]=='',levels[i]] = blast.loc[blast[levels[i]]=='',levels[i-1]] + "  "
         blast_collapse = blast.sort_values(levels).groupby(levels[:(i+1)], sort=False)
         averages = blast_collapse['% identity'].mean()
@@ -88,11 +86,11 @@ def plot_hmmer(file, lookup, nhits=10):
         ax.text(0.5, 0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
         fig.savefig(os.path.abspath(file + ".png"))
         return
-    
+
     hmmer = readhmmer(file)
     hmmer = trimhmmer(hmmer)
     hmmer = hmmer.iloc[0:nhits,:]
-        
+
     # check if this is a batch of sequences
     seq_names = hmmer['query name']
     seq_pres = set([i.split('_')[0] for i in seq_names])
@@ -127,16 +125,16 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
         ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
         fig.savefig(os.path.abspath(file + ".png"))
         return
-	
+
     blast = readblast(file)
     blast = taxdist(blast, reg_ids, vax_ids)
-    
+
     blast = trimblast(blast)
     blast = tophits(blast)
-    
+
     blast = blast.drop_duplicates('subject acc.') # drop hits with the same gene name
     blast = blast.reset_index()
-        
+
     blast['label'] = blast.groupby(['q. start','q. end'])['subject acc.'].transform(lambda x: ','.join(x))
     blast['description'] = blast.groupby(['q. start','q. end'])['subject title'].transform(lambda x: ','.join(x))
     blast['regulated_sum'] = blast.groupby(['q. start','q. end'])['regulated'].transform(lambda x: any(x))
@@ -146,7 +144,7 @@ def plot_blast(file, reg_ids, vax_ids, nhits):
 
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
-    
+
     colours = colourscale(blast['regulated_sum'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
     names = blast['description']
 
@@ -173,7 +171,7 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
         ax.text(0.5,0.5, 'No hits', fontsize=30, verticalalignment='center', horizontalalignment='center')
         fig.savefig(os.path.abspath(file + ".png"))
         return
-	
+
     blast = readblast(file)
     blast['coords'] = blast['query acc.'].transform(lambda x: re.search(':(.+?)$', x).group(1))
     coords = blast["coords"].str.split("-", n = 1, expand = True)
@@ -184,14 +182,14 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
     blast['query length'] = blast['q. end'].max()
 
     blast = taxdist(blast, reg_ids, vax_ids)
-    
+
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
     blast = trimblast(blast)
     blast = tophits(blast)
-    
+
     blast = blast.drop_duplicates('subject acc.') # drop hits with the same gene name
     blast = blast.reset_index()
-        
+
     blast['label'] = blast.groupby(['q. start','q. end'])['subject acc.'].transform(lambda x: ','.join(x))
     blast['description'] = blast.groupby(['q. start','q. end'])['subject title'].transform(lambda x: ','.join(x))
     blast['regulated_sum'] = blast.groupby(['q. start','q. end'])['regulated'].transform(lambda x: any(x))
@@ -200,7 +198,7 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
 
     if blast.shape[0] < nhits:
         nhits = blast.shape[0]
-    
+
     colours = colourscale(blast['regulated_sum'], [1.0] * blast.shape[0], pd.to_numeric(blast['% identity']))
     names = blast['description']
 
@@ -212,4 +210,4 @@ def plot_blast_frag(file, reg_ids, vax_ids, nhits):
     fig.update_layout(showlegend=False) # , title={'text': 'Database Hits', 'y':0.98, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}
     fig.write_image(os.path.abspath(file + ".png"), width=1000, height=60*nhits+90, scale=2)
 
-
+\

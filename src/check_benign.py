@@ -119,7 +119,7 @@ def main():
         required=True, help="Benign HMM database folder (must contain benign_annotations.tsv)")
     args=parser.parse_args()
 
-    if (not os.path.exists(args.db + "/benign_annotations.tsv")):
+    if not os.path.exists(args.db + "/benign_annotations.tsv"):
         sys.stderr.write("\t...benign_annotations.tsv does not exist\n")
         exit(1)
 

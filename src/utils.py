@@ -1,16 +1,16 @@
 #! /usr/bin/env python3
 
 ##############################################################################
-#utils.py provides functions used across multiple python scripts in the 
-#CommonMechanism package 
+#utils.py provides functions used across multiple python scripts in the
+#CommonMechanism package
 #
 #Copyright (C) 2022-2023 NTI|Bio
 #This file is part of the CommonMechanism
 ##############################################################################
 #Included functions:
-#   check_blastfile(filename): checks BLAST output files for each query to check if 
+#   check_blastfile(filename): checks BLAST output files for each query to check if
 #       results exist and if hits exist
-#   
+#
 ##############################################################################
 
 import pandas as pd
@@ -25,8 +25,8 @@ import pytaxonkit
 ##############################################################################
 #is_empty
 #usage: check that a file is empty
-#input: 
-#   - name of file  
+#input:
+#   - name of file
 def is_empty(filepath: str) -> bool:
     try:
         abspath = os.path.abspath(os.path.expanduser(filepath))
@@ -36,10 +36,10 @@ def is_empty(filepath: str) -> bool:
         return True
 
 ##############################################################################
-#has_hits 
+#has_hits
 #usage: check to see if the file contains any hits (lines that don't start with #)
-#input: 
-#   - path to file 
+#input:
+#   - path to file
 def has_hits(filepath: str) -> bool:
     try:
         with open(filepath,'r') as file:
@@ -54,13 +54,13 @@ def has_hits(filepath: str) -> bool:
         return False
 
 ##############################################################################
-#colourscale 
+#colourscale
 #usage: assigns colour scale to numeric values associated with taxon bins
 #   separate colours for regulated orgs (OrRd) and non-regulated (Blues)
 #input:
 #   - reg_status: regulatory status
 #   - counts: count of hits to evaluate
-#   - averages: averages to evaluate 
+#   - averages: averages to evaluate
 def colourscale(reg_status, counts, averages):
     rmap = cm.get_cmap('OrRd', 100)
     nrmap = cm.get_cmap('Blues', 100)
@@ -83,7 +83,7 @@ def split_taxa(blast):
                 blast2.loc[lastrow+1,:] = blast.loc[i,:]
                 blast2.loc[lastrow+1,'subject tax ids'] = tax
                 lastrow = lastrow+1
-    
+
     blast = blast2.drop(cutrows)
     blast = blast.reset_index(drop=True)
     blast['regulated'] = False
@@ -94,8 +94,8 @@ def split_taxa(blast):
     return blast
 
 ##############################################################################
-#taxdist 
- 
+#taxdist
+
 def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
     pd.set_option('display.max_colwidth', None)
@@ -107,7 +107,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     blast = blast[blast['subject tax ids'] != 32630] # synthetic constructs
     blast = blast[blast['subject tax ids'] != 29278] # vectors
     blast = blast.reset_index(drop=True)
-    
+
     # checks which individual lines contain regulated pathogens
     t = pytaxonkit.lineage(blast['subject tax ids'], data_dir=db_path, threads=threads)
     reg = list(map(str, reg_ids[0]))
@@ -119,7 +119,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         tax_lin.set_index('Rank', inplace=True)
 
         taxlist = list(map(str, tax_lin['TaxID']))
-        exlist = ['32630', '29278']    
+        exlist = ['32630', '29278']
 
         if str(blast.loc[x,'subject tax ids']) not in taxlist:
             print("Problem with taxID " + str(blast.loc[x,'subject tax ids']) + " - check that your taxID and protein database are up to date")
@@ -144,11 +144,11 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
             blast.loc[x,'phylum'] = tax_lin.loc['phylum', 'Lineage']
         else:
             blast.loc[x,'phylum'] = ""
-      
+
     blast = blast.sort_values(by=['% identity'], ascending=False)
-  
+
     blast = blast.reset_index(drop=True)
-  
+
     return blast
 
 #####################################################################################
@@ -158,7 +158,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
 #   - hmmer output file name
 def readhmmer(fileh):
     columns = ['target name', 'accession','tlen', 'query name',' accession','qlen','E-value','score','bias','hit #','of','c-Evalue','i-Evalue','score2','bias','hmm from','hmm to','ali from','ali to','env from','env to','acc', 'description of target']
-    
+
     hmmer = []
 
     with open(fileh, 'r') as f:
@@ -187,7 +187,7 @@ def readhmmer(fileh):
 #   - hmmer output file name
 def readcmscan(fileh):
     columns = ['target name', 'accession','query name','accession','mdl','mdl from','mdl to', 'seq from', 'seq to', 'strand', 'trunc', 'pass', 'gc', 'bias', 'score', 'E-value', 'inc', 'description of target']
-    
+
     cmscan = []
 
     with open(fileh, 'r') as f:
@@ -211,7 +211,7 @@ def readcmscan(fileh):
 #####################################################################################
 def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so coordinates will be complicated
     # rank hits by bitscore
-    hmmer = hmmer.sort_values(by=['score'], ascending=False)    
+    hmmer = hmmer.sort_values(by=['score'], ascending=False)
     drop = []
     hmmer2 = hmmer
     # only keep  top ranked hits that don't overlap
@@ -224,23 +224,23 @@ def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so
                             hmmer2 = hmmer2.drop([j])
         hmmer2 = hmmer2.reset_index(drop=True)
     return hmmer2
-    
+
 
 #####################################################################################
 # read in BLAST/DIAMOND files and pre-format the data frame with essential info
 def readblast(fileh):
     blast = pd.read_csv(fileh, sep='\t', comment='#', header=None)
     columns = ['query acc.', 'subject title', 'subject acc.', 'subject tax ids', 'evalue', 'bit score', '% identity', 'query length', 'q. start', 'q. end', 'subject length', 's. start', 's. end']
-    
+
     blast.columns = columns
     blast = blast.sort_values(by=['% identity'], ascending=False)
     blast['log evalue'] = -np.log10(pd.to_numeric(blast['evalue'])+1e-300)
     blast['q. coverage'] = abs(blast['q. end']-blast['q. start'])/blast['query length'].max()
     blast['s. coverage'] = abs(blast['s. end']-blast['s. start'])/blast['subject length']
-    
+
     blast = blast[blast['subject tax ids'].notna()]
     blast = blast.reset_index(drop=True)
-    
+
     return blast
 
 #####################################################################################
@@ -267,7 +267,7 @@ def trimblast(blast):
                         if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
-    
+
     return blast2
 
 def trim_to_top(df):
@@ -288,7 +288,7 @@ def trim_to_top(df):
             if (top_hit != prev_hit) & (prev_hit != None):
                 df.loc[prev_hit, 'q. end'] = base - 1
             prev_hit = top_hit
-    
+
     return df.iloc[keep_rows]
 
 def shift_hits_pos_strand(blast):
@@ -309,7 +309,7 @@ def trim_edges(df):
                 i_end = df.loc[i,'q. end']
                 j_start = df.loc[j,'q. start']
                 j_end = df.loc[j,'q. end']
-                
+
                 # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
                 if (j_start >= i_start and j_start <= i_end):
                     # keep equivalent hits
@@ -324,7 +324,7 @@ def trim_edges(df):
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
-                
+
                 # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
                 if (j_end >= i_start and j_end <= i_end):
                     # keep equivalent hits
@@ -337,7 +337,7 @@ def trim_edges(df):
                     else:
                         df.loc[j,'q. start'] = 0
                         df.loc[j,'q. end'] = 0
-    
+
     rerun = 0
     mix_starts = 0
     for start in set(df['q. start']):
@@ -346,11 +346,11 @@ def trim_edges(df):
                 rerun = 1
                 mix_starts = mix_starts + 1
     return df, rerun
-        
+
 
 # go through trimmed BLAST hits and only look at top protein hit for each base
 def tophits(blast2):
-    
+
     blast3 = blast2
     blast3 = blast3.sort_values('% identity', ascending=False)
 
@@ -362,14 +362,14 @@ def tophits(blast2):
         while rerun == 1: # edges of hits can be moved within a higher scoring hit in the first pass
             df, rerun = trim_edges(df)
 
-        for j in df.index: 
+        for j in df.index:
             blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])
             blast3.loc[j,'q. start'] = df.loc[j,'q. start']
             blast3.loc[j,'q. end'] = df.loc[j,'q. end']
 
     blast3 = blast3.sort_values('q. start')
     blast3 = blast3[blast3['q. start'] != 0]
-    
+
     # only keep annotations covering 50 bases or more
     blast3 = blast3[blast3['subject length'] >= 50]
     blast3 = blast3.reset_index(drop=True)

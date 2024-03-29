@@ -1,4 +1,5 @@
 # function to split multifastas into individual files and screen them
+# usage: python split_query.py -f fasta_file
 
 from Bio import SeqIO
 import argparse
@@ -21,6 +22,3 @@ for rec in SeqIO.parse(f_open, "fasta"):
    id_file.close()
    print(file_id)
 f_open.close()
-
-# usage: python split_query.py -f fasta_file
-

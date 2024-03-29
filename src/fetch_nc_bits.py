@@ -2,11 +2,11 @@
 
 # checks whether there are any hits to nr for a query. If there aren't any over a gien significance level, prints the whole sequence to a noncoding query file. If there are hits, fetches the nucleotide regions between these hits and singles them out for nucleotide screening
 
-from utils import *
-import sys, shutil
-# import pybedtools
 import re
+import sys
+import shutil
 from Bio import SeqIO
+from utils import *
 
 query = sys.argv[1]
 f_file = sys.argv[2]
@@ -71,12 +71,6 @@ if nc_bits == "all":
     shutil.copyfile(f_file, outfile)
 elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
     sys.stdout.write("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
-else: 
+else:
     seqid = blast.iloc[0][0]
     fetch_sequences(seqid, nc_bits, f_file, outfile)
-
-
-
-
-
-

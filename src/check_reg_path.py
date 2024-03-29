@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 ##################################################################################################
-#check_reg_path.py checks results for regulated pathogen and prints any 
+#check_reg_path.py checks results for regulated pathogen and prints any
 #matched coordinates
 #   This file will ignore any synthetic constructs
 #
@@ -10,7 +10,7 @@
 ##################################################################################################
 #Usage:
 #   python check_reg_path.py -i INPUT -d database_folder -t threads
-#       -i, --input 
+#       -i, --input
 ##################################################################################################
 from utils import *
 import os, sys, argparse
@@ -19,16 +19,16 @@ import textwrap
 
 pd.set_option("display.max_colwidth", 10000)
 
-def main(): 
-    parser = argparse.ArgumentParser() 
-    parser.add_argument("-i","--input",dest="in_file", 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i","--input",dest="in_file",
         required=True, help="Input query file (e.g. QUERY.nr.dmnd)")
     parser.add_argument("-d","--database", dest="db",
         required=True,help="database folder (must contain vax_taxids and reg_taxids file)")
     parser.add_argument("-t","--threads", dest="threads",
         required=True,help="number of threads")
-    args=parser.parse_args() 
-    
+    args=parser.parse_args()
+
     #check input files
     if (not os.path.exists(args.in_file)):
         sys.stderr.write("\t...input query file %s does not exist\n" % args.in_file)
@@ -45,7 +45,7 @@ def main():
 
     sample_name = re.sub(".nr.*", "", args.in_file)
     sample_name = re.sub(".nt.blastn", "", sample_name)
-    
+
     # if there are already regulated regions written to file for this query, add to them
     hits1 = None
     if os.path.exists(sample_name + ".reg_path_coords.csv"):
@@ -106,7 +106,7 @@ def main():
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
                 org = ""
-            
+
                 blast2 = blast2.dropna(subset = ['species'])
                 n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
                 n_total = len(blast2['regulated'][blast2['q. start'] == site])
@@ -131,7 +131,7 @@ def main():
                     if subset['superkingdom'][0] == "Viruses":
                         reg_vir = 1
                         org = "virus"
-                    elif subset['superkingdom'][0] == "Bacteria": 
+                    elif subset['superkingdom'][0] == "Bacteria":
                         reg_bac = 1
                         org = "bacteria"
                     elif 'superkingdom' in subset:
@@ -146,7 +146,7 @@ def main():
                     sys.stdout.write("\t...gene: %s\n" % gene_names)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
         hits = hits.drop_duplicates()
-        #Create output file 
+        #Create output file
         if hits1 is not None:
             hits = pd.concat([hits1, hits])
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)

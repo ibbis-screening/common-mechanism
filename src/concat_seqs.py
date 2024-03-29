@@ -28,8 +28,3 @@ out_file = open(out_filename, 'w')
 # write the sequence ID and sequence to the file
 out_file.write('>' + seq_id + '\n')
 out_file.write(seq + '\n')
-
-
-
-
-

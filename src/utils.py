@@ -16,7 +16,6 @@
 import pandas as pd
 import numpy as np
 import os
-# import taxoniq
 import matplotlib.cm as cm
 import re
 import sys
@@ -108,7 +107,6 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     blast = blast[blast['subject tax ids'] != 32630] # synthetic constructs
     blast = blast[blast['subject tax ids'] != 29278] # vectors
     blast = blast.reset_index(drop=True)
-    # print(blast)
     
     # checks which individual lines contain regulated pathogens
     t = pytaxonkit.lineage(blast['subject tax ids'], data_dir=db_path, threads=threads)
@@ -116,13 +114,9 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     vax = list(map(str, vax_ids[0]))
 
     for x in range(0, blast.shape[0]): # for each hit taxID
-        # fetch the full lineage for that taxID
-        
-
         # go through each taxonomy level and check for regulated taxIDs
         tax_lin = pd.DataFrame(list(zip(t['FullLineage'].str.split(';')[x], t['FullLineageTaxIDs'].str.split(';')[x], t['FullLineageRanks'].str.split(';')[x])), columns=['Lineage', 'TaxID', 'Rank'])
         tax_lin.set_index('Rank', inplace=True)
-        # print(tax_lin)
 
         taxlist = list(map(str, tax_lin['TaxID']))
         exlist = ['32630', '29278']    
@@ -134,9 +128,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
             blast.drop(x, axis=0, inplace=True)
             continue
         if any(x in reg for x in taxlist):
-            # blast.loc[x,'regulated'] = ",".join([x for x in taxlist if x in reg])
             blast.loc[x,'regulated'] = True
-            # print("Flag")
         if any(x in vax for x in taxlist):
             blast.loc[x,'regulated'] = False
 
@@ -158,70 +150,6 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     blast = blast.reset_index(drop=True)
   
     return blast
-
-def taxdist_old(blast, reg_ids, vax_ids):
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
-    # blast here is a dataframe of blast results
-    blast = split_taxa(blast)
-    blast['subject tax ids'] = blast['subject tax ids'].astype('int')
-    blast = blast[blast['subject tax ids'] != 32630]
-    blast = blast.reset_index(drop=True)
-    # print(blast)
-    
-    # checks which individual lines contain regulated pathogens
-    missing = []
-    vax = []
-    artif = []
-    columns = []
-
-    for x in range(0, blast.shape[0]):
-        try:
-            t = taxoniq.Taxon(int(blast['subject tax ids'][x]))
-            # taxoniq starts ranked_lineage at the species or genus level, so check the strain taxID first
-            if int(blast['subject tax ids'][x]) in set(reg_ids[0]):
-                # blast.loc[x,'regulated'] = True
-                blast.loc[x,'regulated'] = int(blast['subject tax ids'][x])
-            while t.scientific_name != 'root': #  & int(t.tax_id) not in set(vax_ids[0])
-                if int(t.tax_id) in set(reg_ids[0]):
-                    # blast.loc[x,'regulated'] = True
-                    blast.loc[x,'regulated'] = int(t.tax_id)
-                if int(t.tax_id) == 81077:
-                    artif.append(x)
-                if blast.columns.str.contains(t.rank.name).any():
-                    blast.loc[x,t.rank.name] = t.scientific_name
-                else:
-                    blast[t.rank.name] = ""
-                    blast.loc[x,t.rank.name] = t.scientific_name
-                    columns.append(t.rank.name)
-                t = t.parent
-                if int(t.tax_id) in set(vax_ids[0]):
-                    vax.append(x)
-                # print(t.rank.name)
-                # print(t.scientific_name)
-        except:
-            sys.stderr.write('\t...taxon id ' + str(blast['subject tax ids'][x]) + ' is missing from taxoniq database\n')
-            missing.append(x)
-    
-    if (len(vax)>0):
-        blast['regulated'][vax] = False
-#
-    blast = blast.drop(missing)
-    blast = blast.drop(artif)
-    # if (len(missing)>0):
-    #     blast.loc[missing,columns] = "missing"
-        
-    blast = blast.sort_values(by=['% identity'], ascending=False)
-    # print(blast)
-    
-    # simplify output by putting all single instances of a species in an 'other' category
-    singletons = blast.species.value_counts().index[blast.species.value_counts()==1]
-    blast['species_simplified'] = blast['species']
-    blast.loc[blast.species.isin(singletons), 'species_simplified'] = 'other'
-    
-    blast = blast.reset_index(drop=True)
-    
-    return blast
-
 
 #####################################################################################
 #readhmmer
@@ -250,8 +178,6 @@ def readhmmer(fileh):
     hmmer['ali from'] = pd.to_numeric(hmmer['ali from'])
     hmmer['ali to'] = pd.to_numeric(hmmer['ali to'])
     hmmer['qlen'] = pd.to_numeric(hmmer['qlen'])
-
-#    print(hmmer)
     return hmmer
 
 #####################################################################################
@@ -280,16 +206,12 @@ def readcmscan(fileh):
     cmscan['score'] = pd.to_numeric(cmscan['score'])
     cmscan['seq from'] = pd.to_numeric(cmscan['seq from'])
     cmscan['seq to'] = pd.to_numeric(cmscan['seq to'])
-
-#    print(cmscan)
     return cmscan
 
 #####################################################################################
 def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so coordinates will be complicated
     # rank hits by bitscore
-    hmmer = hmmer.sort_values(by=['score'], ascending=False)
-#     hmmer = hmmer.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
-    
+    hmmer = hmmer.sort_values(by=['score'], ascending=False)    
     drop = []
     hmmer2 = hmmer
     # only keep  top ranked hits that don't overlap
@@ -331,25 +253,20 @@ def trimblast(blast):
     if 'regulated' in blast:
         blast = blast.sort_values(by=['regulated'], ascending=False)
     blast = blast.sort_values(by=['% identity', 'bit score'], ascending=False)
-    # blast = blast.drop_duplicates(subset=['query acc.', 'subject acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
     blast = blast.reset_index(drop=True)
-    # print(blast[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
 
     blast2 = blast
     # only keep  top ranked hits that don't overlap
     for query in blast['query acc.'].unique():
         df = blast[blast['query acc.'] == query]
-        # print(df)
         for i in df.index: # run through each hit from the top
             for j in df.index[(i+1):]: # compare to each below
                 if j in blast2.index:
                     # if the beginning and end of the higher rank hit both overlap or extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
                     if (df.loc[i,'q. start'] <= df.loc[j,'q. start'] and df.loc[i,'q. end'] >= df.loc[j,'q. end']):
                         if (df.loc[i,'q. start'] < df.loc[j,'q. start'] or df.loc[i,'q. end'] > df.loc[j,'q. end'] or df.loc[i,'% identity'] > df.loc[j,'% identity']): # don't drop hits if they have the same coordinates and % identity
-                            # print(str(i) + " " + str(j))
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
-    # print(blast2[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
     
     return blast2
 
@@ -372,7 +289,6 @@ def trim_to_top(df):
                 df.loc[prev_hit, 'q. end'] = base - 1
             prev_hit = top_hit
     
-    # print(keep_rows)
     return df.iloc[keep_rows]
 
 def shift_hits_pos_strand(blast):
@@ -387,8 +303,6 @@ def shift_hits_pos_strand(blast):
 def trim_edges(df):
     for top in range(len(df.index)): # run through each hit from the top
             i = df.index[top]
-            # if [df['subject acc.'][i] == "EOB10733.1"]:
-            #     print("EOB10733.1")
             for next in range(top+1, len(df.index)): # compare to each below
                 j = df.index[next]
                 i_start = df.loc[i,'q. start']
@@ -398,17 +312,12 @@ def trim_edges(df):
                 
                 # if the beginning of a weaker hit is inside a stronger hit, alter its start to the next base after that hit
                 if (j_start >= i_start and j_start <= i_end):
-                    # print(df.loc[j,'subject acc.'], df.loc[j,'q. start'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. end'] + 1)
                     # keep equivalent hits
-                    # if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                     if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     # if the hit extends past the end of the earlier one
                     elif (i_end + 1 < j_end):
-                        # if df['subject acc.'][j] == 'WP_235443889.1':
-                        # print('Trimming ' + str(j) + " based on " + str(i))
                         df.loc[j,'q. start'] = i_end + 1
-                        # print(df.loc[j,['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
                     elif (i_end == j_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     # remove if the hit is contained in the earlier one
@@ -418,15 +327,10 @@ def trim_edges(df):
                 
                 # if the end of a weaker hit is inside a stronger hit, alter the end to just before that hit
                 if (j_end >= i_start and j_end <= i_end):
-                    # print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
                     # keep equivalent hits
-                    # if (j_start == i_start and j_end == i_end and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                     if (df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
                     elif (i_start - 1 > j_start):
-                        # if df['subject acc.'][j] == 'WP_235443889.1':
-                        #     print('Trimming')
-                        #     print(df.loc[j,'subject acc.'], df.loc[i,'subject acc.'], df.loc[j,'q. end'], df.loc[i,'q. start'], df.loc[i,'q. end'], df.loc[i,'q. start'] - 1)
                         df.loc[j,'q. end'] = i_start - 1
                     elif (i_start == j_start and df.loc[j,'% identity'] == df.loc[i,'% identity']):
                         pass
@@ -439,14 +343,8 @@ def trim_edges(df):
     for start in set(df['q. start']):
         if len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))) > 1:
             if len(set(df['% identity'][df['q. start'] == start])) > 1: # if there are overlapping annotations with different % identities, re-run
-                # print("Found a length discrepancy\n\n")
-                # print(df[df['q. start'] == start][['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
-                # print(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start])))
-                # print(len(set(zip(df['q. start'][df['q. start'] == start], df['q. end'][df['q. start'] == start]))))
                 rerun = 1
                 mix_starts = mix_starts + 1
-    # if rerun == 1:
-    #     print('Running again - ' + str(mix_starts) + ' non-consistent starts identified')
     return df, rerun
         
 
@@ -454,40 +352,25 @@ def trim_edges(df):
 def tophits(blast2):
     
     blast3 = blast2
-    # print(blast2)
-    # blast3 = blast3.sort_values('q. start')
     blast3 = blast3.sort_values('% identity', ascending=False)
 
     # only keep coordinates of each hit that are not already covered by a better hit
     for query in blast3['query acc.'].unique():
-        # print("Filtering to top hits")
-        # print(blast3)
         df = blast3[blast3['query acc.'] == query]
-        # df.reset_index(inplace=True) # don't do this - the right line in blast3 won't get edited
-        # print(df[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].head(20))
 
         rerun = 1
         while rerun == 1: # edges of hits can be moved within a higher scoring hit in the first pass
             df, rerun = trim_edges(df)
-        # df, rerun = trim_edges(df)
 
         for j in df.index: 
             blast3.loc[j,'subject length'] = max([df.loc[j,'q. start'], df.loc[j,'q. end']]) - min([df.loc[j,'q. start'], df.loc[j,'q. end']])
             blast3.loc[j,'q. start'] = df.loc[j,'q. start']
             blast3.loc[j,'q. end'] = df.loc[j,'q. end']
-        # print("Done filtering")
-        # print(blast3)
-                
-    # print("Results of tophit")
+
     blast3 = blast3.sort_values('q. start')
     blast3 = blast3[blast3['q. start'] != 0]
-    # print(blast3[['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
     
     # only keep annotations covering 50 bases or more
     blast3 = blast3[blast3['subject length'] >= 50]
-    # blast3 = blast3[blast3['q. start'] < blast3['q. end']]
-    # print(blast3[['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
-    # print(blast2.loc[blast3.index,['subject acc.', 'q. start', 'q. end', 's. start', 's. end']][:40])
     blast3 = blast3.reset_index(drop=True)
-    # print(blast3['subject length'])
     return blast3

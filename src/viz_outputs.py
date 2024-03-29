@@ -39,7 +39,6 @@ def main():
 
     # viz benign hits
     plot_hmmer(benign, benign_desc, args.n_hits)
-    # plot_blast(file=synbio, reg_ids=reg_ids, vax_ids=vax_ids, nhits = 10)
 
     # viz taxon IDs
     plot_blast(taxid, reg_ids=reg_ids, vax_ids=vax_ids, nhits=args.n_hits)

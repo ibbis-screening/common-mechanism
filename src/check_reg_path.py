@@ -43,10 +43,8 @@ def main():
     reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids.txt", header=None)
     vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids.txt", header=None)
 
-    # sample_name = re.sub("\..*", "", args.in_file)
     sample_name = re.sub(".nr.*", "", args.in_file)
     sample_name = re.sub(".nt.blastn", "", sample_name)
-    # print("Sample name: " + sample_name)
     
     # if there are already regulated regions written to file for this query, add to them
     hits1 = None
@@ -61,21 +59,14 @@ def main():
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py
     blast = taxdist(blast, reg_ids, vax_ids, args.db, args.threads) #function in utils.py
-    # print(blast['subject tax ids'])
-    # blast = blast[(blast['superkingdom'] != "Bacteria") | (blast['species'] != "")] # ignore submissions made above the species level
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
 
-    # print("Original blast")
-    # print(blast[interesting_cols].sort_values('q. start').head(40))
     blast2 = trimblast(blast)
-    # print("Trim blast")
-    # print(blast2[interesting_cols].sort_values('q. start').head(40))
-    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
-    # print("Top blast")
-    # print(blast2[interesting_cols].sort_values('q. start').head(40))
+    # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    blast2 = tophits(blast2)
 
     reg_bac = 0
     reg_vir = 0
@@ -90,7 +81,6 @@ def main():
                 species_list = textwrap.fill(", ".join(set(htrim['species'])), 100).replace("\n", "\n\t\t     ")
                 taxid_list = textwrap.fill(", ".join(map(str, set(htrim['subject tax ids']))), 100).replace("\n", "\n\t\t     ")
                 percent_ids = (" ".join(map(str, set(htrim['% identity']))))
-                # print(htrim)
                 if htrim.shape[0] > 0:
                     if any(htrim['q. coverage'] > 0.90):
                         htrim = htrim[htrim['q. coverage'] > 0.90]
@@ -106,23 +96,17 @@ def main():
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
         hits = pd.DataFrame(columns=['q. start', 'q. end'])
-        # print(blast2)
-        # sys.stdout.write("\t...regulated pathogen sequence: PRESENT\n")
         with pd.option_context('display.max_rows', None,
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
-            #  print(blast[['query acc.', 'subject acc.', 'regulated', 'species', 'q. start', 'q. end', '% identity']])
-        # for each hit (subject acc) linked with at least one regulated taxid
+            # for each hit (subject acc) linked with at least one regulated taxid
             for site in set(blast2['q. start'][blast2['regulated'] != False]):
                 subset = blast2[(blast2['q. start'] == site)]
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
                 org = ""
             
-                # if sum(subset['regulated']) > 0: # if there's at least one regulated hit
-                # print("screening at " + str(site))
-                # print(subset[['subject acc.', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']])
                 blast2 = blast2.dropna(subset = ['species'])
                 n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
                 n_total = len(blast2['regulated'][blast2['q. start'] == site])
@@ -154,21 +138,17 @@ def main():
                         if subset['superkingdom'][0] == "Eukaryota":
                             org = "eukaryote"
                             reg_fung = 1
-                    # sys.stdout.write("\t...%s\n" % (subset['superkingdom'][0]))
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    # sys.stdout.write("\t\t     Regulated taxid(s): %s\n" % (reg_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))
                 else: # something is wrong, n_reg > n_total
                     sys.stdout.write("\t...gene: %s\n" % gene_names)
                     sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
-        # hits = blast2[blast2['regulated']==True][['q. start', 'q. end']]  # print out the start and end coordinates of the query sequence
         hits = hits.drop_duplicates()
         #Create output file 
         if hits1 is not None:
             hits = pd.concat([hits1, hits])
-        # print(hits)
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0 and reg_fung == 0:

@@ -26,7 +26,6 @@ def check_flags(matching, bin_list):
                     bin_list.append("F")
         if hit == 0:
             bin_list.append("P")
-            # print(matching)
     else:
         bin_list.append("Err")
     
@@ -34,7 +33,6 @@ def check_flags(matching, bin_list):
     
 for res in glob.glob('*.screen'):
     names.append(res)
-    # print(res)
     with open(res) as f:
         lines = f.readlines()
         
@@ -49,16 +47,8 @@ for res in glob.glob('*.screen'):
         else:
             vfs.append("P")
         
-        # homol_fail = [s for s in lines if "Homology search has failed" in s]
-        # if len(homol_fail) > 0:
-        #     reg_virus.append("Err")
-        #     reg_bact.append("Err")
-        #     reg_euk.append("Err")
-        # else:
-
         # reg_virus screen - fetch all coding and noncoding reports
         matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
-        # print(matching_virus)
         if len(matching_virus) > 0:
             reg_virus = check_flags(matching_virus, reg_virus)
         else:
@@ -66,16 +56,13 @@ for res in glob.glob('*.screen'):
         
         # reg_bact screen - fetch all coding and noncoding reports
         matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
-        # print(matching_bact)
         if len(matching_bact) > 0:
             reg_bact.append("F")
-            # reg_bact = check_flags(matching_bact, reg_bact)
         else:
             reg_bact.append("P")
 
         # reg_euk screen - fetch all coding and noncoding reports
         matching_euk = [s for s in lines if "found in only regulated organisms: FLAG (eukaryote)" in s]
-        # print(matching_euk)
         if len(matching_euk) > 0:
             reg_euk = check_flags(matching_euk, reg_euk)
         else:
@@ -109,9 +96,6 @@ for res in glob.glob('*.screen'):
             benign.append("-")
         else:
             benign.append("Err")
-    # print(len(biorisk), len(reg_virus), len(reg_bact), len(benign))
-
-#print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))
 
 breakdown = list(zip(names, biorisk, vfs, reg_virus, reg_bact, reg_euk, reg_nonreg, benign))
 summary = []
@@ -122,7 +106,6 @@ for name, risk, vf, reg_vir, reg_bac, reg_euk, reg_nonreg, ben in breakdown:
     else:
         if risk == "F":
             summary.append((name, "F"))
-    #        print("Biorisk found")
         elif (reg_vir == "F" and ben == "F"):
             summary.append((name, "F"))
         elif (reg_vir == "F" and ben == "P"):
@@ -132,7 +115,6 @@ for name, risk, vf, reg_vir, reg_bac, reg_euk, reg_nonreg, ben in breakdown:
             summary.append((name, "P"))
         elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes, but these seem to be poorly supported Victors genes
             summary.append((name, "P"))
-    #        print("Regulated bacterial housekeeping found")
         elif (reg_euk == "F" and ben == "P") == 1:
             summary.append((name, "P"))
         # if it's a regulated bacterial hit, flag it
@@ -147,21 +129,6 @@ pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
 breakdown = pd.DataFrame(breakdown)
 breakdown.columns = ("names", "biorisk", "virulence factor", "regulated_virus", "regulated_bacteria", "regulated_eukaryote", "mix of reg and non-reg", "benign")
 breakdown.to_csv("test_itemized.csv", index=False)
-
-
-#g = sb.FacetGrid(breakdown, col="virus")
-#g.map_dataframe(sb.stripplot, x=breakdown["biorisk"], y=breakdown["reg_tax"], hue=breakdown["benign"])
-#plt.savefig("Positive_set.png")
-
-#sb.set_context("talk")
-#plt.title("Predictions on test set")
-##sb.stripplot(x=biorisk, y=reg_tax, hue=benign, data=breakdown, jitter=0.3, dodge=True, size=10)
-#sb.swarmplot(x=biorisk, y=reg_bact, hue=benign, data=breakdown, dodge=True, size=10)
-#sb.despine()
-#plt.ylabel("Regulated pathogen hit")
-#plt.xlabel("Biorisk hit")
-#plt.xticks(rotation=30, ha='right')
-#plt.savefig("Test_set.png",bbox_inches='tight')
 
 print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))
 print("Errors: ", (pd.DataFrame(summary)[1]=="Err").sum())

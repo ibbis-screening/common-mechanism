@@ -53,10 +53,10 @@ def main():
     if os.path.exists(sample_name + ".reg_path_coords.csv"):
         hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
-    if check_blastfile(args.in_file) == 0:
+    if is_empty(args.in_file):
         sys.stdout.write("\tERROR: Homology search has failed\n")
         exit(1)
-    if check_blastfile(args.in_file) == 2:
+    if not has_hits(args.in_file):
         sys.stdout.write("\t...no hits\n")
         exit(1)
     blast = readblast(args.in_file)                  #function in utils.py

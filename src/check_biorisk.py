@@ -38,10 +38,9 @@ def main():
     # print(lookup)
 
     # read in HMMER output and check for valid hits
-    res = check_blastfile(in_file)
-    if res == 0:
+    if is_empty(in_file):
         sys.stdout.write("\t...ERROR: biorisk search results empty\n")
-    if res == 1:
+    if has_hits(in_file):
         hmmer = readhmmer(in_file)
         keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-20]
         hmmer = hmmer.iloc[keep1,:]
@@ -69,7 +68,7 @@ def main():
                     sys.stdout.write("\t\t --> Virulence factor found in bases " + str(hmmer['ali from'][region]) + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: " + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
         else: 
             sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")
-    if res == 2:
+    else:
         sys.stdout.write("\t\t --> Biorisks: no hits detected, PASS\n")
 
 if __name__ == "__main__":

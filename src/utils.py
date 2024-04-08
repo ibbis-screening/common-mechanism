@@ -24,30 +24,35 @@ import pytaxonkit
 
 
 ##############################################################################
-#check_blastfile 
-#usage: check BLAST output files for each query to see if they exist and have any hits
+#is_empty
+#usage: check that a file is empty
 #input: 
-#   - name of BLAST output file  
-def check_blastfile(filename):
-    if os.path.isfile(filename) == False:
-        # sys.stderr.write("\t...%s does not exist\n" % filename)
-        return 0
-    curr_file = open(filename,'r')
-    num_hits = 0 
-    num_lines = 0
-    for line in curr_file:
-        if (len(line) > 0) and (line[0] != "#"):
-            num_hits += 1
-        num_lines += 1
-    #Return based on file results
-    if num_lines == 0:
-        # sys.stderr.write("\t...%s is empty\n" % filename)
-        return 0
-    elif num_hits == 0:
-        # sys.stderr.write("\t...%s has no hits\n" % filename)
-        return 2        
-    else:
-        return 1
+#   - name of file  
+def is_empty(filepath: str) -> bool:
+    try:
+        abspath = os.path.abspath(os.path.expanduser(filepath))
+        return os.path.getsize(abspath) == 0
+    except OSError:
+        # If there is an error (including FileNotFoundError) consider it empty
+        return True
+
+##############################################################################
+#has_hits 
+#usage: check to see if the file contains any hits (lines that don't start with #)
+#input: 
+#   - path to file 
+def has_hits(filepath: str) -> bool:
+    try:
+        with open(filepath,'r') as file:
+            for line in file:
+                # Strip leading and trailing whitespace and check the first character
+                if not line.strip().startswith('#'):
+                    # Found a hit!
+                    return True
+        return False
+    except FileNotFoundError:
+        # The file does not exist
+        return False
 
 ##############################################################################
 #colourscale 

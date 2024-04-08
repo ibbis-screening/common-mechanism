@@ -23,7 +23,7 @@ def check_for_benign(query, coords, benign_desc):
     # PROTEIN HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     hmmscan = query + ".benign.hmmscan"
-    if check_blastfile(hmmscan) == 2:
+    if not has_hits(hmmscan):
         sys.stdout.write("\t...no housekeeping protein hits\n")
     else:
         hmmer = readhmmer(hmmscan)
@@ -68,7 +68,7 @@ def check_for_benign(query, coords, benign_desc):
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     cmscan = query + ".benign.cmscan"
-    if check_blastfile(cmscan) == 2:
+    if not has_hits(cmscan):
         sys.stdout.write("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
@@ -115,7 +115,7 @@ def check_for_benign(query, coords, benign_desc):
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
     blast = query + ".benign.blastn"
-    if check_blastfile(blast) == 2:
+    if not has_hits(blast):
         sys.stdout.write("\t...no Synbio sequence hits\n")
     else:
         blastn = readblast(blast) # synbio parts

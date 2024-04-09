@@ -242,7 +242,7 @@ if [ "$FAST_MODE" = 0 ]; then
     fi
 
 else
-    echo " >> FAST MODE: Skipping steps 2-3\n" | tee -a ${OUTPUT}.screen
+    echo " >> FAST MODE: Skipping steps 2-3" | tee -a ${OUTPUT}.screen
 
 fi
 

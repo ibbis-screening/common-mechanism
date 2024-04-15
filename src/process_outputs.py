@@ -19,15 +19,15 @@ def plot_pie(blast, query):
     traces = []
     sizes = [1,3.5,9,16,25,34]
     holes = [0,0.5,0.62,0.74,0.8,0.85]
-    for i in range(len(levels)):
-        blast.loc[blast[levels[i]]=='',levels[i]] = blast.loc[blast[levels[i]]=='',levels[i-1]] + "  "
+    for i, level in enumerate(levels):
+        blast.loc[blast[level]=='',level] = blast.loc[blast[level]=='',levels[i-1]] + "  "
         blast_collapse = blast.sort_values(levels).groupby(levels[:(i+1)], sort=False)
         averages = blast_collapse['% identity'].mean()
         counts = list(blast_collapse.count()['% identity'])
         colours = colourscale(blast_collapse['regulated'].sum(), counts, averages)
         values = list(blast_collapse.count()['% identity'])
         values_scaled = np.asarray(values)/sum(np.asarray(values))*sizes[i]
-        labels = np.concatenate(list(blast_collapse[levels[i]].unique()))
+        labels = np.concatenate(list(blast_collapse[level].unique()))
         trace = go.Pie(
             hole = holes[i],
             scalegroup = 'one',

@@ -352,7 +352,7 @@ def trim_to_top(df):
                 df.loc[top_hit,'q. start'] = base
                 keep_rows.append(top_hit)
             # if the top hit just changed, set the end of query coverage for the last hit to the previous base
-            if (top_hit != prev_hit) & (prev_hit != None):
+            if (top_hit != prev_hit) & (prev_hit is not None):
                 df.loc[prev_hit, 'q. end'] = base - 1
             prev_hit = top_hit
 

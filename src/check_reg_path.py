@@ -109,14 +109,13 @@ def main():
                        'display.precision', 3,
                        ):
             # for each hit (subject acc) linked with at least one regulated taxid
-            for site in set(blast2['q. start'][blast2['regulated'] != False]):
+            for site in set(blast2['q. start'][blast2['regulated'] is not False]):
                 subset = blast2[(blast2['q. start'] == site)]
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
-                org = ""
 
                 blast2 = blast2.dropna(subset = ['species'])
-                n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
+                n_reg = (blast2['regulated'][blast2['q. start'] == site] is not False).sum()
                 n_total = len(blast2['regulated'][blast2['q. start'] == site])
                 gene_names = ", ".join(set(subset['subject acc.']))
                 end = blast2['q. end'][blast2['q. start'] == site].max()
@@ -134,11 +133,11 @@ def main():
                 percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
                 reg_ids = (" ".join(map(str, set(
                             blast2['regulated'][(blast2['q. start'] == site)
-                            & (blast2['regulated'] != False)])))
+                            & (blast2['regulated'] is not False)])))
                           )
 
                 # if some of the organisms with this sequence aren't regulated, say so
-                if (n_reg < n_total):
+                if n_reg < n_total:
                     sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} "
                                      + "found in both regulated and non-regulated organisms\n")
                     sys.stdout.write(f"\t\t     Species: {species_list} (taxid(s): {taxid_list}) "
@@ -146,16 +145,13 @@ def main():
                     sys.stdout.write(f"\t\t     Description: {desc}\n")
                     # could explicitly list which are and aren't regulated?
                     # otherwise, raise a flag and say which superkingdom the flag belongs to
-                elif (n_reg == n_total):
+                elif n_reg == n_total:
                     if subset['superkingdom'][0] == "Viruses":
                         reg_vir = 1
-                        org = "virus"
                     elif subset['superkingdom'][0] == "Bacteria":
                         reg_bac = 1
-                        org = "bacteria"
                     elif 'superkingdom' in subset:
                         if subset['superkingdom'][0] == "Eukaryota":
-                            org = "eukaryote"
                             reg_fung = 1
                     hits = pd.concat([hits, subset[['q. start', 'q. end']]])
                     sys.stdout.write(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} "

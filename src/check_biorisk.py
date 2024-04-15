@@ -24,12 +24,12 @@ def main():
     args = parser.parse_args()
 
     #check input files
-    if (not os.path.exists(args.in_file)):
+    if not os.path.exists(args.in_file):
         sys.stderr.write("\t...input file does not exist\n")
-        exit(1)
-    if (not os.path.exists(args.db + "/biorisk_annotations.csv")):
+        sys.exit(1)
+    if not os.path.exists(args.db + "/biorisk_annotations.csv"):
         sys.stderr.write("\t...biorisk_annotations.csv does not exist\n")
-        exit(1)
+        sys.exit(1)
 
     #Specify input file and read in database file
     in_file = args.in_file
@@ -52,23 +52,23 @@ def main():
             hmmer.loc[model, 'description'] = lookup.iloc[name_index[0], 1]
             hmmer.loc[model, 'Must flag'] = lookup.iloc[name_index[0], 2]
         if hmmer.shape[0] > 0:
-            if (sum(hmmer['Must flag']) > 0):
+            if sum(hmmer['Must flag']) > 0:
                 for region in hmmer.index[hmmer['Must flag'] != 0]:
-                    if (hmmer['ali from'][region] > hmmer['qlen'][region]):
+                    if hmmer['ali from'][region] > hmmer['qlen'][region]:
                         hmmer['ali from'][region] = divmod(hmmer['ali from'][region], hmmer['qlen'][region])[0]
                         hmmer['ali to'][region] = divmod(hmmer['ali to'][region], hmmer['qlen'][region])[0]
 
                     flag_msg = ("--> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region])
                                 + " to " + str(hmmer['ali to'][region]) + ": FLAG\n\t\t     Gene: "
-                                + ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])))
+                                + ", ".join(set(hmmer['description'][hmmer['Must flag'] is True])))
                     sys.stdout.write("\t\t " + flag_msg + "\n")
             else:
                 sys.stdout.write("\t\t --> Biorisks: Regulated genes not found, PASS\n")
-            if (sum(hmmer['Must flag']) != hmmer.shape[0]):
+            if sum(hmmer['Must flag']) != hmmer.shape[0]:
                 for region in hmmer.index[hmmer['Must flag'] == 0]:
                     flag_msg = ("--> Virulence factor found in bases " + str(hmmer['ali from'][region])
                             + " to " + str(hmmer['ali to'][region]) + ", WARNING\n\t\t     Gene: "
-                            + ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])))
+                            + ", ".join(set(hmmer['description'][hmmer['Must flag'] is False])))
                     sys.stdout.write("\t\t " + flag_msg + "\n")
         else:
             sys.stdout.write("\t\t --> Biorisks: no significant hits detected, PASS\n")

@@ -16,7 +16,7 @@ import argparse
 import os
 import sys
 import pandas as pd
-from utils import check_blastfile, readblast, readhmmer, readcmscan, trimblast, tophits
+from utils import has_hits, readblast, readhmmer, readcmscan, trimblast, tophits
 
 def check_for_benign(query, coords, benign_desc):
     cleared = [0] * coords.shape[0]

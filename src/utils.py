@@ -7,15 +7,9 @@
 #Copyright (C) 2022-2023 NTI|Bio
 #This file is part of the CommonMechanism
 ##############################################################################
-#Included functions:
-#   check_blastfile(filename): checks BLAST output files for each query to check if
-#       results exist and if hits exist
-#
-##############################################################################
 
 import os
 import re
-import sys
 import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
@@ -71,7 +65,7 @@ def colourscale(reg_status, counts, averages):
                 (np.array(nrmap(averages[i]/averages.max()))*255)[:3].tolist()
                 ).replace('[', '(').replace(']', ')'))
         else:
-             colours.append('rgb' + str(
+            colours.append('rgb' + str(
                 (np.array(rmap(averages[i]/averages.max()))*255)[:3].tolist()
                 ).replace('[', '(').replace(']', ')'))
     return colours
@@ -104,7 +98,7 @@ def split_taxa(blast):
 ##############################################################################
 #taxdist
 
-def taxdist(blast, reg_ids, vax_ids, db_path, threads):
+def taxdist(blast, reg_ids, vax_ids, db_path=None, threads=None):
     # prevent truncation of taxonomy results
     pd.set_option('display.max_colwidth', None)
 
@@ -200,7 +194,7 @@ def readhmmer(fileh):
                 break
             if "#" in line:
                 continue
-            bits = re.split('\s+', line)
+            bits = re.split(r'\s+', line)
             description = " ".join(bits[22:])
             bits = bits[:22]
             bits.append(description)
@@ -246,7 +240,7 @@ def readcmscan(fileh):
                 break
             if "#" in line:
                 continue
-            bits = re.split('\s+', line)
+            bits = re.split(r'\s+', line)
             description = " ".join(bits[17:])
             bits = bits[:17]
             bits.append(description)
@@ -262,7 +256,6 @@ def readcmscan(fileh):
 def trimhmmer(hmmer): # don't forget this is a report on 6-frame translations so coordinates will be complicated
     # rank hits by bitscore
     hmmer = hmmer.sort_values(by=['score'], ascending=False)
-    drop = []
     hmmer2 = hmmer
     # only keep top ranked hits that don't overlap
     for query in hmmer['query name'].unique():

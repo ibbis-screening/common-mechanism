@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import numpy as np
-from utils import check_blastfile, colourscale, readblast, readhmmer, taxdist, tophits, trimblast, trimhmmer
+from utils import colourscale, is_empty, has_hits,readblast, readhmmer, taxdist, tophits, trimblast, trimhmmer
 
 # taxonomic distribution plots
 def plot_tax(file, reg_ids, query):

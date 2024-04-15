@@ -13,7 +13,7 @@ import argparse
 import os
 import sys
 import pandas as pd
-from utils import check_blastfile, readhmmer, trimhmmer
+from utils import has_hits, is_empty, readhmmer, trimhmmer
 
 def main():
     parser = argparse.ArgumentParser()

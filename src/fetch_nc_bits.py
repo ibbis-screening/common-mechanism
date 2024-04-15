@@ -8,7 +8,7 @@ import re
 import sys
 import shutil
 from Bio import SeqIO
-from utils import check_blastfile, readblast, trimblast
+from utils import is_empty, has_hits, readblast, trimblast
 
 def fetch_sequences(seqid, nc_bits, f_file, outfile):
     tofetch = []

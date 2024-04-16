@@ -39,7 +39,7 @@ pip install biopython
 ```
 
 ## Recommended manual installs
-Conda currently isn't able to install an up-to-date version of BLAST compatible with current databases, so we recommend installing from source. The BLAST code executable can be found at https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/. 
+Conda currently isn't able to install an up-to-date version of BLAST compatible with current databases, so we recommend installing from source. The BLAST code executable can be downloaded from the NCBI FTP (https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) and install instructions are available in the [BLAST® Command Line Applications User Manual](https://www.ncbi.nlm.nih.gov/books/NBK569861/).
 
 For more details on BLAST, see https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html.
 

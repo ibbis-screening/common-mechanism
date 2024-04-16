@@ -21,7 +21,6 @@ conda install -c bioconda bedtools
 conda install -c bioconda taxonkit
 conda install -c bioconda pytaxonkit
 conda install -c bioconda infernal
-conda install -c bioconda blast
 conda install -c bioconda diamond
 conda install -c bioconda perl-list-moreutils
 conda install parallel
@@ -36,7 +35,13 @@ pip install plotly
 pip install ncbi-taxon-db
 pip install matplotlib
 pip install pybedtools
+pip install biopython
 ```
+
+## Recommended manual installs
+Conda currently isn't able to install an up-to-date version of BLAST compatible with current databases, so we recommend installing from source. The BLAST code executable can be downloaded from the NCBI FTP (https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) and install instructions are available in the [BLAST® Command Line Applications User Manual](https://www.ncbi.nlm.nih.gov/books/NBK569861/).
+
+For more details on BLAST, see https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html.
 
 # Required Data 
 The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder (this folder can contain other databases or scripts). The resulting file structure (and required storage space) will be as follows:

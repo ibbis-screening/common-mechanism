@@ -11,7 +11,6 @@ import math
 # reg_ids = pd.read_csv(args.database + '/biorisk/reg_taxids', header=None)
 # vax_ids = pd.read_csv(args.database + '/benign/vax_taxids', header=None)
 
-
 # taxonomic distribution plots
 def plot_tax(file, reg_ids, query):
     blast = readblast(file)

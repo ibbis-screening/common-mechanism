@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-setup.cfg
-setup.py
-src/CommonMechanism.egg-info/PKG-INFO
-src/CommonMechanism.egg-info/SOURCES.txt
-src/CommonMechanism.egg-info/dependency_links.txt
-src/CommonMechanism.egg-info/top_level.txt

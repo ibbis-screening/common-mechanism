@@ -124,8 +124,8 @@ def check_for_benign(query, coords, benign_desc):
         # print(blastn)
         for region in range(0, coords.shape[0]): # for each regulated pathogen region
             htrim = blastn[~((blastn['q. start'] > coords['q. end'][region]) & (blastn['q. end'] > coords['q. end'][region])) & ~((blastn['q. start'] < coords['q. start'][region]) & (blastn['q. end'] < coords['q. start'][region]))]
-            if any(htrim['q. coverage'] > 0.90):
-                htrim = htrim[htrim['q. coverage'] > 0.90]
+            if any(htrim['q. coverage'] > 0.80):
+                htrim = htrim[htrim['q. coverage'] > 0.80]
                 htrim = htrim.reset_index(drop=True)
                 descriptions = []
                 for row in range(htrim.shape[0]):

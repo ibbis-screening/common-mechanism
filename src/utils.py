@@ -463,7 +463,7 @@ def tophits(blast2):
         # print("Filtering to top hits")
         # print(blast3)
         df = blast3[blast3['query acc.'] == query]
-        # df.reset_index(inplace=True)
+        # df.reset_index(inplace=True) # don't do this - the right line in blast3 won't get edited
         # print(df[['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']].head(20))
 
         rerun = 1

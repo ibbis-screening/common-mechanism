@@ -1,23 +1,25 @@
-# function to split multifastas into individual files and screen them
-# usage: python split_query.py -f fasta_file
+"""
+function to split multifastas into individual files and screen them
+usage: python split_query.py -f fasta_file
+"""
 
 import argparse
+import string
 from Bio import SeqIO
 
 parser = argparse.ArgumentParser(description="Split the fasta file into individual file with each gene seq")
 parser.add_argument('-f', action='store', dest='fasta_file', help='Input fasta file')
 result = parser.parse_args()
 
-f_open = open(result.fasta_file, "r")
+with open(result.fasta_file, "r", encoding="utf-8") as input_file:
+    for record in SeqIO.parse(input_file, "fasta"):
+        desc = record.description
+        desc = desc.strip()
 
-for rec in SeqIO.parse(f_open, "fasta"):
-    id = rec.description
-    file_id = "".join(x for x in id if x.isalnum())
-    if len(file_id) > 150:
-        file_id = file_id[:150]
-    seq = rec.seq
-    id_file = open(file_id+".fasta", "w")
-    id_file.write(">"+str(id)+"\n"+str(seq))
-    id_file.close()
-    print(file_id)
-f_open.close()
+        VALID_FILENAME_CHARS = f"-.{string.ascii_letters}{string.digits}"
+        FILENAME = "".join(x for x in desc if x in VALID_FILENAME_CHARS)
+        if len(FILENAME) > 150:
+            FILENAME = FILENAME[:150]
+
+        with open(f"{FILENAME}.fasta", "w", encoding="utf-8") as output_file:
+            output_file.write(">"+str(desc)+"\n"+str(record.seq))

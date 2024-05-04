@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "common-mechanism"
+version='0.1.0',
+requires-python = ">= 3.8"
+description='Free, globally-available tool for DNA sequence screening',
+license = {file = "LICENSE"}
+readme = "README.md"
+keywords = ["synthesis screening", "DNA synthesis"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+]
+
+[project.optional-dependencies]
+dev = [
+    'pytest',
+    'pylint',
+    'black',
+]
+
+[project.urls]
+Homepage = "https://ibbis.bio/common-mechanism"
+Repository = "https://github.com/ibbis-screening/common-mechanism.git"
+
+[project.scripts]
+screen = "common-mechanism:screen"

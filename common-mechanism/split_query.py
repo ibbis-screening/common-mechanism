@@ -4,25 +4,24 @@ from Bio import SeqIO
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description="Split the fasta file into individual file with each gene seq")
-parser.add_argument('-f', action='store', dest='fasta_file', help='Input fasta file')
-result = parser.parse_args()
+VALID_FILENAME_CHARS = f"-.{string.ascii_letters}{string.digits}"
 
-f_open = open(result.fasta_file, "r")
+def main():
+    parser = argparse.ArgumentParser(description="Split the fasta file into individual file with each gene seq")
+    parser.add_argument('-f', action='store', dest='fasta_file', help='Input fasta file')
+    result = parser.parse_args()
 
-for rec in SeqIO.parse(f_open, "fasta"):
-   id = rec.description
-   file_id = "".join(x for x in id if x.isalnum())
-   if len(file_id) > 150:
-      file_id = file_id[:150]
-   seq = rec.seq
-   id_file = open(file_id+".fasta", "w")
-   id_file.write(">"+str(id)+"\n"+str(seq))
-   id_file.close()
-   print(file_id)
-   # os.system("time run_pipeline.sh " + file_id + ".fasta > " + file_id + ".screen.txt")
+    with open(result.fasta_file, "r", encoding="utf-8") as input_file:
+        for record in SeqIO.parse(input_file, "fasta"):
+            desc = record.description
+            desc = desc.strip()
 
-f_open.close()
+            filename = "".join(x for x in desc if x in VALID_FILENAME_CHARS)
+            if len(filename) > 150:
+                filename = filename[:150]
 
-# usage: python split_query.py -f fasta_file
+            with open(f"{filename}.fasta", "w", encoding="utf-8") as output_file:
+                output_file.write(">"+str(desc)+"\n"+str(record.seq))
 
+if __name__ == "__main__":
+    main()

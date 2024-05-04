@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "common-mechanism"
-version='0.1.0',
+version='0.1.0'
 requires-python = ">= 3.8"
-description='Free, globally-available tool for DNA sequence screening',
+description='Free, globally-available tool for DNA sequence screening'
 license = {file = "LICENSE"}
 readme = "README.md"
 keywords = ["synthesis screening", "DNA synthesis"]
@@ -30,4 +30,4 @@ Homepage = "https://ibbis.bio/common-mechanism"
 Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [project.scripts]
-screen = "common-mechanism:screen"
+split = "split_query:main"

@@ -5,7 +5,6 @@ You can call it as a script:
     
     python split.py input.fasta 
 """
-
 import argparse
 import os
 import string
@@ -34,12 +33,13 @@ def write_split_fasta(fasta_file):
             desc = clean_description(record.description)
             outpath = os.path.join(output_dir, f"{desc}.fasta")
 
+            # Avoid overwriting input files
             if outpath == fasta_file:
                 outpath = os.path.join(output_dir, f"{desc}-split.fasta")
 
             with open(outpath, "w", encoding="utf-8") as output_file:
-                print(f">{desc}", file=output_file)
-                print(record.seq, file=output_file)
+                output_file.write(f">{desc}{os.linesep}")
+                output_file.write(record.seq)
 
 def main():
     """

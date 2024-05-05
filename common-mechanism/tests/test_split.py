@@ -29,6 +29,7 @@ def fasta_records(test_data_dir):
 @pytest.mark.parametrize("description, expected", [
     ("BBa_K620001_P_22737_Coding_\"WT-F87A_(p450)\"", "BBa_K620001_P_22737_Coding_WT-F87A_p450"),
     ("long description" * 20, "longdescription" * 10),
+    ("", "")
 ])
 def test_clean_description(description, expected):
     assert clean_description(description) == expected
@@ -53,7 +54,13 @@ def test_write_split_fasta(mock_seqio_parse, mock_os_path_join, mock_open, filen
 
     for record in records:
         desc = clean_description(record.description)
-        assert mock_os_path_join.called_with(os.path.dirname(filepath), f"{desc}.fasta")
-        mock_open.assert_any_call(os.path.join(os.path.dirname(filepath), f"{desc}.fasta"), "w", encoding="utf-8")
+
+        if desc:
+            output_filename = f"{desc}.fasta"
+        else:
+            output_filename = f"{os.path.splitext(filename)[0]}-split-0.fasta"
+
+        assert mock_os_path_join.called_with(os.path.dirname(filepath), output_filename)
+        mock_open.assert_any_call(os.path.join(os.path.dirname(filepath), output_filename), "w", encoding="utf-8")
         mock_open().write.assert_any_call(f">{desc}{os.linesep}")
         mock_open().write.assert_any_call(f"{record.seq}")

@@ -30,4 +30,4 @@ Homepage = "https://ibbis.bio/common-mechanism"
 Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [project.scripts]
-split = "split_query:main"
+split = "split:main"

@@ -1,7 +1,9 @@
 """
-Split FASTA files containing multiple records into individual files, one for each record.
+Split a FASTA file containing multiple records into individual files, one for each record.
 
-usage: python split.py input.fasta 
+You can call it as a script:
+    
+    python split.py input.fasta 
 """
 
 import argparse
@@ -9,28 +11,44 @@ import os
 import string
 from Bio import SeqIO
 
-VALID_FILENAME_CHARS = f"-.{string.ascii_letters}{string.digits}"
+VALID_FILENAME_CHARS = f"-._{string.ascii_letters}{string.digits}"
 
 def clean_description(description):
-    description = description.strip()
-    record_name = "".join(x for x in description if x in VALID_FILENAME_CHARS)
-    if len(record_name) > 150:
-        record_name = record_name[:150]
-
-    return f"{record_name}.fasta"
-
+    """
+    Cleans the description from a sequence record for use as part of a filename.
+    """
+    cleaned = description.strip()
+    cleaned = "".join(x for x in cleaned if x in VALID_FILENAME_CHARS)
+    if len(cleaned) > 150:
+        cleaned = cleaned[:150]
+    return cleaned
 
 def write_split_fasta(fasta_file):
+    """
+    Parse all sequence records in an input FASTA file, and write a new file for each record.
+    """
     output_dir = os.path.dirname(fasta_file)
+
     with open(fasta_file, "r", encoding="utf-8") as input_file:
         for record in SeqIO.parse(input_file, "fasta"):
             desc = clean_description(record.description)
-            out_filename = os.path.join(output_dir, f"{desc}.fasta")
-            with open(out_filename, "w", encoding="utf-8") as output_file:
+            outpath = os.path.join(output_dir, f"{desc}.fasta")
+
+            if outpath == fasta_file:
+                outpath = os.path.join(output_dir, f"{desc}-split.fasta")
+
+            with open(outpath, "w", encoding="utf-8") as output_file:
                 print(f">{desc}", file=output_file)
                 print(record.seq, file=output_file)
 
 def main():
+    """
+    Main function. Passes FASTA file to `write_split_fasta`.
+
+    Arguments:
+      - fasta_file: Path to the input FASTA file.
+
+    """
     parser = argparse.ArgumentParser(
         description="Split a FASTA file containing multiple records into individual files, one for each record."
     )

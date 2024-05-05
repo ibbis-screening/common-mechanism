@@ -27,17 +27,20 @@ def write_split_fasta(fasta_file):
     Parse all sequence records in an input FASTA file, and write a new file for each record.
     """
     output_dir = os.path.dirname(fasta_file)
+    fasta_name = os.path.splitext(os.path.basename(fasta_file))[0]
 
     with open(fasta_file, "r", encoding="utf-8") as input_file:
-        for record in SeqIO.parse(input_file, "fasta"):
+        for i, record in enumerate(SeqIO.parse(input_file, "fasta")):
             desc = clean_description(record.description)
-            outpath = os.path.join(output_dir, f"{desc}.fasta")
 
-            # Avoid overwriting input files
-            if outpath == fasta_file:
-                outpath = os.path.join(output_dir, f"{desc}-split.fasta")
+            # Handle empty descriptions and avoid overwriting input files
+            if not desc or desc == fasta_name:
+                output_basename = f"{fasta_name}-split-{i}.fasta"
+            else:
+                output_basename = f"{desc}.fasta"
 
-            with open(outpath, "w", encoding="utf-8") as output_file:
+            output_path = os.path.join(output_dir, output_basename)
+            with open(output_path, "w", encoding="utf-8") as output_file:
                 output_file.write(f">{desc}{os.linesep}")
                 output_file.write(record.seq)
 

@@ -2,7 +2,7 @@ import os
 from unittest.mock import mock_open, patch
 import pytest
 from Bio import SeqIO
-from split import clean_description, write_split_fasta
+from common_mechanism.split import clean_description, write_split_fasta
 
 @pytest.fixture
 def test_data_dir():
@@ -42,7 +42,7 @@ def test_clean_description(description, expected):
 ])
 @patch("builtins.open", new_callable=mock_open)
 @patch("os.path.join", side_effect=lambda a, b: f"{a}/{b}")
-@patch("split.SeqIO.parse")
+@patch("common_mechanism.split.SeqIO.parse")
 def test_write_split_fasta(mock_seqio_parse, mock_os_path_join, mock_open, filename, test_data_dir, fasta_records):
     filepath = os.path.join(test_data_dir, filename)
     records = fasta_records[filename]
@@ -60,7 +60,7 @@ def test_write_split_fasta(mock_seqio_parse, mock_os_path_join, mock_open, filen
         else:
             output_filename = f"{os.path.splitext(filename)[0]}-split-0.fasta"
 
-        assert mock_os_path_join.called_with(os.path.dirname(filepath), output_filename)
+        mock_os_path_join.assert_any_call(os.path.dirname(filepath), output_filename)
         mock_open.assert_any_call(os.path.join(os.path.dirname(filepath), output_filename), "w", encoding="utf-8")
         mock_open().write.assert_any_call(f">{desc}{os.linesep}")
         mock_open().write.assert_any_call(f"{record.seq}")

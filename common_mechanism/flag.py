@@ -1,167 +1,195 @@
 #! /usr/bin/env python3
+"""
+Parse all .screen files in a directory and create two CSV files of flags raised during screening.
 
-# parse all .screen.txt files in a directory and count stats on each flag and overall calls
-# Usage: parse_test_res.py (in directory of choice)
+The flags.csv file will have the following columns and values:
 
+- filename:                 .screen file basename
+- biorisk:                  "F" if flagged, "P" if no flags
+- virulence_factor:         "F" if flagged, "P" if no flags
+- regulated_virus:          "F" if flagged, "P" if no flags, "Err" if error logged
+- regulated_bacteria:       "F" if flagged, "P" if no flags, "Err" if error logged
+- regulated_eukaryote:      "F" if flagged, "P" if no flags, "Err" if error logged
+- mixed_regulated_non_reg:  "F" if flagged, "P" if no flags, "Err" if error logged
+- benign:                   "F" if not cleared, "P" if all cleared, "-" if not run
+
+The flags_recommended CSV just has two columns, "filename" and "recommend_flag_or_pass".
+
+You can call it as a script:
+    
+    flag.py /path/to/directory/with/.screen 
+"""
+import argparse
 import glob
+import os
+import re
 import pandas as pd
 
-# columns in the summary file, to be filled with the checks below
-names = []
-biorisk = []
-vfs = []
-reg_virus = []
-reg_bact = []
-reg_euk = []
-reg_nonreg = []
-benign = []
+DESCRIPTION = "Parse all .screen files in a directory and create two CSVs file of flags raised"
 
-def check_flags(matching, bin_list):
-    if len(matching) > 0:
-        hit = 0
-        for match in matching:
-            if hit == 0:
-                if 'FLAG' in match:
-                    hit = 1
-                    bin_list.append("F")
-        if hit == 0:
-            bin_list.append("P")
-            # print(matching)
+def dir_path(path):
+    """ Raise ArgumentTypeError if `path` is not a directory. """
+    if not os.path.isdir(path):
+        raise argparse.ArgumentTypeError(f"{path} is not a valid directory path")
+    return path
+
+def add_args(parser):
+    """
+    Add module arguments to an ArgumentParser object.
+    """
+    parser.add_argument(
+        action='store',
+        type=dir_path,
+        dest='screen_dir',
+        help='Directory containing .screen files to summarize'
+    )
+    return parser
+
+def add_flags(lines, flag_list, pattern):
+    """
+    Parse a subset of input lines from a screen file and add to a list of flags
+    """
+    screen_lines = [s for s in lines if re.search(pattern, s)]
+    if len(screen_lines) > 0:
+        flag_list.append("F")
     else:
-        bin_list.append("Err")
-    
-    return bin_list
-    
-for res in glob.glob('*.screen'):
-    names.append(res)
-    # print(res)
-    with open(res) as f:
-        lines = f.readlines()
-        
-        # biorisk screen
-        matching = [s for s in lines if "Biorisk" in s]
-        biorisk = check_flags(matching, biorisk)
+        flag_list.append("P")
 
-        # VF screen
-        vf = [s for s in lines if "Virulence factor found" in s]
-        if len(vf) > 0:
-            vfs.append("F")
-        else:
-            vfs.append("P")
-        
-        # homol_fail = [s for s in lines if "Homology search has failed" in s]
-        # if len(homol_fail) > 0:
-        #     reg_virus.append("Err")
-        #     reg_bact.append("Err")
-        #     reg_euk.append("Err")
-        # else:
+def get_flag_list(screen_dir):
+    """
+    Search the input directory for .screen files, then search those files for lines indicating
+    whether each kind of flag (biorisk, virulence factor, regulated pathogens, benign regions)
+    was found.
+    """
+    # columns in the summary file, to be filled with the checks below
+    filenames = []
+    biorisk_flags = []
+    vf_flags = []
+    virus_flags = []
+    bacteria_flags = []
+    eukaryote_flags = []
+    reg_nonreg_flags = []
+    benign_flags = []
 
-        # reg_virus screen - fetch all coding and noncoding reports
-        matching_virus = [s for s in lines if "found in only regulated organisms: FLAG (virus)" in s]
-        # print(matching_virus)
-        if len(matching_virus) > 0:
-            reg_virus = check_flags(matching_virus, reg_virus)
-        else:
-            reg_virus.append("P")
-        
-        # reg_bact screen - fetch all coding and noncoding reports
-        matching_bact = [s for s in lines if "found in only regulated organisms: FLAG (bacteria)" in s]
-        # print(matching_bact)
-        if len(matching_bact) > 0:
-            reg_bact.append("F")
-            # reg_bact = check_flags(matching_bact, reg_bact)
-        else:
-            reg_bact.append("P")
+    for screen_path in glob.glob(os.path.join(screen_dir, '*.screen')):
+        filenames.append(os.path.basename(screen_path))
+        with open(screen_path, 'r', encoding="utf-8") as f:
+            lines = f.readlines()
+            add_flags(lines, biorisk_flags, r"Biorisks: Regulated gene in bases \d+ to \d+: FLAG")
+            add_flags(lines, vf_flags, "Virulence factor found")
+            add_flags(lines, virus_flags, "found in only regulated organisms: FLAG (virus)")
+            add_flags(lines, bacteria_flags, "found in only regulated organisms: FLAG (bacteria)")
+            add_flags(lines, eukaryote_flags, "found in only regulated organisms: FLAG (eukaryote)")
+            add_flags(
+                lines, reg_nonreg_flags, "found in both regulated and non-regulated organisms"
+            )
 
-        # reg_euk screen - fetch all coding and noncoding reports
-        matching_euk = [s for s in lines if "found in only regulated organisms: FLAG (eukaryote)" in s]
-        # print(matching_euk)
-        if len(matching_euk) > 0:
-            reg_euk = check_flags(matching_euk, reg_euk)
-        else:
-            reg_euk.append("P")
+            # All homology-related flags should be replaced with "Err" if search failed
+            homol_fail = [s for s in lines if "ERROR: Homology search has failed" in s]
+            if len(homol_fail) > 0:
+                virus_flags[-1:] = ["Err"]
+                bacteria_flags[-1:] = ["Err"]
+                eukaryote_flags[-1:] = ["Err"]
+                reg_nonreg_flags[-1:] = ["Err"]
 
-        # reg_nonreg screen - ID cases where the same sequence is found in regulated and non-regulated organisms
-        matching_reg_nonreg = [s for s in lines if "found in both regulated and non-regulated organisms" in s]
-        if len(matching_reg_nonreg) > 0:
-            reg_nonreg.append("F")
-        else:
-            reg_nonreg.append("P")
-        
-        homol_fail = [s for s in lines if "ERROR: Homology search has failed" in s]
-        if len(homol_fail) > 0:
-            reg_virus[-1:] = ["Err"]
-            reg_bact[-1:] = ["Err"]
-            reg_euk[-1:] = ["Err"]
-            reg_nonreg[-1:] = ["Err"]
+            # benign screen
+            # 1 means a regulated region failed to clear, 0 means benign coverage and clear
+            allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]
+            anyfail = [s for s in lines if "failed to clear: FLAG" in s]
+            clear = [s for s in lines if "no regulated regions to clear" in s]
+            # if any region failed to clear, keep flag
+            if len(allpass) > 0:
+                benign_flags.append("P")
+            # if none failed and passes are observed, drop flag
+            elif len(anyfail) > 0:
+                benign_flags.append("F")
+            elif len(clear) > 0:
+                benign_flags.append("-")
+            else:
+                benign_flags.append("Err")
 
-        # benign screen - 1 means a regulated region failed to clear, 0 means benign coverage and clear
-        allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]
-        anyfail = [s for s in lines if "failed to clear: FLAG" in s]
-        clear = [s for s in lines if "no regulated regions to clear" in s]
-        # if any region failed to clear, keep flag
-        if len(allpass) > 0:
-            benign.append("P")
-        # if none failed and passes are observed, drop flag
-        elif len(anyfail) > 0:
-            benign.append("F")
-        elif len(clear) > 0:
-            benign.append("-")
-        else:
-            benign.append("Err")
-    # print(len(biorisk), len(reg_virus), len(reg_bact), len(benign))
+    return list(
+        zip(
+            filenames,
+            biorisk_flags,
+            vf_flags,
+            virus_flags,
+            bacteria_flags,
+            eukaryote_flags,
+            reg_nonreg_flags,
+            benign_flags
+        )
+    )
 
-#print(len(names), len(biorisk), len(reg_virus), len(reg_bact), len(benign))
+def write_flag_files(screen_dir):
+    """
+    Writes flags.csv (all flags) and flags_recommended.csv (single recommended flag), with one row
+    for each .screen file found in the input directory.
+    """
+    output_dir = os.path.dirname(screen_dir)
+    detail_file = os.path.join(output_dir, "flags.csv")
+    summary_file = os.path.join(output_dir, "flags_recommended.csv")
 
-breakdown = list(zip(names, biorisk, vfs, reg_virus, reg_bact, reg_euk, reg_nonreg, benign))
-summary = []
-for name, risk, vf, reg_vir, reg_bac, reg_euk, reg_nonreg, ben in breakdown:
+    flags = get_flag_list(screen_dir)
+    summary = []
+    for name, risk, vf, reg_vir, reg_bac, eukaryote_flags, _, benign in flags:
         # if a biorisk is flagged, flag the whole thing
-    if risk == "Err" or reg_bac == "Err" or ben == "Err":
-        summary.append((name, "Err"))
-    else:
-        if risk == "F":
-            summary.append((name, "F"))
-    #        print("Biorisk found")
-        elif (reg_vir == "F" and ben == "F"):
-            summary.append((name, "F"))
-        elif (reg_vir == "F" and ben == "P"):
-            summary.append((name, "P"))
-        # if it's a regulated bacterial pathogen but a known benign gene, clear it
-        elif (reg_bac == "F" and ben == "P" and vf == "P") == 1:
-            summary.append((name, "P"))
-        elif (reg_bac == "F" and ben == "P" and vf == "F") == 1: # some VFs are also housekeeping genes, but these seem to be poorly supported Victors genes
-            summary.append((name, "P"))
-    #        print("Regulated bacterial housekeeping found")
-        elif (reg_euk == "F" and ben == "P") == 1:
-            summary.append((name, "P"))
-        # if it's a regulated bacterial hit, flag it
-        elif reg_bac == "F":
-            summary.append((name, "F"))
-        elif reg_euk == "F":
-            summary.append((name, "F"))
+        if risk == "Err" or reg_bac == "Err" or benign == "Err":
+            summary.append((name, "Err"))
         else:
-            summary.append((name, "P"))
-pd.DataFrame(summary).to_csv("test_summary.csv", index=False, header=None)
+            if risk == "F":
+                summary.append((name, "F"))
+            # Flag
+            elif (reg_vir == "F" and benign == "F"):
+                summary.append((name, "F"))
+            elif (reg_vir == "F" and benign == "P"):
+                summary.append((name, "P"))
+            # if it's a regulated bacterial pathogen but a known benign gene, clear it
+            elif (reg_bac == "F" and benign == "P" and vf == "P") == 1:
+                summary.append((name, "P"))
+            # though VFs are housekeeping genes, these seem to be poorly supported Victors genes
+            elif (reg_bac == "F" and benign == "P" and vf == "F") == 1:
+                summary.append((name, "P"))
+            elif (eukaryote_flags == "F" and benign == "P") == 1:
+                summary.append((name, "P"))
+            # if it's a regulated bacterial hit, flag it
+            elif reg_bac == "F":
+                summary.append((name, "F"))
+            elif eukaryote_flags == "F":
+                summary.append((name, "F"))
+            else:
+                summary.append((name, "P"))
+    summary = pd.DataFrame(summary)
+    summary.columns = ("filename", "recommend_flag_or_pass")
+    summary.to_csv(summary_file, index=False, header=None)
 
-breakdown = pd.DataFrame(breakdown)
-breakdown.columns = ("names", "biorisk", "virulence factor", "regulated_virus", "regulated_bacteria", "regulated_eukaryote", "mix of reg and non-reg", "benign")
-breakdown.to_csv("test_itemized.csv", index=False)
+    flags = pd.DataFrame(flags)
+    flags.columns = ("filename",
+                    "biorisk",
+                    "virulence_factor",
+                    "regulated_virus",
+                    "regulated_bacteria",
+                    "regulated_eukaryote",
+                    "mixed_regulated_and_non_reg",
+                    "benign")
+    flags.to_csv(detail_file, index=False)
 
+    print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))
+    print("Errors: ", (pd.DataFrame(summary)[1]=="Err").sum())
 
-#g = sb.FacetGrid(breakdown, col="virus")
-#g.map_dataframe(sb.stripplot, x=breakdown["biorisk"], y=breakdown["reg_tax"], hue=breakdown["benign"])
-#plt.savefig("Positive_set.png")
+def run(parsed_args):
+    """
+    Wrapper so that args be parsed in main() or commec.py interface.
+    """
+    write_flag_files(parsed_args.screen_dir)
 
-#sb.set_context("talk")
-#plt.title("Predictions on test set")
-##sb.stripplot(x=biorisk, y=reg_tax, hue=benign, data=breakdown, jitter=0.3, dodge=True, size=10)
-#sb.swarmplot(x=biorisk, y=reg_bact, hue=benign, data=breakdown, dodge=True, size=10)
-#sb.despine()
-#plt.ylabel("Regulated pathogen hit")
-#plt.xlabel("Biorisk hit")
-#plt.xticks(rotation=30, ha='right')
-#plt.savefig("Test_set.png",bbox_inches='tight')
+def main():
+    """
+    Main function. Passes args to `run`.
+    """
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    add_args(parser)
+    run(parser.parse_args())
 
-print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))
-print("Errors: ", (pd.DataFrame(summary)[1]=="Err").sum())
+if __name__ == "__main__":
+    main()

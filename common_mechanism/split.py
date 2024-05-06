@@ -1,5 +1,5 @@
 """
-Split a FASTA file containing multiple records into individual files, one for each record.
+Split a multi-record FASTA file into individual files, one for each record.
 
 You can call it as a script:
     
@@ -9,15 +9,16 @@ import argparse
 import os
 import string
 from Bio import SeqIO
+from common_mechanism.utils import file_arg
 
 VALID_FILENAME_CHARS = f"-._{string.ascii_letters}{string.digits}"
-DESCRIPTION = "Split a FASTA file containing multiple records into individual files, one for each record"
+DESCRIPTION = "Split a multi-record FASTA file into individual files, one for each record"
 
 def add_args(parser):
     """
     Add module arguments to an ArgumentParser object.
     """
-    parser.add_argument(action='store', dest='fasta_file', help='Input fasta file')
+    parser.add_argument(action='store', dest='fasta_file', type=file_arg, help='Input fasta file')
     return parser
 
 def clean_description(description):

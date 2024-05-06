@@ -24,14 +24,9 @@ import glob
 import os
 import re
 import pandas as pd
+from common_mechanism.utils import directory_arg
 
 DESCRIPTION = "Parse all .screen files in a directory and create two CSVs file of flags raised"
-
-def dir_path(path):
-    """ Raise ArgumentTypeError if `path` is not a directory. """
-    if not os.path.isdir(path):
-        raise argparse.ArgumentTypeError(f"{path} is not a valid directory path")
-    return path
 
 def add_args(parser):
     """
@@ -39,7 +34,7 @@ def add_args(parser):
     """
     parser.add_argument(
         action='store',
-        type=dir_path,
+        type=directory_arg,
         dest='screen_dir',
         help='Directory containing .screen files to summarize'
     )

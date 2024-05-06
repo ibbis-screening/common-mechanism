@@ -19,6 +19,7 @@ import os
 import re
 import sys
 import pytaxonkit
+import argparse
 
 
 ##############################################################################
@@ -51,6 +52,19 @@ def has_hits(filepath: str) -> bool:
     except FileNotFoundError:
         # The file does not exist
         return False
+
+def directory_arg(path):
+    """ Raise ArgumentTypeError if `path` is not a directory. """
+    if not os.path.isdir(path):
+        raise argparse.ArgumentTypeError(f"{path} is not a valid directory path")
+    return path
+
+def file_arg(path):
+    """ Raise ArgumentTypeError if `path` is not a file. """
+    if not os.path.isfile(path):
+        raise argparse.ArgumentTypeError(f"{path} is not a valid file")
+    return path
+
 
 ##############################################################################
 #split_taxa: splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their own taxon ID

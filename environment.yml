@@ -1,0 +1,28 @@
+name: commec-dev
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.12
+  # Runtime Python dependencies
+  - biopython
+  - numpy
+  - pandas
+  - pytaxonkit
+  # Runtime non-Python dependencies
+  - bedtools
+  - blast
+  - emboss
+  - diamond
+  - hmmer
+  - infernal
+  - parallel
+  - perl-list-moreutils
+  - taxonkit
+  # Development dependencies
+  - pip
+  - pytest
+  - matplotlib
+  - pip:
+      - -e .

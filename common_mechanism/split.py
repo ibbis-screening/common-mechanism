@@ -11,6 +11,14 @@ import string
 from Bio import SeqIO
 
 VALID_FILENAME_CHARS = f"-._{string.ascii_letters}{string.digits}"
+DESCRIPTION = "Split a FASTA file containing multiple records into individual files, one for each record"
+
+def add_args(parser):
+    """
+    Add module arguments to an ArgumentParser object.
+    """
+    parser.add_argument(action='store', dest='fasta_file', help='Input fasta file')
+    return parser
 
 def clean_description(description):
     """
@@ -42,7 +50,13 @@ def write_split_fasta(fasta_file):
             output_path = os.path.join(output_dir, output_basename)
             with open(output_path, "w", encoding="utf-8") as output_file:
                 output_file.write(f">{desc}{os.linesep}")
-                output_file.write(record.seq)
+                output_file.write(str(record.seq))
+
+def run(parsed_args):
+    """
+    Wrapper so that args be parsed in main() or commec.py interface.
+    """
+    write_split_fasta(parsed_args.fasta_file)
 
 def main():
     """
@@ -52,13 +66,9 @@ def main():
       - fasta_file: Path to the input FASTA file.
 
     """
-    parser = argparse.ArgumentParser(
-        description="Split a FASTA file containing multiple records into individual files, one for each record."
-    )
-    parser.add_argument(action='store', dest='fasta_file', help='Input fasta file')
-    result = parser.parse_args()
-
-    write_split_fasta(result.fasta_file)
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    add_args(parser)
+    run(parser.parse_args())
 
 if __name__ == "__main__":
     main()

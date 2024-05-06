@@ -235,7 +235,7 @@ def readhmmer(fileh):
                 break
             if "#" in line:
                 continue
-            bits = re.split('\s+', line)
+            bits = re.split(r'\s+', line)
             description = " ".join(bits[22:])
             bits = bits[:22]
             bits.append(description)
@@ -266,7 +266,7 @@ def readcmscan(fileh):
                 break
             if "#" in line:
                 continue
-            bits = re.split('\s+', line)
+            bits = re.split(r'\s+', line)
             description = " ".join(bits[17:])
             bits = bits[:17]
             bits.append(description)

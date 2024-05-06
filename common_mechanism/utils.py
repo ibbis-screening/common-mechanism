@@ -16,8 +16,6 @@
 import pandas as pd
 import numpy as np
 import os
-# import taxoniq
-import matplotlib.cm as cm
 import re
 import sys
 import pytaxonkit
@@ -53,22 +51,6 @@ def has_hits(filepath: str) -> bool:
     except FileNotFoundError:
         # The file does not exist
         return False
-
-##############################################################################
-#colourscale 
-#usage: assigns colour scale to numeric values associated with taxon bins
-#   separate colours for regulated orgs (OrRd) and non-regulated (Blues)
-#input:
-#   - reg_status: regulatory status
-#   - counts: count of hits to evaluate
-#   - averages: averages to evaluate 
-def colourscale(reg_status, counts, averages):
-    rmap = cm.get_cmap('OrRd', 100)
-    nrmap = cm.get_cmap('Blues', 100)
-    colours = []
-    for i in range(len(reg_status)):
-        colours.append('rgb' + str((np.array(nrmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')')) if reg_status[i] != counts[i] else colours.append('rgb' + str((np.array(rmap(averages[i]/averages.max()))*255)[:3].tolist()).replace('[', '(').replace(']', ')'))
-    return colours
 
 ##############################################################################
 #split_taxa: splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their own taxon ID

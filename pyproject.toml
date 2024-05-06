@@ -3,12 +3,26 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "common-mechanism"
+name = "common_mechanism"
 version='0.1.0'
-requires-python = ">= 3.8"
+dependencies = [
+  "biopython",
+  "numpy",
+  "pandas"
+  # Exclude "pytaxonkit" since it's only available via bioconda
+]
+requires-python = ">= 3.8" # 
+authors = [
+  {name = "Nicole Wheeler"},
+  {name = "Jen Lu"},
+  {name = "Tessa Alexanian", email = "tessa@ibbis.bio"}
+]
+maintainers = [
+  {name = "International Biosecurity and Biosafety Initiative for Science (IBBIS)", email = "info@ibbis.bio"}
+]
 description='Free, globally-available tool for DNA sequence screening'
-license = {file = "LICENSE"}
 readme = "README.md"
+license = {file = "LICENSE"}
 keywords = ["synthesis screening", "DNA synthesis"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -22,7 +36,10 @@ classifiers = [
 dev = [
     'pytest',
     'pylint',
-    'black',
+    'black'
+]
+test_scripts = [
+    'matplotlib'
 ]
 
 [project.urls]
@@ -30,4 +47,7 @@ Homepage = "https://ibbis.bio/common-mechanism"
 Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [project.scripts]
-split = "split:main"
+split = "common_mechanism.split:main"
+
+[tool.setuptools]
+packages = {find = {"include" = ["common_mechanism"]}}

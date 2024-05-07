@@ -11,7 +11,7 @@ screen.py
         -o OUTPUT (output prefix, default: input name)
         -p SEARCH_TOOL (default: blastx) 
         -f = use fast mode (default: false)
-        -n = skip nucleotide search if no protein hits are found in a region (default: true)
+        -n = skip nucleotide search if no protein hits are found in a region (default: false)
         -c = clean up intermediate files (default: false)
 
 Command-line usage:
@@ -71,9 +71,9 @@ def add_args(parser):
     )
     parser.add_argument(
         "-n",
-        "--nt-search",
-        dest="nt_search",
-        action="store_false",
+        "--skip-nt",
+        dest="skip_nt_search",
+        action="store_true",
         help="Skip nucleotide search if no protein hits are found in a region",
     )
     parser.add_argument(
@@ -191,7 +191,7 @@ def screen_proteins(
 
     if search_tool == "blastx":
         search_output = f"{out_prefix}.nr.blastx"
-        blastdb = 'swissprot'
+        blastdb = 'nr'
         command = [
             f"{scripts_dir}/run_blastx.sh",
             "-q",
@@ -203,7 +203,6 @@ def screen_proteins(
             "-t",
             str(threads),
         ]
-        print(command)
         run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
@@ -378,7 +377,7 @@ def run(args):
         threads=args.threads,
         protein_search_tool=args.protein_search_tool,
         in_fast_mode=args.fast_mode,
-        skip_nt_search=args.nt_search,
+        skip_nt_search=args.skip_nt_search,
         do_cleanup=args.cleanup
     )
 

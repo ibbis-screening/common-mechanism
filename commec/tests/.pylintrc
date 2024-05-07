@@ -1,0 +1,11 @@
+[MASTER]
+load-plugins=pylint.extensions.docparams
+
+[MESSAGES CONTROL]
+disable=
+    missing-function-docstring,
+    missing-class-docstring,
+    missing-module-docstring
+
+[DOCSTRING]
+ignore-private-members=yes

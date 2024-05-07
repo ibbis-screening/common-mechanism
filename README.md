@@ -1,110 +1,65 @@
-# An International Common Mechanism for DNA Synthesis Screening
-CommonMechanism is designed for screening DNA for regulated pathogens that 
-pose a significant biorisk. In order to run this pipeline, please first see [Installation](#installation) and [Required Data](#required-data) for setup. 
+# commec: a free, open-source, globally available tool for DNA sequence screening
 
-Table of Contents:
-1. [Installation](#installation) 
-2. [Required Data](#required-data) 
-3. [Running the CommonMechanism](#running-the-common-mechanism)
-4. [User Survey](#user-survey)
-5. [Author Information](#author-information)
+The `commec` package is a tool for DNA sequence screening that is part of the
+[Common Mechanism for DNA Synthesis screening](https://ibbis.bio/common-mechanism/).
 
-# Installation 
-In addition to the CommonMechanism source code, users may need to install a number of software packages that will be called by the CommonMechanism. This section details the various dependencies. Alternatively, contact Nicole (N.Wheeler@bham.ac.uk) if you would like to receive an Apptainer with all the required dependencies set up.
+![Common Mechanism banner](https://ibbis.bio/wp-content/uploads/2024/05/commec-v0.1.0-banner.png)
 
-## Recommended to install with conda
+Introduction
+============
+The Common Mechanism offers three sub-commands through the `commec` entrypoint:
+
+    screen  Run Common Mechanism screening on an input FASTA.
+    flag    Parse all .screen files in a directory and create two CSVs file of flags raised
+    split   Split a multi-record FASTA file into individual files, one for each record
+
+The `screen` command runs an input FASTA through four steps:
+
+  1. Biorisk scan (uses a hmmer search against custom databases)
+  2. Regulated protein scan (uses a BLASTX or DIAMOND search against NCBI nr)
+  3. Regulated nucleotide scan (uses BLASTN against NCBI nt)
+  4. Benign scan (users hmmer, cmscan and BLASTN against custom databases)
+
+The `.screen` file produced by that pipeline can be passed to `flag` to produce two output CSVs.
+`flags.csv` will have the following columns:
+
+    filename:                 .screen file basename
+    biorisk:                  "F" if flagged, "P" if no flags
+    virulence_factor:         "F" if flagged, "P" if no flags
+    regulated_virus:          "F" if flagged, "P" if no flags, "Err" if error logged
+    regulated_bacteria:       "F" if flagged, "P" if no flags, "Err" if error logged
+    regulated_eukaryote:      "F" if flagged, "P" if no flags, "Err" if error logged
+    mixed_regulated_non_reg:  "F" if flagged, "P" if no flags, "Err" if error logged
+    benign:                   "F" if not cleared, "P" if all cleared, "-" if not run
+
+The flags_recommended CSV just has two columns, "filename" and "recommend_flag_or_pass". The
+recommendation is based on the following decision flow:
+
+![Flowchart showing decision-making by the common mechanism flag module.](https://ibbis.bio/wp-content/uploads/2024/05/common-mechanism-screening-flowcharts-decision-support.jpg "Decision Flow")
+
+Documentation
+=============
+The online documentation is located at the
+[GitHub Wiki](https://github.com/ibbis-screening/common-mechanism/wiki).
+
+Development
+=======
+Development dependencies are managed through a conda environment. Install conda, then make sure
+that [your channels are configured correctly](http://bioconda.github.io/).
 
 ```
-conda install -c bioconda hmmer
-conda install -c bioconda emboss
-conda install -c bioconda bedtools
-conda install -c bioconda taxonkit
-conda install -c bioconda pytaxonkit
-conda install -c bioconda infernal
-conda install -c bioconda diamond
-conda install -c bioconda perl-list-moreutils
-conda install parallel
+conda env create -f environment.yml
+conda activate commec-dev
 ```
 
-## Recommended to install with pip 
-The CommonMechanism pipeline has the following python package dependencies:
+From here, you should have an interactive version of the package installed via (`pip -e .`) as well
+as the necessary shell dependencies.
 
-```
-pip install pandas
-pip install plotly
-pip install ncbi-taxon-db
-pip install matplotlib
-pip install pybedtools
-pip install biopython
-```
-
-## Recommended manual installs
-Conda currently isn't able to install an up-to-date version of BLAST compatible with current databases, so we recommend installing from source. The BLAST code executable can be downloaded from the NCBI FTP (https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) and install instructions are available in the [BLAST® Command Line Applications User Manual](https://www.ncbi.nlm.nih.gov/books/NBK569861/).
-
-For more details on BLAST, see https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html.
-
-# Required Data 
-The following databases will need to be installed prior to running the CommonMechanism pipeline. Please place all databases in the same folder (this folder can contain other databases or scripts). The resulting file structure (and required storage space) will be as follows:
-
-    databases/
-    databases/nr_dmnd (~276 Gb) 
-    databases/nr_blast (~375 Gb)   (optional)
-    databases/nt_blast (~280 Gb) 
-    databases/benign_db (~350 Mb)
-    databases/biorisk_db (~1.0 Gb)
-    databases/nodes.dmp (~100 Mb)
-    databases/names.dmp (~200 Mb)
-
-## Benign and Biorisk Databases 
-The benign_db database can be downloaded [here](https://bham-my.sharepoint.com/personal/n_wheeler_bham_ac_uk/_layouts/15/guestaccess.aspx?share=EixvesiY0ylNlUWP6-KxR1sBFruv5mRBbWIdTharAR2xgA&e=gywBC9).
-
-The biorisk_db files can be downloaded [here](http://biodata.digital/) - please make sure the files are downloaded to the right folder, so the Common Mechanism can find them. 
-
-Any HMM database needs to be formatted with hmmpress before it can be used. 
-
-## BLAST Database
-The Common Mechanism requires the BLAST nt database. The files for the BLAST nt database are located at https://ftp.ncbi.nlm.nih.gov/blast/db/. Users can download the BLAST database (including 700+ files) within the `nt_blast/` folder by using the following command:
-
-      update_blastdb.pl --passive --decompress nt
-   
-This command requires the BLAST executables to be installed (see [BLAST Download](#blast-aligner))
-
-If you are having trouble running the command after installing BLAST with conda, edit the first line of the update_blastdb.pl script in your environment bin to use /usr/bin/env perl instead of /usr/bin/perl.
-
-
-Users can also download the BLAST nr database to check the relative speed and accuracy of BLAST vs DIAMOND search on their machine:
-
-      update_blastdb.pl --passive --decompress nr
-
-## DIAMOND Database
-The CommonMechanism database will be provided via Amazon AWS. Please email Jennifer Lu (jennifer.lu717@gmail.com) for instructions to download the database. 
-
-## NCBI taxonomy database
-Please download the NCBI taxonomy database using the following commands:
-
-      wget -c ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz 
-      tar -zxvf taxdump.tar.gz
-
-# Running the Common Mechanism 
-The basic command line argument for running the Common Mechanism is as follows:
-
-      /run_pipeline.sh -q ${QUERY} -o ${OUTPUT} -d ${DATABASE FOLDER} -t ${THREADS}
-
-The following required parameters must be specified:
-- `${QUERY}` - The sequence file to test
-- `${OUTPUT}` - User-specified output prefix (All output files will begin with ${OUTPUT})
-- `${DATABASE FOLDER}` - The path to the `databases/` folder setup as described in [Required Data](#required-data)
-- `${THREADS}` - Number of threads to be used when running the analysis
-
-# System requirements
-While most jobs run with 20GB RAM or less, it is best to allow 100GB for RAM-intensive queries. 8 or more threads are also recommended to improve protein homology search speed. 
-
-# User survey
-We would love to hear your feedback on the software. Please use the link below to provide your response:
-https://forms.gle/JMY5jBQvWdSu4W6L9
-
-# Author information 
-Nicole Wheeler (n.wheeler@bham.ac.uk)
-Jennifer Lu (jennifer.lu717@gmail.com)
-
-Last Updated On: 11/10/2022
+About
+=====
+The Common Mechanism is a project of [IBBIS](https://ibbis.bio), the International Biosecurity and
+Biosafety Initiative for Science. From 2021-2023, the software and databases were developed by a
+team of technical consultants working with the Nuclear Threat Initiative, led by Dr. Nicole Wheeler
+of the University of Birmingham, and including contributions from Brittany Rife Magalis of the
+University of Louisville and Jennifer Lu of the Center for Computational Biology at Johns Hopkins
+University. In 2024, IBBIS became the home of the project

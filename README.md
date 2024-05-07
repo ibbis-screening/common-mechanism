@@ -1,4 +1,4 @@
-# commec: an open-source, globally available tool for DNA sequence screening
+# commec: a free, open-source, globally available tool for DNA sequence screening
 
 The `commec` package is a free and open-source tool for DNA sequence screening that is part of the
 [Common Mechanism for DNA Synthesis screening](https://ibbis.bio/common-mechanism/).

@@ -14,7 +14,7 @@ authors = [
 maintainers = [
   {name = "International Biosecurity and Biosafety Initiative for Science (IBBIS)", email = "info@ibbis.bio"}
 ]
-description='Free, globally-available tool for DNA sequence screening'
+description='Free, open-source, globally available tool for DNA sequence screening'
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["synthesis screening", "DNA synthesis"]

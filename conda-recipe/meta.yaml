@@ -1,0 +1,49 @@
+{% set version = "0.1.0" %}
+
+package:
+  name: commec
+  version: {{ version }}
+
+source:
+  path: ../  # Adjust as necessary
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps --no-build-isolation --no-cache-dir -vvv"
+
+requirements:
+  build:
+    - python
+    - pip
+  host:
+    - python
+    - pip
+  run:
+    - python
+    # Runtime Python dependencies
+    - biopython
+    - numpy
+    - pandas
+    - pytaxonkit
+    # Runtime non-Python dependencies
+    - bedtools
+    - blast
+    - emboss
+    - diamond
+    - hmmer
+    - infernal
+    - parallel
+    - perl-list-moreutils
+    - taxonkit
+    - python
+
+test:
+  commands:
+    - commec screen --help
+    - commec flag --help
+    - commec split --help
+
+about:
+  home: https://github.com/ibbis-screening/common-mechanism
+  license: MIT
+  summary: "commec: a free, open-source, globally available tool for DNA sequence screening"

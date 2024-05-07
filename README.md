@@ -1,7 +1,9 @@
 # commec: a free, open-source, globally available tool for DNA sequence screening
 
-The `commec` package is a free and open-source tool for DNA sequence screening that is part of the
+The `commec` package is a tool for DNA sequence screening that is part of the
 [Common Mechanism for DNA Synthesis screening](https://ibbis.bio/common-mechanism/).
+
+![Common Mechanism banner](https://ibbis.bio/wp-content/uploads/2024/05/commec-v0.1.0-banner.png)
 
 Introduction
 ============
@@ -33,7 +35,7 @@ The `.screen` file produced by that pipeline can be passed to `flag` to produce 
 The flags_recommended CSV just has two columns, "filename" and "recommend_flag_or_pass". The
 recommendation is based on the following decision flow:
 
-
+![Flowchart showing decision-making by the common mechanism flag module.](https://ibbis.bio/wp-content/uploads/2024/05/common-mechanism-screening-flowcharts-decision-support.jpg "Decision Flow")
 
 Documentation
 =============

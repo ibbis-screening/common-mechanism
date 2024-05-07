@@ -42,7 +42,7 @@ def test_clean_description(description, expected):
 ])
 @patch("builtins.open", new_callable=mock_open)
 @patch("os.path.join", side_effect=lambda a, b: f"{a}/{b}")
-@patch("common_mechanism.split.SeqIO.parse")
+@patch("commec.split.SeqIO.parse")
 def test_write_split_fasta(mock_seqio_parse, mock_os_path_join, mock_open, filename, test_data_dir, fasta_records):
     filepath = os.path.join(test_data_dir, filename)
     records = fasta_records[filename]

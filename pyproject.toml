@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "common_mechanism"
+name = "commec"
 version='0.1.0'
 # This is not a pure python project; dependencies are managed through environment.yml
 authors = [
@@ -31,7 +31,7 @@ Homepage = "https://ibbis.bio/common-mechanism"
 Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [project.scripts]
-"commec" = "common_mechanism.commec:main"
+"commec" = "commec.main:main"
 
 [tool.setuptools]
-packages = {find = {"include" = ["common_mechanism"]}}
+packages = {find = {"include" = ["commec"]}}

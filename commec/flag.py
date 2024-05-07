@@ -40,11 +40,16 @@ def add_args(parser):
     )
     return parser
 
-def add_flags(lines, flag_list, pattern):
+def add_flags(lines, flag_list, pattern, regex=False):
     """
     Parse a subset of input lines from a screen file and add to a list of flags
     """
-    screen_lines = [s for s in lines if re.search(pattern, s)]
+    if regex:
+        screen_lines = [s for s in lines if re.search(pattern, s)]
+    else:
+        screen_lines = [s for s in lines if pattern in s]
+
+    print(screen_lines)
     if len(screen_lines) > 0:
         flag_list.append("F")
     else:
@@ -70,13 +75,15 @@ def get_flag_list(screen_dir):
         filenames.append(os.path.basename(screen_path))
         with open(screen_path, 'r', encoding="utf-8") as f:
             lines = f.readlines()
-            add_flags(lines, biorisk_flags, r"Biorisks: Regulated gene in bases \d+ to \d+: FLAG")
-            add_flags(lines, vf_flags, "Virulence factor found")
+            add_flags(
+                lines, biorisk_flags, r"Biorisks: Regulated gene in bases \d+ to \d+: FLAG", regex=True
+            )
+            add_flags(lines, vf_flags, r"Virulence factor found in bases \d+ to \d+", regex=True)
             add_flags(lines, virus_flags, "found in only regulated organisms: FLAG (virus)")
             add_flags(lines, bacteria_flags, "found in only regulated organisms: FLAG (bacteria)")
             add_flags(lines, eukaryote_flags, "found in only regulated organisms: FLAG (eukaryote)")
             add_flags(
-                lines, reg_nonreg_flags, "found in both regulated and non-regulated organisms"
+                lines, reg_nonreg_flags, r"found in both regulated and non-regulated organisms"
             )
 
             # All homology-related flags should be replaced with "Err" if search failed

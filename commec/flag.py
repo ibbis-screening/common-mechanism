@@ -49,7 +49,6 @@ def add_flags(lines, flag_list, pattern, regex=False):
     else:
         screen_lines = [s for s in lines if pattern in s]
 
-    print(screen_lines)
     if len(screen_lines) > 0:
         flag_list.append("F")
     else:

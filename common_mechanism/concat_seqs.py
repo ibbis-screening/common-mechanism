@@ -1,5 +1,11 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+"""
+Script that concatenates all sequences in a FASTA file.
 
+Usage:
+    concat_seqs.py input.fasta
+"""
 import sys
 
 # read in the file based on the command line argument

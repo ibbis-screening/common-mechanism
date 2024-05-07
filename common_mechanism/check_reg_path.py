@@ -1,17 +1,13 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+"""
+Script that checks results for regulated pathogen and prints any matched coordinates. Ignores any
+synthetic constructs.
 
-##################################################################################################
-#check_reg_path.py checks results for regulated pathogen and prints any 
-#matched coordinates
-#   This file will ignore any synthetic constructs
-#
-#Copyright (C) 2022-2023 NTI|Bio
-#This file is part of the CommonMechanism
-##################################################################################################
-#Usage:
-#   python check_reg_path.py -i INPUT -d database_folder -t threads
-#       -i, --input 
-##################################################################################################
+Usage:
+  python check_reg_path.py -i INPUT -d database_folder -t threads
+      -i, --input 
+"""
 from utils import *
 import os, sys, argparse
 import pandas as pd

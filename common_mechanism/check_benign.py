@@ -1,20 +1,19 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+"""
+Script that checks the output from hmmscan and prints to screen the results
 
-#################################################################################
-#check_benigh.py checks the output from hmmscan and prints to screen the results
-#
-#Copyright (C) 2022-2023 NTI|Bio
-#This file is part of the CommonMechanism
-#################################################################################
-#Usage: 
-#   python check_benign.py -i INPUT -s SEQUENCE -d DATABASE FOLDER 
-#       -i, --input = input sample name (will check for sample.benign.hmmscan file)
-#       -s, --sequence = input sequence file
-#       -d, --database = database folder location/path (will check for benign_annotations.tsv) 
-#################################################################################
-from utils import *
-import os, sys, argparse 
+Usage: 
+    python check_benign.py -i INPUT -s SEQUENCE -d DATABASE FOLDER 
+      -i, --input = input sample name (will check for sample.benign.hmmscan file)
+      -s, --sequence = input sequence file
+      -d, --database = database folder location/path (will check for benign_annotations.tsv) 
+"""
+import argparse 
+import os
+import sys
 import pandas as pd
+from common_mechanism.utils import *
 
 def check_for_benign(query, coords, benign_desc):
         

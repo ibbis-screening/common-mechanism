@@ -1,5 +1,12 @@
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Command-line entrypoint for the package.
+Command-line entrypoint for the package. Calls `screen.py`, `flag.py` and `split.py` as subcommands.
+
+Command-line usage:
+    - commec screen -d /path/to/databases input.fasta
+    - commec flag /path/to/directory/with/output.screen 
+    - commec split input.fasta
 """
 import argparse
 from common_mechanism.flag import (

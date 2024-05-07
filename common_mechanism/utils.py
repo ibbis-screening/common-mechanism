@@ -1,6 +1,7 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Provides functions used across multiple python scripts in the CommonMechanism package.
+Provides functions used across multiple python scripts in the commec package.
 """
 import argparse
 import os

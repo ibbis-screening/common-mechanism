@@ -1,14 +1,11 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+"""
+Script that checks the output from hmmscan and prints to screen the results
 
-##############################################################################
-#check_biorisk.py checks the output from hmmscan and prints to screen the results
-#
-#Copyright (C) 2022-2023 NTI|Bio 
-#This file is part of the CommonMechanism 
-##############################################################################
-# Usage:
-#  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/ 
-##############################################################################
+Usage:
+ python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/ 
+"""
 from utils import *
 import os, sys, argparse 
 import pandas as pd

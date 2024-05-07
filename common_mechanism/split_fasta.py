@@ -1,10 +1,12 @@
-#!/usr/bin/env python
-#Jennifer Lu, jlu26@jhmi.edu 
-#2/3/2022
-#
-#This program splits a multi-fasta file based on number of sequences per file 
-#Output will be input.#.fa 
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+"""
+Split a multi-record FASTA file into files with a set number of sequences per file. Output will be
+input.#.fa.
 
+Command-line usage:
+    split_fasta.py --i input_fasta -n num_seqs
+"""
 import os, sys, argparse
 from Bio import SeqIO 
 

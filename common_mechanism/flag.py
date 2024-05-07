@@ -1,4 +1,5 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Parse all .screen files in a directory and create two CSV files of flags raised during screening.
 
@@ -15,8 +16,7 @@ The flags.csv file will have the following columns and values:
 
 The flags_recommended CSV just has two columns, "filename" and "recommend_flag_or_pass".
 
-You can call it as a script:
-    
+Command-line usage:
     flag.py /path/to/directory/with/.screen 
 """
 import argparse

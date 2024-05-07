@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Defines the `ScreenDatabases` class.
 """

@@ -1,5 +1,5 @@
-#!/bin/bash
-
+#! /usr/bin/env bash
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 #####################################################################
 #run_diamond.sh runs DIAMOND against a specified NCBI nr database. 
 #   Buchfink B, Reuter K, Drost HG, "Sensitive protein alignments at 

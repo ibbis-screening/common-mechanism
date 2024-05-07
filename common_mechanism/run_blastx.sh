@@ -1,5 +1,5 @@
-#! /usr/bin/env bash
-
+#!/usr/bin/env bash
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 #####################################################################
 #run_blastx.sh runs blastx against a specified database.
 #####################################################################

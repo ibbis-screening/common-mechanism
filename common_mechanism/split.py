@@ -1,9 +1,10 @@
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Split a multi-record FASTA file into individual files, one for each record.
 
-You can call it as a script:
-    
-    python split.py input.fasta 
+Command-line usage:
+    split.py input.fasta 
 """
 import argparse
 import os

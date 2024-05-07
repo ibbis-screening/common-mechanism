@@ -1,9 +1,21 @@
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Run Common Mechanism screening on an input FASTA.
 
-You can call it as a script:
-    
-    screen.py -d /path/to/databases input.fasta 
+screen.py
+        -d DATBASE_FOLDER
+        INPUT_FASTA
+    Optional parameters:
+        -t THREADS (default: 1)
+        -o OUTPUT (output prefix, default: input name)
+        -p SEARCH_TOOL (default: blastx) 
+        -f = use fast mode (default: false)
+        -n = skip nucleotide search if no protein hits are found in a region (default: true)
+        -c = clean up intermediate files (default: false)
+
+Command-line usage:
+    screen.py -d /path/to/databases input.fasta -t 1 -o out_prefix 
 
 """
 import argparse

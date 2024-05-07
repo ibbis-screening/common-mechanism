@@ -26,7 +26,7 @@ class ScreenDatabases:
         Get the directory containing the needed NR database (which depends on the tool used).
         """
         if self.search_tool == "blastx":
-            return os.path.join(self.dir, "nr_blast/nr")
+            return os.path.join(self.dir, "nr_blast")
         elif self.search_tool == "diamond":
             return os.path.join(self.dir, "nr_dmnd")
         else:

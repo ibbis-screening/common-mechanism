@@ -169,8 +169,8 @@ def write_flag_files(screen_dir):
                     "benign")
     flags.to_csv(detail_file, index=False)
 
-    print("Flags: ", (pd.DataFrame(summary)[1]=="F").sum(), "/", len(summary))
-    print("Errors: ", (pd.DataFrame(summary)[1]=="Err").sum())
+    print("Flags: ", (summary["recommend_flag_or_pass"]=="F").sum(), "/", len(summary))
+    print("Errors: ", (summary["recommend_flag_or_pass"]=="Err").sum())
 
 def run(parsed_args):
     """

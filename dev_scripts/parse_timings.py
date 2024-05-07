@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+"""
+parse all .stats files in a folder to plot the distribution of time taken to screen
+Usage: parse_test_timings.py (in directory of choice)
 
-# parse all .stats files in a folder to plot the distribution of time taken to screen
-# Usage: parse_test_timings.py (in directory of choice)
-
-# make it compatible with both individual files and a pooled one
-
+TODO: make it compatible with both individual files and a pooled one
+"""
 import glob
 import pandas as pd
 import seaborn as sb

@@ -1,169 +1,520 @@
 """
+Run Common Mechanism screening on an input FASTA.
 
-screen.py
+You can call it as a script:
+    
+    screen.py -d /path/to/databases input.fasta 
 
 """
-
 import argparse
 import datetime
+import glob
 import logging
 import os
 import shutil
 import subprocess
+import sys
+from dataclasses import dataclass
 from common_mechanism.utils import directory_arg, file_arg
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
+
+@dataclass
+class ScreenParameters:
+    """
+    Parameters used for screening
+    """
+    threads: int
+    protein_search_tool: str
+    in_fast_mode: bool
+    skip_nt_search: bool
+    do_cleanup: bool
+
+class ScreenDatabases:
+    """
+    The Common Mechanism depends on a lot of datbases in a particular structure (encoded here).
+    """
+
+    def __init__(self, database_dir, search_tool):
+        self.dir = database_dir
+        self.search_tool = search_tool
+        self.biorisk_dir = os.path.join(database_dir, "biorisk_db")
+        self.benign_dir = os.path.join(database_dir, "benign_db")
+        self.nt_dir = os.path.join(database_dir, "nt_blast/nt")
+
+        self.biorisk_db = os.path.join(self.biorisk_dir, "biorisk.hmm")
+        self.benign_db = os.path.join(self.benign_dir, "benign.hmm")
+
+    @property
+    def nr_dir(self):
+        """
+        Get the directory containing the needed NR database (which depends on the tool used).
+        """
+        if self.search_tool == "blastx":
+            return os.path.join(self.dir, "nr_blast/nr")
+        elif self.search_tool == "diamond":
+            return os.path.join(self.dir, "nr_dmnd")
+        else:
+            raise ValueError(
+                "Protein search tool must be either 'blastx' or 'diamond'."
+            )
+
+    def validate(self, in_fast_mode=False):
+        """
+        Make sure all the needed databases exist.
+        """
+        for db_dir in [self.biorisk_dir, self.benign_dir]:
+            if not os.path.isdir(db_dir):
+                raise FileNotFoundError(
+                    f"Mandatory screening directory {db_dir} not found."
+                )
+
+        for db in [self.biorisk_db, self.benign_db]:
+            if not os.path.isfile(db):
+                raise FileNotFoundError(f"Mandatory screening database {db} not found.")
+
+        # Fast mode doesn't need to check protein search directories
+        if not in_fast_mode and not os.path.isdir(self.nr_dir):
+            raise FileNotFoundError(
+                f"Protein screening directory {self.nr_dir} not found."
+            )
+
 
 def add_args(parser):
     """
     Add module arguments to an ArgumentParser object.
     """
-    parser.add_argument(dest='fasta_file', type=file_arg, help='FASTA file to screen')
+    parser.add_argument(dest="fasta_file", type=file_arg, help="FASTA file to screen")
     parser.add_argument(
-        '-d',
-        '--databases',
-        dest='database_dir',
+        "-d",
+        "--databases",
+        dest="database_dir",
         type=directory_arg,
         required=True,
-        help='Path to databases directory'
+        help="Path to databases directory",
     )
     parser.add_argument(
-        '-o', '--output', dest='output_prefix', help='Output prefix (can be string or directory)'
+        "-o",
+        "--output",
+        dest="output_prefix",
+        help="Output prefix (can be string or directory)",
     )
     parser.add_argument(
-        '-t', '--threads', dest='threads', type=int, default=1, help='Threads available'
+        "-t", "--threads", dest="threads", type=int, default=1, help="Threads available"
     )
     parser.add_argument(
-        '-p',
-        '--protein-search-tool',
-        dest='protein_search_tool',
+        "-p",
+        "--protein-search-tool",
+        dest="protein_search_tool",
         choices=["blastx", "diamond"],
         default="blastx",
-        help='Tool for homology search to identify regulated pathogen proteins'
+        help="Tool for homology search to identify regulated pathogen proteins",
     )
     parser.add_argument(
-        '-f',
-        '--fast',
-        dest='fast_mode',
-        action='store_true',
-        help='Run in fast mode and skip homology search'
+        "-f",
+        "--fast",
+        dest="fast_mode",
+        action="store_true",
+        help="Run in fast mode and skip homology search",
     )
     parser.add_argument(
-        '-n',
-        '--nt-search',
-        dest='nt_search',
-        action='store_false',
-        help='Skip nucleotide search if no protein hits are found in a region'
+        "-n",
+        "--nt-search",
+        dest="nt_search",
+        action="store_false",
+        help="Skip nucleotide search if no protein hits are found in a region",
     )
     parser.add_argument(
-        '-c', '--cleanup', dest='cleanup', action='store_true', help='Delete intermediate files'
+        "-c",
+        "--cleanup",
+        dest="cleanup",
+        action="store_true",
+        help="Delete intermediate files",
     )
     return parser
+
+
+def get_output_prefix(input_file, prefix_arg=""):
+    """
+    Returns a prefix that can be used for all output files.
+    
+    - If no prefix was given, use the input filename.
+    - If a directory was given, use the input filename as file prefix within that directory.
+    """
+    if not prefix_arg:
+        return os.path.splitext(input_file)[0]
+    if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
+        # Make the directory if it doesn't exist
+        if not os.path.isdir(prefix_arg):
+            os.makedirs(prefix_arg)
+        # Use the input filename as a prefix within that directory (stripping out the path)
+        input_name = os.path.splitext(os.path.basename(input_file))[0]
+        return prefix_arg + input_name
+    # Existing, non-path prefixes can be used as-is
+    return prefix_arg
+
+
+def get_cleaned_fasta(input_file, out_prefix):
+    """
+    Return a FASTA where whitespace (including non-breaking spaces) is replaced with underscores.
+    """
+    cleaned_file = f"{out_prefix}.fasta"
+    with (
+        open(input_file, "r", encoding="utf-8") as fin,
+        open(cleaned_file, "w", encoding="utf-8") as fout,
+    ):
+        for line in fin:
+            line = line.strip()
+            modified_line = "".join(
+                "_" if c.isspace() or c == "\xc2\xa0" else c for c in line
+            )
+            fout.write(f"{modified_line}{os.linesep}")
+    return cleaned_file
+
 
 def run_as_subprocess(command, out_file, raise_errors=False):
     """
     Run a command using subprocess.run, piping stdout and stderr to `out_file`.
     """
-    with open(out_file, "a", encoding='utf-8') as f:
-        return subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors)
+    with open(out_file, "a", encoding="utf-8") as f:
+        return subprocess.run(
+            command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
+        )
 
-def main():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
-    add_args(parser)
-    args = parser.parse_args()
 
-    # Get input file
+def screen_biorisks(
+    input_file, output_prefix, screen_file, log_file, scripts_dir, screen_dbs
+):
+    """
+    Call hmmscan` and `check_biorisk.py` to add biorisk results to `screen_file`.
+    """
+    logging.debug("\t...running hmmscan")
+    biorisk_out = f"{output_prefix}.biorisk.hmmscan"
+    command = ["hmmscan", "--domtblout", biorisk_out, screen_dbs.biorisk_db, input_file]
+    run_as_subprocess(command, log_file)
+
+    logging.debug("\t...checking hmmscan results")
+    command = [
+        "python3",
+        f"{scripts_dir}/check_biorisk.py",
+        "-i",
+        biorisk_out,
+        "--database",
+        screen_dbs.biorisk_dir,
+    ]
+    run_as_subprocess(command, screen_file)
+
+
+def screen_proteins(
+    input_file,
+    out_prefix,
+    screen_file,
+    tmp_log,
+    scripts_dir,
+    screen_dbs,
+    search_tool,
+    threads,
+):
+    """
+    Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
+    pathogen protein screening results to `screen_file`.
+    """
+    logging.debug("\t...running %s", search_tool)
+    protein_out = f"{out_prefix}.nr"
+
+    if search_tool == "blastx":
+        search_output = f"{out_prefix}.nr.blastx"
+        command = [
+            f"{scripts_dir}/run_blastx.sh",
+            "-q",
+            input_file,
+            "-d",
+            screen_dbs.nr_dir,
+            "-o",
+            protein_out,
+            "-t",
+            threads,
+        ]
+        run_as_subprocess(command, tmp_log)
+    else:  # search_tool == 'diamond':
+        search_output = f"{out_prefix}.nr.dmnd"
+        processes = 6
+        command = [
+            f"{scripts_dir}/run_diamond.sh",
+            "-i",
+            input_file,
+            "-d",
+            screen_dbs.nr_dir,
+            "-o",
+            protein_out,
+            "-t",
+            int(threads / processes),
+            "-p",
+            processes,
+        ]
+        run_as_subprocess(command, tmp_log)
+
+    logging.debug("\t...checking %s results", search_tool)
+    # Delete any previous check_reg_path results
+    reg_path_coords = f"{out_prefix}.reg_path_coords.csv"
+    if os.path.isfile(reg_path_coords):
+        os.remove(reg_path_coords)
+
+    command = [
+        "python",
+        f"{scripts_dir}/check_reg_path.py",
+        "-i",
+        search_output,
+        "-d",
+        screen_dbs.dir,
+        "-t",
+        threads,
+    ]
+    run_as_subprocess(command, screen_file)
+
+
+def screen_nucleotides(
+    input_file, out_prefix, screen_file, scripts_dir, screen_dbs, search_tool, threads
+):
+    """
+    Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and then `check_reg_path.py` to
+    screen regulated pathogen nucleotides in noncoding regions (i.e. that would not be found with
+    protein search).
+    """
+    nr_out = out_prefix + ".nr.blastx" if search_tool == "blastx" else "nr.dmnd"
+    command = ["python", f"{scripts_dir}/fetch_nc_bits.py", nr_out, input_file]
+    run_as_subprocess(command, screen_file)
+
+    # Only screen nucleotides in noncoding regions
+    noncoding_fasta = f"{out_prefix}.noncoding.fasta"
+    if not os.path.isfile(noncoding_fasta):
+        logging.debug(
+            "\t...skipping nucleotide search since no noncoding regions fetched"
+        )
+        return
+
+    # Only run blastn if there are not previous results
+    nt_out = f"{out_prefix}.nt.blastn"
+    if not os.path.isfile(nt_out):
+        command = [
+            "blastn",
+            "-query",
+            noncoding_fasta,
+            "-db",
+            screen_dbs.nt_dir,
+            "-out",
+            nt_out,
+            "-outfmt",
+            "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send",
+            "-max_target_seqs",
+            50,
+            "-num_threads",
+            8,
+            "-culling_limit",
+            5,
+            "-evalue",
+            10,
+        ]
+    logging.debug("\t...checking blastn results")
+    command = [
+        "python",
+        f"{scripts_dir}/check_reg_path.py",
+        "-i",
+        nt_out,
+        "-d",
+        screen_dbs.dir,
+        "-t",
+        threads,
+    ]
+    run_as_subprocess(command, screen_file)
+
+
+def screen_benign(
+    input_fasta, input_faa, out_prefix, screen_file, tmp_log, scripts_dir, benign_dir
+):
+    """
+    Call `hmmscan`, `blastn`, and `cmscan` and then pass results to `check_benign.py` to identify
+    regions that can be cleared.
+    """
+    logging.debug("\t...running benign hmmscan")
+    hmmscan_out = f"{out_prefix}.benign.hmmscan"
+    command = [
+        "hmmscan",
+        "--domtblout",
+        hmmscan_out,
+        f"{benign_dir}/benign.hmm",
+        input_faa,
+    ]
+    run_as_subprocess(command, tmp_log)
+
+    logging.debug("\t...running benign blastn")
+    command = [
+        "blastn",
+        "-query",
+        input_fasta,
+        "-db",
+        f"{benign_dir}/benign.fasta",
+        "-out",
+        f"{out_prefix}.benign.blastn",
+        "-outfmt",
+        "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send",
+        "-evalue",
+        "1e-5"
+    ]
+    run_as_subprocess(command, tmp_log)
+
+    logging.debug("\t...running benign cmscan")
+    cmscan_out = f"{out_prefix}.benign.cmscan"
+    command = ["cmscan", "--tblout", cmscan_out, f"{benign_dir}/benign.cm", input_fasta]
+    run_as_subprocess(command, tmp_log)
+
+    logging.debug("\t...checking benign scan results")
+    command = [
+        "python3",
+        f"{scripts_dir}/check_benign.py",
+        "-i",
+        out_prefix,
+        "--database",
+        benign_dir,
+    ]
+    run_as_subprocess(command, screen_file)
+
+def run(args):
+    """
+    Wrapper so that args be parsed in main() or commec.py interface.
+    """
     input_file = args.fasta_file
-    input_name = os.path.splitext(os.path.basename(input_file))[0]
-
-    # If output not specified, or just directory, use input filename (sans extension) as prefix
-    output_prefix = args.output_prefix
-    if not output_prefix:
-        output_prefix = os.path.splitext(input_file)[0]
-    elif os.path.isdir(output_prefix):
-        output_prefix = output_prefix + input_name
-
-    # Name output file
+    output_prefix = get_output_prefix(input_file, args.output_prefix)
     screen_file = f"{output_prefix}.screen"
-    tmp_output_file = f"{output_prefix}.tmp"
+
+    if os.path.exists(screen_file):
+        raise RuntimeError(f"Screen output {screen_file} already exists. Aborting.")
+
+    tmp_log = f"{output_prefix}.log.tmp"
 
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(screen_file, 'a')
-        ]
+        format="%(message)s",
+        handlers=[logging.StreamHandler(), logging.FileHandler(screen_file, "a")],
     )
     logging.basicConfig(
         level=logging.DEBUG,
-        format='%(message)s',
-        handlers=[
-            logging.FileHandler(tmp_output_file, 'a')
-        ]
+        format="%(message)s",
+        handlers=[logging.FileHandler(tmp_log, "a")],
     )
 
-    # Set all the constants
-    THREADS = args.threads
-    PROTEIN_SEARCH_TOOL = args.protein_search_tool
-    IN_FAST_MODE = args.fast_mode
-    SKIP_NT_SEARCH = args.nt_search
-    DO_CLEANUP = args.cleanup
+    # Set run parameters from args
+    run_parameters = ScreenParameters(
+        threads=args.threads,
+        protein_search_tool=args.protein_search_tool,
+        in_fast_mode=args.fast_mode,
+        skip_nt_search=args.nt_search,
+        do_cleanup=args.cleanup
+    )
 
-    # TODO: search input database folder and find the right file locations,
-    # rather than requiring hardcoded dir names
     # Check that databases exist
-    DATABASE_DIR = args.database_dir
-    BIORISK_DIR = os.path.join(args.database_dir, 'biorisk_db')
-    BENIGN_DIR = os.path.join(args.database_dir, 'benign_db')
-    if PROTEIN_SEARCH_TOOL == 'blastx':
-        NR_DIR = os.path.join(args.database_dir, 'nr_dmnd')
-    elif PROTEIN_SEARCH_TOOL == 'diamond':
-        NR_DIR = os.path.join(args.database_dir, 'nr_blast')
+    scripts_dir = os.path.dirname(__file__)
+    dbs = ScreenDatabases(args.database_dir, run_parameters.protein_search_tool)
+    dbs.validate(run_parameters.in_fast_mode)
 
-    # Add a check for transeq as well?
-    # check_datbases(BIORISK_DIR, 'biorisk.hmm')
-    # check_databases(BENIGN_DIR, 'benign.hmm'
-
-    # Remove spaces or blank characters from the input file
-    cleaned_fasta = f"{output_prefix}.fasta"
-    shutil.copyfile(input_file, tmp_output_file)
-    with (
-        open(tmp_output_file, 'r', encoding='utf-8') as fin,
-        open(cleaned_fasta, 'w', encoding='utf-8') as fout
-    ):
-        for line in fin:
-            # Remove whitespace (including non-breaking spaces) and replace with underscores
-            line = line.strip()
-            modified_line = ''.join('_' if c.isspace() or c == '\xc2\xa0' else c for c in line)
-            fout.write(f"{modified_line}{os.linesep}")
-
-    # Biorisk scan
-    logging.info(">> STEP 1: Checking for biorisk genes...")
+    # Add the input contents to the log
+    shutil.copyfile(input_file, tmp_log)
+    fasta_to_screen = get_cleaned_fasta(input_file, output_prefix)
 
     logging.debug("\t...running transeq")
-    transeq_out  = f"{output_prefix}.transeq.faa"
-    command = ["transeq", input_file, transeq_out, "-frame", "6", "-clean"]
-    result = run_as_subprocess(command, tmp_output_file)
+    faa_to_screen = f"{output_prefix}.transeq.faa"
+    command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
+    result = run_as_subprocess(command, tmp_log)
     if result.returncode != 0:
         logging.info("\t ERROR: transeq failed")
+        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.")
 
-    logging.debug("\t...running hmmscan")
-    biorisk_out = f"{output_prefix}.biorisk.hmmscan"
-    command = ["hmmscan", "--domtblout", biorisk_out, f"{BIORISK_DIR}/biorisk.hmm", transeq_out]
-    run_as_subprocess(command, tmp_output_file)
+    # Biorisk screen
+    logging.info(">> STEP 1: Checking for biorisk genes...")
+    screen_biorisks(faa_to_screen, output_prefix, screen_file, tmp_log, scripts_dir, dbs)
+    logging.info(
+        " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
 
-    logging.debug("\t...checking hmmscan results")
-    command = ["python3", "", biorisk_out, f"{BIORISK_DIR}/biorisk.hmm", transeq_out]
-    run_as_subprocess(command, screen_file)
-
-    logging.info(" STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-    if IN_FAST_MODE:
+    # Taxonomy screen
+    if run_parameters.in_fast_mode:
         logging.info(" >> FAST MODE: Skipping steps 2-3")
     else:
         logging.info(" >> STEP 2: Checking regulated pathogen proteins...")
+        screen_proteins(
+            fasta_to_screen,
+            output_prefix,
+            screen_file,
+            tmp_log,
+            scripts_dir,
+            dbs,
+            run_parameters.protein_search_tool,
+            run_parameters.threads,
+        )
+        logging.info(
+            " STEP 2 completed at %s",
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    if run_parameters.in_fast_mode or run_parameters.skip_nt_search:
+        logging.info(" SKIPPING STEP 3: Nucleotide search")
+    else:
+        logging.info(" >> STEP 3: Checking regulated pathogen nucleotides...")
+        screen_nucleotides(
+            fasta_to_screen,
+            output_prefix,
+            screen_file,
+            scripts_dir,
+            dbs,
+            run_parameters.protein_search_tool,
+            run_parameters.threads,
+        )
+        logging.info(
+            " STEP 3 completed at %s",
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    # Benign screen
+    logging.info(">> STEP 4: Checking any pathogen regions for benign components...")
+    screen_benign(
+        fasta_to_screen,
+        faa_to_screen,
+        output_prefix,
+        screen_file,
+        tmp_log,
+        scripts_dir,
+        dbs.benign_dir,
+    )
+    logging.info(
+        ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+    if run_parameters.do_cleanup:
+        for pattern in [
+            "reg_path_coords.csv",
+            "*hmmscan",
+            "*blastn",
+            "faa",
+            "*blastx",
+            "*dmnd",
+            "*.tmp",
+        ]:
+            for file in glob.glob(f"{output_prefix}.{pattern}"):
+                if os.path.isfile(file):
+                    os.remove(file)
+
+def main():
+    """
+    Main function. Passes args to `run`.
+    """
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    add_args(parser)
+    run(parser.parse_args())
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as e:
+        print(f"Runtime error: {e}", file=sys.stderr)
+        sys.exit(1)

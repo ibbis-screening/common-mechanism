@@ -6,9 +6,9 @@ Script that checks the output from hmmscan and prints to screen the results
 Usage:
  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/ 
 """
-from utils import *
 import os, sys, argparse 
 import pandas as pd
+from commec.utils import *
 
 def main():
     parser = argparse.ArgumentParser()

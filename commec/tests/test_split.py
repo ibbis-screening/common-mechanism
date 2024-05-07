@@ -2,7 +2,7 @@ import os
 from unittest.mock import mock_open, patch
 import pytest
 from Bio import SeqIO
-from common_mechanism.split import clean_description, write_split_fasta
+from commec.split import clean_description, write_split_fasta
 
 @pytest.fixture
 def test_data_dir():

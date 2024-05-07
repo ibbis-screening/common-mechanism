@@ -8,10 +8,10 @@ Usage:
   python check_reg_path.py -i INPUT -d database_folder -t threads
       -i, --input 
 """
-from utils import *
 import os, sys, argparse
-import pandas as pd
 import textwrap
+import pandas as pd
+from commec.utils import *
 
 pd.set_option("display.max_colwidth", 10000)
 

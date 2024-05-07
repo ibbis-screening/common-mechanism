@@ -13,7 +13,7 @@ import argparse
 import os
 import sys
 import pandas as pd
-from common_mechanism.utils import *
+from commec.utils import *
 
 def check_for_benign(query, coords, benign_desc):
         

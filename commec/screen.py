@@ -27,8 +27,8 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from common_mechanism.utils import directory_arg, file_arg
-from common_mechanism.screen_databases import ScreenDatabases
+from commec.utils import directory_arg, file_arg
+from commec.screen_databases import ScreenDatabases
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
 

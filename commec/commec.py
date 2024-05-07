@@ -9,12 +9,12 @@ Command-line usage:
     - commec split input.fasta
 """
 import argparse
-from common_mechanism.flag import (
+from commec.flag import (
     DESCRIPTION as flag_DESCRIPTION,
     add_args as flag_add_args,
     run as flag_run
 )
-from common_mechanism.split import (
+from commec.split import (
     DESCRIPTION as split_DESCRIPTION,
     add_args as split_add_args,
     run as split_run

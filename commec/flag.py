@@ -24,7 +24,7 @@ import glob
 import os
 import re
 import pandas as pd
-from common_mechanism.utils import directory_arg
+from commec.utils import directory_arg
 
 DESCRIPTION = "Parse all .screen files in a directory and create two CSVs file of flags raised"
 

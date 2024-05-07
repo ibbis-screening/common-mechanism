@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 ##############################################################################
 #run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
 #
@@ -174,7 +174,7 @@ if [ ! -f "${OUTPUT}".faa ]; then
     echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi
 
-python3 ${CM_DIR}/concat_seqs.py ${OUTPUT}.faa
+#python3 ${CM_DIR}/concat_seqs.py ${OUTPUT}.faa
 
 echo -e "\t...running hmmscan" 
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa >> ${OUTPUT}.tmp 2>&1
@@ -184,7 +184,7 @@ python3 ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_
 s1_time=$(date)
 echo -e "    STEP 1 completed at $s1_time\n" | tee -a ${OUTPUT}.screen
 
-if [ "$FAST_MODE" = 0 ]; then
+# if [ "$FAST_MODE" = 0 ]; then
     # Step 2: taxon ID/protein screening
     echo " >> STEP 2: Checking regulated pathogen proteins..." | tee -a ${OUTPUT}.screen
 
@@ -200,7 +200,7 @@ if [ "$FAST_MODE" = 0 ]; then
         python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
     else 
         if [ ! -f "${OUTPUT}".nr.dmnd ]; then
-        echo -e "\t...running run_diamond.sh"
+            echo -e "\t...running run_diamond.sh"
             ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $((THREADS/PROCESSES)) -p $PROCESSES # use the shortened filename rather than the original
         fi
         echo -e "\t...checking diamond results"

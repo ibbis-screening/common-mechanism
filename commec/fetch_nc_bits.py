@@ -8,11 +8,10 @@ the nucleotide regions between these hits and singles them out for nucleotide sc
 Usage:
     fetch_nc_bits.py query_name fasta_file_path
 """
-from utils import *
 import sys, shutil
-# import pybedtools
 import re
 from Bio import SeqIO
+from commec.utils import *
 
 query = sys.argv[1]
 f_file = sys.argv[2]

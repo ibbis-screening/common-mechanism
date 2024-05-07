@@ -10,7 +10,7 @@ import argparse
 import os
 import string
 from Bio import SeqIO
-from common_mechanism.utils import file_arg
+from commec.utils import file_arg
 
 VALID_FILENAME_CHARS = f"-._{string.ascii_letters}{string.digits}"
 DESCRIPTION = "Split a multi-record FASTA file into individual files, one for each record"

@@ -87,6 +87,14 @@ def get_flag_list(screen_dir):
                 eukaryote_flags[-1:] = ["Err"]
                 reg_nonreg_flags[-1:] = ["Err"]
 
+            # All homology-related flags should be replaced with "-" if run in fast mode
+            fast_mode = [s for s in lines if "FAST MODE" in s]
+            if len(fast_mode) > 0:
+                virus_flags[-1:] = ["-"]
+                bacteria_flags[-1:] = ["-"]
+                eukaryote_flags[-1:] = ["-"]
+                reg_nonreg_flags[-1:] = ["-"]
+
             # benign screen
             # 1 means a regulated region failed to clear, 0 means benign coverage and clear
             allpass = [s for s in lines if "all regulated regions cleared: PASS" in s]

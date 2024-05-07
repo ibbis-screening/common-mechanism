@@ -193,13 +193,12 @@ def screen_proteins(
 
     if search_tool == "blastx":
         search_output = f"{out_prefix}.nr.blastx"
-        blastdb = 'nr'
         command = [
             f"{scripts_dir}/run_blastx.sh",
             "-q",
             input_file,
             "-d",
-            f"{screen_dbs.nr_dir}/{blastdb}",
+            screen_dbs.nr_db,
             "-o",
             protein_out,
             "-t",
@@ -223,6 +222,9 @@ def screen_proteins(
             str(processes),
         ]
         run_as_subprocess(command, tmp_log)
+
+    if not os.path.exists(search_output):
+        raise RuntimeError(f"Protein search failed and {search_output} was not created. Aborting.")
 
     logging.debug("\t...checking %s results", search_tool)
     # Delete any previous check_reg_path results
@@ -263,9 +265,9 @@ def screen_nucleotides(
         )
         return
 
-    # Only run blastn if there are not previous results
-    nt_out = f"{out_prefix}.nt.blastn"
-    if not os.path.isfile(nt_out):
+    # Only run new blastn search if there are no previous results
+    nt_output = f"{out_prefix}.nt.blastn"
+    if not os.path.isfile(nt_output):
         command = [
             "blastn",
             "-query",
@@ -273,28 +275,33 @@ def screen_nucleotides(
             "-db",
             screen_dbs.nt_dir,
             "-out",
-            nt_out,
+            nt_output,
             "-outfmt",
             "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send",
             "-max_target_seqs",
-            50,
+            "50",
             "-num_threads",
-            8,
+            "8",
             "-culling_limit",
-            5,
+            "5",
             "-evalue",
-            10,
+            "10",
         ]
+        run_as_subprocess(command, screen_file)
+
+    if not os.path.exists(nt_output):
+        raise RuntimeError(f"Nucleotide search failed and {nt_output} was not created. Aborting.")
+
     logging.debug("\t...checking blastn results")
     command = [
         "python",
         f"{scripts_dir}/check_reg_path.py",
         "-i",
-        nt_out,
+        nt_output,
         "-d",
         screen_dbs.dir,
         "-t",
-        threads,
+        str(threads),
     ]
     run_as_subprocess(command, screen_file)
 
@@ -386,12 +393,14 @@ def run(args):
     # Check that databases exist
     scripts_dir = os.path.dirname(__file__)
     dbs = ScreenDatabases(args.database_dir, run_parameters.protein_search_tool)
-    dbs.validate(run_parameters.in_fast_mode)
+    dbs.validate(run_parameters.in_fast_mode, run_parameters.skip_nt_search)
 
     # Add the input contents to the log
     shutil.copyfile(input_file, tmp_log)
     fasta_to_screen = get_cleaned_fasta(input_file, output_prefix)
 
+    # Biorisk screen
+    logging.info(">> STEP 1: Checking for biorisk genes...")
     logging.debug("\t...running transeq")
     faa_to_screen = f"{output_prefix}.transeq.faa"
     command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
@@ -399,9 +408,6 @@ def run(args):
         run_as_subprocess(command, tmp_log)
     except RuntimeError as e:
         raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from e
-
-    # Biorisk screen
-    logging.info(">> STEP 1: Checking for biorisk genes...")
     screen_biorisks(faa_to_screen, output_prefix, screen_file, tmp_log, scripts_dir, dbs)
     logging.info(
         " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

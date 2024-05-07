@@ -53,8 +53,8 @@ def main():
     if not has_hits(args.in_file):
         sys.stdout.write("\t...no hits\n")
         exit(1)
-    blast = readblast(args.in_file)                  #function in utils.py
-    blast = taxdist(blast, reg_ids, vax_ids, args.db, args.threads) #function in utils.py
+    blast = readblast(args.in_file)
+    blast = taxdist(blast, reg_ids, vax_ids, args.db + "/taxonomy/", args.threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs

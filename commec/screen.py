@@ -144,9 +144,11 @@ def run_as_subprocess(command, out_file, raise_errors=False):
             command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
         )
         if result.returncode != 0:
-            logging.info(f"\t ERROR: command {command} failed")
+            command_str = ' '.join(command)
+            logging.info(f"\t ERROR: command '{command_str}' failed")
             raise RuntimeError(
-                f"subprocess.run of '{command}' encountered error. Check {out_file} for logs."
+                f"subprocess.run of command '{command_str}' encountered error."
+                f" Check {out_file} for logs."
             )
 
 def screen_biorisks(
@@ -238,7 +240,7 @@ def screen_proteins(
         "-t",
         str(threads),
     ]
-    result = run_as_subprocess(command, screen_file)
+    run_as_subprocess(command, screen_file)
 
 
 def screen_nucleotides(

@@ -140,10 +140,14 @@ def run_as_subprocess(command, out_file, raise_errors=False):
     Run a command using subprocess.run, piping stdout and stderr to `out_file`.
     """
     with open(out_file, "a", encoding="utf-8") as f:
-        return subprocess.run(
+        result = subprocess.run(
             command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
         )
-
+        if result.returncode != 0:
+            logging.info(f"\t ERROR: command {command} failed")
+            raise RuntimeError(
+                f"subprocess.run of '{command}' encountered error. Check {out_file} for logs."
+            )
 
 def screen_biorisks(
     input_file, output_prefix, screen_file, log_file, scripts_dir, screen_dbs
@@ -187,17 +191,19 @@ def screen_proteins(
 
     if search_tool == "blastx":
         search_output = f"{out_prefix}.nr.blastx"
+        blastdb = 'swissprot'
         command = [
             f"{scripts_dir}/run_blastx.sh",
             "-q",
             input_file,
             "-d",
-            screen_dbs.nr_dir,
+            f"{screen_dbs.nr_dir}/{blastdb}",
             "-o",
             protein_out,
             "-t",
-            threads,
+            str(threads),
         ]
+        print(command)
         run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
@@ -211,9 +217,9 @@ def screen_proteins(
             "-o",
             protein_out,
             "-t",
-            int(threads / processes),
+            str(int(threads / processes)),
             "-p",
-            processes,
+            str(processes),
         ]
         run_as_subprocess(command, tmp_log)
 
@@ -231,9 +237,9 @@ def screen_proteins(
         "-d",
         screen_dbs.dir,
         "-t",
-        threads,
+        str(threads),
     ]
-    run_as_subprocess(command, screen_file)
+    result = run_as_subprocess(command, screen_file)
 
 
 def screen_nucleotides(
@@ -388,10 +394,10 @@ def run(args):
     logging.debug("\t...running transeq")
     faa_to_screen = f"{output_prefix}.transeq.faa"
     command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
-    result = run_as_subprocess(command, tmp_log)
-    if result.returncode != 0:
-        logging.info("\t ERROR: transeq failed")
-        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.")
+    try:
+        run_as_subprocess(command, tmp_log)
+    except RuntimeError as e:
+        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from e
 
     # Biorisk screen
     logging.info(">> STEP 1: Checking for biorisk genes...")

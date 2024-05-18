@@ -40,7 +40,7 @@ class ScreenDatabases:
     @property
     def nr_db(self):
         if self.search_tool == "blastx":
-            return os.path.join(self.nr_dir, "swissprot")
+            return os.path.join(self.nr_dir, "nr")
         elif self.search_tool == "diamond":
             return os.path.join(self.nr_dir, "nr.dmnd")
         else:

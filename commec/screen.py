@@ -121,7 +121,7 @@ def get_cleaned_fasta(input_file, out_prefix):
     """
     Return a FASTA where whitespace (including non-breaking spaces) is replaced with underscores.
     """
-    cleaned_file = f"{out_prefix}.fasta"
+    cleaned_file = f"{out_prefix}.cleaned.fasta"
     with (
         open(input_file, "r", encoding="utf-8") as fin,
         open(cleaned_file, "w", encoding="utf-8") as fout,

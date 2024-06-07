@@ -3,35 +3,35 @@
 ##############################################################################
 #run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
 #
-#Copyright (C) 2022-2023 NTI|Bio 
-#This file is part of the CommonMechanism 
+#Copyright (C) 2022-2023 NTI|Bio
+#This file is part of the CommonMechanism
 ##############################################################################
 # Usage:
 #   src/run_pipeline.sh
 #       -q INPUT_FILE
-#       -d DATBASE_FOLDER 
-#       -t THREADS (default: 1) 
-#       -o OUTPUT (output prefix, default: query name) 
+#       -d DATBASE_FOLDER
+#       -t THREADS (default: 1)
+#       -o OUTPUT (output prefix, default: query name)
 #   Optional parameters:
-#       -b = use blast instead of diamond (default: diamond) 
+#       -b = use blast instead of diamond (default: diamond)
 #       -f = use fast mode (default: false)
 #       -n = run a nucleotide search if no protein hits are found in a region (default: true)
 #       -m = run multiple queries (default: false)
 #       -c = clean up intermediate files (default: no cleanup)
-# Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix 
+# Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix
 ##############################################################################
 # set parameters for the run
-#set -eu 
+#set -eu
 PROCESSES=6         #number of processes to run at once
 THREADS=1           #threads available
-QUERY=""            #query input file 
+QUERY=""            #query input file
 OUTPUT=""           #output prefix
 MULTIQUERY=0        #multiple query files (default: off)
-CLEANUP=0           #cleanup files (default: off)" 
-BLAST=0             #blast or diamond (default: diamond) 
+CLEANUP=0           #cleanup files (default: off)"
+BLAST=0             #blast or diamond (default: diamond)
 FAST_MODE=0         #fast mode (default: off)
 NT_SEARCH="on"         #nucleotide search (default: on)
-DB_PATH="" 
+DB_PATH=""
 
 function print_usage() {
     echo ""
@@ -40,13 +40,13 @@ function print_usage() {
     echo "    DB_PATH         path to databases (required)"
     echo "    THREADS         threads available (default: 1)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
-    echo " OPTIONAL FLAGS" 
+    echo " OPTIONAL FLAGS"
     echo "    -b              run blast for protein screen (default: diamond)"
     echo "    -f              turn on fast mode (no bast match function) (default: off)"
     echo "    -n              run a nucleotide search if no protein hits are found in a region (default: on)"
     echo "    -m              input contains multiple queries (default: off)"
     echo "    -c              tidy up intermediate screening files afterward (default: off)"
-    
+
 }
 
 #Get options from user
@@ -86,7 +86,7 @@ while getopts "t:d:fq:o:cbn:m" OPTION
                 echo "  OUTPUT          output prefix for alignments (default: query prefix)"
                 echo "  DB_PATH         path to detabases (required)"
                 echo "  THREADS         number of threads for each database run (default: 1)"
-                echo "OPTIONAL FLAGS" 
+                echo "OPTIONAL FLAGS"
                 echo "  -b              run blast for protein screen [default: diamond]"
                 echo "  -f              run fast mode (default: off)"
                 echo "  -n              run a nucleotide search if no protein hits are found in a region (default: on)"
@@ -98,13 +98,13 @@ while getopts "t:d:fq:o:cbn:m" OPTION
     done
 
 #INITIALIZING: Check for values
-#Check input query 
+#Check input query
 echo " >> STEP 0: Checking for valid options..." | tee -a ${OUTPUT}.screen
 if [ "$QUERY" == "" ]; then
     echo " ERROR: no input query file specified" | tee -a ${OUTPUT}.screen
     print_usage
-    exit 1 
-elif [ ! -f "$QUERY" ]; then 
+    exit 1
+elif [ ! -f "$QUERY" ]; then
     echo " ERROR: specified input query file $QUERY does not exist" | tee -a ${OUTPUT}.screen
     print_usage
     exit 1
@@ -115,12 +115,12 @@ if [ "$MULTIQUERY" == 1 ]; then
     echo " >> Splitting multiquery file $QUERY" | tee -a ${OUTPUT}.screen
     python3 ${CM_DIR}/split_query.py -f $QUERY > split_list.txt
     echo "Output split list: split_list.txt"
-    echo "Please run the pipeline on each file in split_list.txt with your chosen options" 
+    echo "Please run the pipeline on each file in split_list.txt with your chosen options"
     # alternative: have the script run each file according to options chosen - ignores any job management system
     exit 0
 fi
 
-#If output not specified, set value 
+#If output not specified, set value
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=${QUERY%.*}
     if [ ${#OUTPUT} -ge 200 ]; then
@@ -129,7 +129,7 @@ if [ "$OUTPUT" == "" ]; then
     echo "Output handle = $OUTPUT"
 fi
 
-#Check input database folder 
+#Check input database folder
 if [ "$DB_PATH" == "" ]; then
     echo " ERROR: screening database path not specified" | tee -a ${OUTPUT}.screen
     print_usage
@@ -139,18 +139,18 @@ elif [ ! -d "$DB_PATH" ]; then
     print_usage
     exit 1
 else
-    #Test database downloads 
+    #Test database downloads
     biorisk_test=${DB_PATH}/biorisk_db/biorisk.hmm
     benign_test=${DB_PATH}/benign_db/benign.hmm
     split_nr_test=${DB_PATH}/nr_dmnd/nr.1.dmnd
     if [ ! -f "$biorisk_test" ]; then
         echo " ERROR: database folder does not contain biorisk database" | tee -a ${OUTPUT}.screen
-        exit 1 
-    fi 
+        exit 1
+    fi
     if [ ! -f "$benign_test" ]; then
         echo " ERROR: database folder does not contain benign database"  | tee -a ${OUTPUT}.screen
-        exit 1 
-    fi 
+        exit 1
+    fi
 fi
 # export DB_PATH=${DB_PATH}
 
@@ -168,15 +168,15 @@ cat ${OUTPUT}.tmp | sed -E 's/[[:space:]]|\xc2\xa0/_/g' > ${OUTPUT}.fasta
 # Step 1: biorisk DB scan
 echo " >> STEP 1: Checking for biorisk genes..."  | tee -a ${OUTPUT}.screen
 
-echo -e "\t...running transeq" 
+echo -e "\t...running transeq"
 transeq $QUERY ${OUTPUT}.faa -frame 6 -clean >> ${OUTPUT}.tmp 2>&1
 if [ ! -f "${OUTPUT}".faa ]; then
     echo -e "\t ERROR: transeq failed" | tee -a ${OUTPUT}.screen
 fi
 
-#python3 ${CM_DIR}/concat_seqs.py ${OUTPUT}.faa
+python3 ${CM_DIR}/concat_seqs.py ${OUTPUT}.faa
 
-echo -e "\t...running hmmscan" 
+echo -e "\t...running hmmscan"
 hmmscan --domtblout ${OUTPUT}.biorisk.hmmscan ${DB_PATH}/biorisk_db/biorisk.hmm ${OUTPUT}.faa >> ${OUTPUT}.tmp 2>&1
 echo -e "\t...checking hmmscan results"
 python3 ${CM_DIR}/check_biorisk.py -i ${OUTPUT}.biorisk.hmmscan --database ${DB_PATH}/biorisk_db/ | tee -a ${OUTPUT}.screen
@@ -197,12 +197,12 @@ if [ "$FAST_MODE" = 0 ]; then
         echo -e "    STEP 2: Search completed (BLASTX) at $s2_time\n" | tee -a ${OUTPUT}.screen
 
         echo -e "\t...checking blast results"
-        if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
+        if [ -f "${OUTPUT}".reg_path_coords.csv ]; then
             rm "${OUTPUT}".reg_path_coords.csv
         fi
 
         python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.blastx -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
-    else 
+    else
         if [ ! -f "${OUTPUT}".nr.dmnd ]; then
             echo -e "\t...running run_diamond.sh"
             MAX_DIAMOND_THREADS=5
@@ -214,7 +214,7 @@ if [ "$FAST_MODE" = 0 ]; then
         echo -e "    STEP 2: Search completed (DIAMOND) at $s2_time\n" | tee -a ${OUTPUT}.screen
 
         echo -e "\t...checking diamond results"
-        if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 
+        if [ -f "${OUTPUT}".reg_path_coords.csv ]; then
             rm "${OUTPUT}".reg_path_coords.csv
         fi
         python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nr.dmnd --database $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
@@ -236,7 +236,7 @@ if [ "$FAST_MODE" = 0 ]; then
         s3_time=$(date)
         echo -e "    STEP 3 found nc bits at $s3_time\n" | tee -a ${OUTPUT}.screen
 
-        if [ -f "${OUTPUT}".noncoding.fasta ]; then 
+        if [ -f "${OUTPUT}".noncoding.fasta ]; then
             if [ ! -f "${OUTPUT}".nt.blastn ]; then
                 echo -e "\t...running blastn"
                 blastn -query ${OUTPUT}.noncoding.fasta -db ${DB_PATH}/nt_blast/nt -out ${OUTPUT}.nt.blastn -outfmt "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send" -max_target_seqs 50 -num_threads 8 -culling_limit 5 -evalue 10
@@ -246,7 +246,7 @@ if [ "$FAST_MODE" = 0 ]; then
 
             echo -e "\t...checking blastn results"
             python3 ${CM_DIR}/check_reg_path.py -i ${OUTPUT}.nt.blastn -d $DB_PATH -t $THREADS | tee -a ${OUTPUT}.screen
-        else 
+        else
             echo -e "\t...skipping nucleotide search"
         fi
 
@@ -288,8 +288,8 @@ then
 
     if ["$BLAST" = 1 ]
     then
-        rm ${OUTPUT}.*blastx 
-    else 
+        rm ${OUTPUT}.*blastx
+    else
         rm ${OUTPUT}.*dmnd
     fi
 fi

@@ -2,79 +2,66 @@
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 ##############################################################################
 # run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
-#
-# Usage:
-#   src/run_pipeline.sh
-#       -q INPUT_FILE
-#       -d DATBASE_FOLDER
-#       -t THREADS (default: 1)
-#       -o OUTPUT (output prefix, default: query name)
-#   Optional parameters:
-#       -b = use blast instead of diamond (default: diamond)
-#       -f = use fast mode (default: false)
-#       -n = run a nucleotide search if no protein hits are found in a region (default: true)
-#       -m = run multiple queries (default: false)
-#       -c = clean up intermediate files (default: no cleanup)
-# Example Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix
 ##############################################################################
-# set parameters for the run
+# Usage: src/run_pipeline.sh -q test_folder/[$name].fasta -d databases/ -p 5 -t 1 -o out_prefix
+
+# Set parameters for the run
 #set -eu
+QUERY=""            # query input file
+DB_PATH=""          # path to databases
+OUTPUT=""           # output prefix
+THREADS=1           # threads available
 # TODO: PROCESSES BACK TO 6 FOR NEW DIAMOND NR 
-PROCESSES=5         #number of processes to run at once
-THREADS=1           #threads available
-QUERY=""            #query input file
-OUTPUT=""           #output prefix
-MULTIQUERY=0        #multiple query files (default: off)
-CLEANUP=0           #cleanup files (default: off)"
-BLAST=0             #blast or diamond (default: diamond)
-FAST_MODE=0         #fast mode (default: off)
-NT_SEARCH="on"         #nucleotide search (default: on)
-DB_PATH=""
+PROCESSES=5         # number of processes to run at once
+FAST_MODE=0         # fast mode (default: off)
+BLAST=0             # blast or diamond (default: diamond)
+NT_SEARCH=1         # nucleotide search (default: on)
+MULTIQUERY=0        # multiple query files (default: off)
+CLEANUP=0           # cleanup files (default: off)
 
 function print_usage() {
     echo ""
-    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -f -b -m -c -p PROCESSES]"
+    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ [-o OUTPUT -t THREADS -p PROCESSES -f -b -n -m -c]"
     echo "    QUERY           query file to align to each database (required)"
     echo "    DB_PATH         path to databases (required)"
-    echo "    THREADS         threads available (default: 1)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
+    echo "    THREADS         threads available (default: 1)"
     echo "    PROCESSES       number of processes to use (default: 5)"
-    echo " OPTIONAL FLAGS"
+    echo " FLAGS"
+    echo "    -f              turn on fast mode (no best match function) (default: off)"
     echo "    -b              run blast for protein screen (default: diamond)"
-    echo "    -f              turn on fast mode (no bast match function) (default: off)"
     echo "    -n              run a nucleotide search if no protein hits are found in a region (default: on)"
     echo "    -m              input contains multiple queries (default: off)"
     echo "    -c              tidy up intermediate screening files afterward (default: off)"
-
 }
 
 #Get options from user
-while getopts "t:d:fq:o:cbn:mp:" OPTION
+while getopts "d:q:o:t:p:fbnmc" OPTION
     do
         case $OPTION in
-            t)
-                THREADS=$OPTARG
+            q)
+                QUERY=$OPTARG
                 ;;
             d)
                 DB_PATH=$OPTARG
                 ;;
-            q)
-                QUERY=$OPTARG
-                ;;
             o)
                 OUTPUT=$OPTARG
                 ;;
+            t)
+                THREADS=$OPTARG
+                ;;
             p)
                 PROCESSES=$OPTARG
+                ;;
+            f)
+                FAST_MODE=1
                 ;;
             b)
                 BLAST=1
                 ;;
             n)
-                NT_SEARCH=$OPTARG
-                ;;
-            f)
-                FAST_MODE=1
+                NT_SEARCH=0
                 ;;
             m)
                 MULTIQUERY=1
@@ -83,18 +70,7 @@ while getopts "t:d:fq:o:cbn:mp:" OPTION
                 CLEANUP=1
                 ;;
             \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -b -f -m -c]"
-                echo "  QUERY           query file to align to each database (required)"
-                echo "  OUTPUT          output prefix for alignments (default: query prefix)"
-                echo "  DB_PATH         path to detabases (required)"
-                echo "  THREADS         number of threads for each database run (default: 1)"
-                echo "OPTIONAL FLAGS"
-                echo "  -b              run blast for protein screen [default: diamond]"
-                echo "  -f              run fast mode (default: off)"
-                echo "  -n              run a nucleotide search if no protein hits are found in a region (default: on)"
-                echo "  -m              input contains multiple queries (default: off)"
-                echo "  -c              tidy up intermediate screening files afterward"
-                exit
+                print_usage
                 ;;
         esac
     done
@@ -229,7 +205,7 @@ if [ "$FAST_MODE" = 0 ]; then
     echo -e "    STEP 2b completed at $s2_time\n" | tee -a ${OUTPUT}.screen
 
     # Step 3: nucleotide screening
-    if [ "$NT_SEARCH" = "on" ]; then
+    if [ "$NT_SEARCH" = 1 ]; then
         echo " >> STEP 3: Checking regulated pathogen nucleotides..." | tee -a ${OUTPUT}.screen
 
         echo -e "\t...fetching noncoding regions"

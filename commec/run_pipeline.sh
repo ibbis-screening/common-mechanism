@@ -33,11 +33,12 @@ DB_PATH=""
 
 function print_usage() {
     echo ""
-    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -f -b -m -c]"
+    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -f -b -m -c -p PROCESSES]"
     echo "    QUERY           query file to align to each database (required)"
     echo "    DB_PATH         path to databases (required)"
     echo "    THREADS         threads available (default: 1)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
+    echo "    PROCESSES       number of processes to use (default: 5)"
     echo " OPTIONAL FLAGS"
     echo "    -b              run blast for protein screen (default: diamond)"
     echo "    -f              turn on fast mode (no bast match function) (default: off)"
@@ -62,6 +63,9 @@ while getopts "t:d:fq:o:cbn:m" OPTION
                 ;;
             o)
                 OUTPUT=$OPTARG
+                ;;
+            p)
+                PROCESSES=$OPTARG
                 ;;
             b)
                 BLAST=1

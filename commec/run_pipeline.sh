@@ -49,7 +49,7 @@ function print_usage() {
 }
 
 #Get options from user
-while getopts "t:d:fq:o:cbn:m" OPTION
+while getopts "t:d:fq:o:cbn:mp:" OPTION
     do
         case $OPTION in
             t)

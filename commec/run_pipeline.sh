@@ -1,11 +1,8 @@
 #! /usr/bin/env bash
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 ##############################################################################
-#run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
+# run_pipeline.sh runs the Common Mechanism against a specified QUERY file.
 #
-#Copyright (C) 2022-2023 NTI|Bio
-#This file is part of the CommonMechanism
-##############################################################################
 # Usage:
 #   src/run_pipeline.sh
 #       -q INPUT_FILE
@@ -22,7 +19,8 @@
 ##############################################################################
 # set parameters for the run
 #set -eu
-PROCESSES=6         #number of processes to run at once
+# TODO: PROCESSES BACK TO 6 FOR NEW DIAMOND NR 
+PROCESSES=5         #number of processes to run at once
 THREADS=1           #threads available
 QUERY=""            #query input file
 OUTPUT=""           #output prefix
@@ -194,7 +192,7 @@ if [ "$FAST_MODE" = 0 ]; then
             ${CM_DIR}/run_blastx.sh -d $DB_PATH/nr_blast/nr -q ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $THREADS # use the shortened filename rather than the original
         fi
         s2_time=$(date)
-        echo -e "    STEP 2: Search completed (BLASTX) at $s2_time\n" | tee -a ${OUTPUT}.screen
+        echo -e "    STEP 2a: Search completed (BLASTX) at $s2_time\n" | tee -a ${OUTPUT}.screen
 
         echo -e "\t...checking blast results"
         if [ -f "${OUTPUT}".reg_path_coords.csv ]; then
@@ -205,13 +203,16 @@ if [ "$FAST_MODE" = 0 ]; then
     else
         if [ ! -f "${OUTPUT}".nr.dmnd ]; then
             echo -e "\t...running run_diamond.sh"
+            # TODO: PROCESSES BACK TO 6 FOR NEW DIAMOND NR 
             MAX_DIAMOND_THREADS=5
-            THREADS_PER_PROCESS=$((THREADS/PROCESSES))
-            ADJUSTED_THREADS=$((THREADS_PER_PROCESS > MAX_THREADS ? MAX_THREADS : THREADS_PER_PROCESS))
-            ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $ADJUSTED_THREADS -p $PROCESSES # use the shortened filename rather than the original
+            ADJUSTED_THREADS=$((THREADS > MAX_DIAMOND_THREADS ? MAX_DIAMOND_THREADS : THREADS))
+            # TODO: PROCESSES BACK TO 6 FOR NEW DIAMOND NR 
+            MIN_PROCESSES=ADJUSTED_THREADS + 1
+            ADJUSTED_PROCESSES = $((PROCESSES < MIN_PROCESSES ? MIN_PROCESSES : PROCESSES))
+            ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $ADJUSTED_THREADS -p $ADJUSTED_PROCESSES
         fi
         s2_time=$(date)
-        echo -e "    STEP 2: Search completed (DIAMOND) at $s2_time\n" | tee -a ${OUTPUT}.screen
+        echo -e "    STEP 2a: Search completed (DIAMOND) at $s2_time\n" | tee -a ${OUTPUT}.screen
 
         echo -e "\t...checking diamond results"
         if [ -f "${OUTPUT}".reg_path_coords.csv ]; then
@@ -221,7 +222,7 @@ if [ "$FAST_MODE" = 0 ]; then
     fi
 
     s2_time=$(date)
-    echo -e "    STEP 2 completed at $s2_time\n" | tee -a ${OUTPUT}.screen
+    echo -e "    STEP 2b completed at $s2_time\n" | tee -a ${OUTPUT}.screen
 
     # Step 3: nucleotide screening
     if [ "$NT_SEARCH" = "on" ]; then

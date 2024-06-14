@@ -49,10 +49,10 @@ def main():
 
     if is_empty(args.in_file):
         sys.stdout.write("\tERROR: Homology search has failed\n")
-        exit(1)
+        sys.exit(1)
     if not has_hits(args.in_file):
         sys.stdout.write("\t...no hits\n")
-        exit(1)
+        sys.exit(0)
     blast = readblast(args.in_file)
     blast = taxdist(blast, reg_ids, vax_ids, args.db + "/taxonomy/", args.threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level

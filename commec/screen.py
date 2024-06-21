@@ -277,7 +277,7 @@ def screen_nucleotides(
             "-out",
             nt_output,
             "-outfmt",
-            "\"7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send\"",
+            "7 qacc stitle sacc staxids evalue bitscore pident qlen qstart qend slen sstart send",
             "-max_target_seqs",
             "50",
             "-num_threads",

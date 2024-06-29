@@ -119,7 +119,8 @@ def get_output_prefix(input_file, prefix_arg=""):
 
 def get_cleaned_fasta(input_file, out_prefix):
     """
-    Return a FASTA where whitespace (including non-breaking spaces) is replaced with underscores.
+    Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
+    replaced with underscores.
     """
     cleaned_file = f"{out_prefix}.cleaned.fasta"
     with (
@@ -129,7 +130,7 @@ def get_cleaned_fasta(input_file, out_prefix):
         for line in fin:
             line = line.strip()
             modified_line = "".join(
-                "_" if c.isspace() or c == "\xc2\xa0" else c for c in line
+                "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
             )
             fout.write(f"{modified_line}{os.linesep}")
     return cleaned_file

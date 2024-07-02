@@ -78,7 +78,7 @@ if nc_bits == "all":
 elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
     sys.stdout.write("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
 else: 
-    seqid = blast.iloc[0][0]
+    seqid = blast.iloc[0, 0]
     fetch_sequences(seqid, nc_bits, f_file, outfile)
 
 

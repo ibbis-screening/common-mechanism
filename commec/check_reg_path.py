@@ -121,7 +121,7 @@ def main():
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))
                     # could explicitly list which are and aren't regulated?
-                    # otherwise, raise a flag and say which superkingdom the flag belongs to
+                # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
                     if subset['superkingdom'][0] == "Viruses":
                         reg_vir = 1
@@ -133,7 +133,12 @@ def main():
                         if subset['superkingdom'][0] == "Eukaryota":
                             org = "eukaryote"
                             reg_fung = 1
-                    hits = pd.concat([hits, subset[['q. start', 'q. end']].dropna()], ignore_index=True)
+
+                    new_hits = subset[['q. start', 'q. end']].dropna()
+                    if not new_hits.empty and not hits.empty:
+                         hits = pd.concat([hits, new_hits], ignore_index=True)
+                    elif not new_hits.empty:
+                        hits = new_hits.copy()
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))

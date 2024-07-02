@@ -10,7 +10,6 @@ import pytaxonkit
 import pandas as pd
 import numpy as np
 
-
 def is_empty(filepath: str) -> bool:
     """
     is_empty
@@ -46,6 +45,44 @@ def has_hits(filepath: str) -> bool:
         # The file does not exist
         return False
 
+def is_likely_protein(fasta_file):
+    """
+    Check whether a FASTA file likely contains protein sequences and doesn't need to be translated.
+    
+    This is an imperfect check, because there is substantial overlap between the IUPAC codes for
+    protein and nucleotide sequences. If a protein FASTA contains no protein-specific codes, it
+    will be classified as a nucleotide by this function. 
+    """
+    protein_codes = set('ACDEFGHIKLMNPQRSTVWY')
+    nucleotide_codes = set('ACGTURYKMSWBDHVN')
+    protein_specific = protein_codes - nucleotide_codes
+
+    def is_protein_specific(seq):
+        """Check for presence of IUPAC amino acid codes that aren't also valid nucleotides"""
+        return any(aa in seq for aa in protein_specific) 
+
+    def only_nucleotide_codes(seq):
+        """Check that sequence is only composed of IUPAC nucleotide codes"""
+        return all(base in nucleotide_codes for base in seq)
+
+    with open(fasta_file, 'r', encoding='utf-8') as file:
+        for line in file:
+            if line.startswith('>'):
+                # This is a header line; skip it.
+                continue
+
+            # Remove whitespace and convert to uppercase for comparison
+            sequence = line.strip().upper()
+
+            if not sequence: # Skip empty lines
+                continue
+
+            if is_protein_specific(sequence):
+                return True
+
+    # If we get through the entire file without finding a non-nucleotide character,
+    # it's likely not a protein FASTA file
+    return False
 
 def directory_arg(path):
     """Raise ArgumentTypeError if `path` is not a directory."""

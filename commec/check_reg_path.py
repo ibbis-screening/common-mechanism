@@ -133,7 +133,7 @@ def main():
                         if subset['superkingdom'][0] == "Eukaryota":
                             org = "eukaryote"
                             reg_fung = 1
-                    hits = pd.concat([hits, subset[['q. start', 'q. end']]])
+                    hits = pd.concat([hits, subset[['q. start', 'q. end']].dropna()], ignore_index=True)
                     sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
                     sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
                     sys.stdout.write("\t\t     Description: %s\n" % (desc))

@@ -50,7 +50,13 @@ def is_protein_specific(seq):
     protein_codes = set('ACDEFGHIKLMNPQRSTVWY')
     nucleotide_codes = set('ACGTURYKMSWBDHVN')
     protein_specific = protein_codes - nucleotide_codes
-    return any(aa in seq for aa in protein_specific)
+    return any(aa in seq.upper() for aa in protein_specific)
+
+def is_mostly_standard_bases(seq):
+    """Check whether over 90% of the sequence is composed of A,C,G,T,U."""
+    standard_bases = set('ACGTU')
+    nucleotide_freq = sum(seq.upper().count(b) for b in standard_bases) / len(seq)
+    return nucleotide_freq > 0.9
 
 def is_likely_protein(fasta_file):
     """
@@ -66,8 +72,8 @@ def is_likely_protein(fasta_file):
                 # This is a header line; skip it.
                 continue
 
-            # Remove whitespace and convert to uppercase for comparison
-            sequence = line.strip().upper()
+            # Remove whitespace
+            sequence = line.strip()
 
             if not sequence: # Skip empty lines
                 continue
@@ -77,7 +83,11 @@ def is_likely_protein(fasta_file):
 
     # If we get through the entire file without finding a non-nucleotide character,
     # it's likely not a protein FASTA file
-    return False
+    if is_mostly_standard_bases(sequence):
+        return False
+    else:
+        raise ValueError()
+
 
 def directory_arg(path):
     """Raise ArgumentTypeError if `path` is not a directory."""

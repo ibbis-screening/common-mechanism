@@ -156,14 +156,14 @@ def run_as_subprocess(command, out_file, raise_errors=False):
 def translate_input(input_file, output_prefix, log_file):
     """
     Use `transeq` to get the six-frame translation of the input FASTA. If the input was protein,
-    reverse translate it first.
+    reverse translate it first, overwriting the original input.
     """
     logging.debug("\t...running transeq")
 
     # Check whether the input file is protein, and should be reverse-translated first
     # We use highly-expressed genes in E. coli, since there's no standard table
     if is_likely_protein(input_file):
-        command = ["backtranambig", input_file, f"{output_prefix}.backtranambig.fasta"]
+        command = ["backtranambig", input_file, input_file]
         run_as_subprocess(command, log_file)
 
     faa_to_screen = f"{output_prefix}.transeq.faa"

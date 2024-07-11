@@ -34,7 +34,7 @@ def has_hits(filepath: str) -> bool:
     - path to file
     """
     try:
-        with open(filepath, "r") as file:
+        with open(filepath, "r", encoding='utf-8') as file:
             for line in file:
                 # Strip leading and trailing whitespace and check the first character
                 if not line.strip().startswith("#"):
@@ -45,6 +45,13 @@ def has_hits(filepath: str) -> bool:
         # The file does not exist
         return False
 
+def is_protein_specific(seq):
+    """Check for presence of IUPAC amino acid codes that aren't also valid nucleotides"""
+    protein_codes = set('ACDEFGHIKLMNPQRSTVWY')
+    nucleotide_codes = set('ACGTURYKMSWBDHVN')
+    protein_specific = protein_codes - nucleotide_codes
+    return any(aa in seq for aa in protein_specific)
+
 def is_likely_protein(fasta_file):
     """
     Check whether a FASTA file likely contains protein sequences and doesn't need to be translated.
@@ -53,18 +60,6 @@ def is_likely_protein(fasta_file):
     protein and nucleotide sequences. If a protein FASTA contains no protein-specific codes, it
     will be classified as a nucleotide by this function. 
     """
-    protein_codes = set('ACDEFGHIKLMNPQRSTVWY')
-    nucleotide_codes = set('ACGTURYKMSWBDHVN')
-    protein_specific = protein_codes - nucleotide_codes
-
-    def is_protein_specific(seq):
-        """Check for presence of IUPAC amino acid codes that aren't also valid nucleotides"""
-        return any(aa in seq for aa in protein_specific) 
-
-    def only_nucleotide_codes(seq):
-        """Check that sequence is only composed of IUPAC nucleotide codes"""
-        return all(base in nucleotide_codes for base in seq)
-
     with open(fasta_file, 'r', encoding='utf-8') as file:
         for line in file:
             if line.startswith('>'):

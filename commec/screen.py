@@ -27,7 +27,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from commec.utils import directory_arg, file_arg
+from commec.utils import directory_arg, file_arg, is_likely_protein 
 from commec.screen_databases import ScreenDatabases
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
@@ -151,6 +151,26 @@ def run_as_subprocess(command, out_file, raise_errors=False):
                 f"subprocess.run of command '{command_str}' encountered error."
                 f" Check {out_file} for logs."
             )
+
+
+def translate_input(input_file, output_prefix, log_file):
+    """
+    Use `transeq` to get the six-frame translation of the input FASTA. If the input was protein,
+    reverse translate it first.
+    """
+    logging.debug("\t...running transeq")
+
+    # Check whether the input file is protein, and should be reverse-translated first
+    # We use highly-expressed genes in E. coli, since there's no standard table
+    if is_likely_protein(input_file):
+        command = ["backtranambig", input_file, f"{output_prefix}.backtranambig.fasta"]
+        run_as_subprocess(command, log_file)
+
+    faa_to_screen = f"{output_prefix}.transeq.faa"
+    command = ["transeq", input_file, faa_to_screen, "-frame", "6", "-clean"]
+    run_as_subprocess(command, log_file)
+    return faa_to_screen
+
 
 def screen_biorisks(
     input_file, output_prefix, screen_file, log_file, scripts_dir, screen_dbs
@@ -402,13 +422,7 @@ def run(args):
 
     # Biorisk screen
     logging.info(">> STEP 1: Checking for biorisk genes...")
-    logging.debug("\t...running transeq")
-    faa_to_screen = f"{output_prefix}.transeq.faa"
-    command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
-    try:
-        run_as_subprocess(command, tmp_log)
-    except RuntimeError as e:
-        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from e
+    faa_to_screen = translate_input(fasta_to_screen, output_prefix, tmp_log)
     screen_biorisks(faa_to_screen, output_prefix, screen_file, tmp_log, scripts_dir, dbs)
     logging.info(
         " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

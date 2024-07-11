@@ -83,10 +83,7 @@ def is_likely_protein(fasta_file):
 
     # If we get through the entire file without finding a non-nucleotide character,
     # it's likely not a protein FASTA file
-    if is_mostly_standard_bases(sequence):
-        return False
-    else:
-        raise ValueError()
+    return False
 
 
 def directory_arg(path):

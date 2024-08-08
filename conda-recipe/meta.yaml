@@ -16,7 +16,7 @@ build:
   noarch: python
   script: "{{ PYTHON }} -m pip install . --no-deps --no-build-isolation --no-cache-dir -vvv"
   run_exports:
-    # consider using "x.x.x" rather than "x.x", or "x" considering alpha software and liklihood of change.
+    # consider using "x.x.x" rather than "x.x", or "x" considering alpha software and likelihood of change.
     - {{ pin_subpackage('commec', max_pin="x.x") }}
 
 requirements:

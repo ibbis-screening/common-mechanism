@@ -146,7 +146,7 @@ def run_as_subprocess(command, out_file, raise_errors=False):
         )
         if result.returncode != 0:
             command_str = ' '.join(command)
-            logging.info(f"\t ERROR: command '{command_str}' failed")
+            logging.info("\t ERROR: command %s failed", command_str)
             raise RuntimeError(
                 f"subprocess.run of command '{command_str}' encountered error."
                 f" Check {out_file} for logs."
@@ -407,8 +407,8 @@ def run(args):
     command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
     try:
         run_as_subprocess(command, tmp_log)
-    except RuntimeError as e:
-        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from e
+    except RuntimeError as error:
+        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from error
     screen_biorisks(faa_to_screen, output_prefix, screen_file, tmp_log, scripts_dir, dbs)
     logging.info(
         " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

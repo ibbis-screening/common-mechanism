@@ -13,10 +13,19 @@ import argparse
 import os
 import sys
 import pandas as pd
-from commec.utils import *
-
+from commec.utils import (
+    has_hits,
+    readhmmer,
+    readcmscan,
+    readblast,
+    trimblast,
+    tophits,
+)
 
 def check_for_benign(query, coords, benign_desc):
+    '''
+    Checks a query against taxonomy 
+    '''
     cleared = [0] * coords.shape[0]
 
     # PROTEIN HITS
@@ -166,6 +175,9 @@ def check_for_benign(query, coords, benign_desc):
 
 
 def main():
+    '''
+    Wrapper for calling check_benign as main, as isolated python script.
+    '''
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -182,24 +194,26 @@ def main():
 
     if not os.path.exists(args.db + "/benign_annotations.tsv"):
         sys.stderr.write("\t...benign_annotations.tsv does not exist\n")
-        exit(1)
+        sys.exit(1)
 
-    # Read in database file
+    # Check database file
     pd.set_option("max_colwidth", 200)
     benign_desc = pd.read_csv(args.db + "/benign_annotations.tsv", sep="\t")
 
-    # Check for file - if exists, check for benign
-    if os.path.exists(args.sample_name + ".reg_path_coords.csv"):
-        coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
-        if coords.shape[0] == 0:
-            sys.stdout.write("\t...no regulated regions to clear\n")
-            exit(0)
-        coords.sort_values(by=["q. start"], inplace=True)
-        coords.reset_index(drop=True, inplace=True)
-        check_for_benign(args.sample_name, coords, benign_desc)
-    else:
+    if not os.path.exists(args.sample_name + ".reg_path_coords.csv"):
         sys.stdout.write("\t...no regulated regions to clear\n")
+        sys.exit(0)
 
+    # Read database file
+    coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
+
+    if coords.shape[0] == 0:
+        sys.stdout.write("\t...no regulated regions to clear\n")
+        sys.exit(0)
+
+    coords.sort_values(by=["q. start"], inplace=True)
+    coords.reset_index(drop=True, inplace=True)
+    check_for_benign(args.sample_name, coords, benign_desc)
 
 if __name__ == "__main__":
     main()

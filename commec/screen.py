@@ -20,28 +20,34 @@ Command-line usage:
 """
 import argparse
 import datetime
-import glob
 import logging
 import os
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
-from commec.utils import directory_arg, file_arg
-from commec.screen_databases import ScreenDatabases
+
+from commec.file_tools import FileTools
+from commec.io_parameters import ScreenIOParameters, ScreenInputParameters
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
 
-def add_args(parser):
+def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Add module arguments to an ArgumentParser object.
     """
-    parser.add_argument(dest="fasta_file", type=file_arg, help="FASTA file to screen")
+
+    default_params : ScreenInputParameters = ScreenInputParameters()
+
+    parser.add_argument(
+        dest="fasta_file",
+        type=FileTools.file_arg,
+        help="FASTA file to screen"
+    )
     parser.add_argument(
         "-d",
         "--databases",
         dest="database_dir",
-        type=directory_arg,
+        type=FileTools.directory_arg,
         required=True,
         help="Path to databases directory",
     )
@@ -52,14 +58,14 @@ def add_args(parser):
         help="Output prefix (can be string or directory)",
     )
     parser.add_argument(
-        "-t", "--threads", dest="threads", type=int, default=1, help="Threads available"
+        "-t", "--threads", dest="threads", type=int, default=default_params.threads, help="Threads available"
     )
     parser.add_argument(
         "-p",
         "--protein-search-tool",
         dest="protein_search_tool",
         choices=["blastx", "diamond"],
-        default="blastx",
+        default=default_params.search_tool,
         help="Tool for homology search to identify regulated pathogen proteins",
     )
     parser.add_argument(
@@ -85,57 +91,6 @@ def add_args(parser):
     )
     return parser
 
-
-@dataclass
-class ScreenParameters:
-    """
-    Parameters used for screening; provided by parsing arguments. All have default values.
-    """
-    threads: int
-    protein_search_tool: str
-    in_fast_mode: bool
-    skip_nt_search: bool
-    do_cleanup: bool
-
-def get_output_prefix(input_file, prefix_arg=""):
-    """
-    Returns a prefix that can be used for all output files.
-    
-    - If no prefix was given, use the input filename.
-    - If a directory was given, use the input filename as file prefix within that directory.
-    """
-    if not prefix_arg:
-        return os.path.splitext(input_file)[0]
-    if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
-        # Make the directory if it doesn't exist
-        if not os.path.isdir(prefix_arg):
-            os.makedirs(prefix_arg)
-        # Use the input filename as a prefix within that directory (stripping out the path)
-        input_name = os.path.splitext(os.path.basename(input_file))[0]
-        return prefix_arg + input_name
-    # Existing, non-path prefixes can be used as-is
-    return prefix_arg
-
-
-def get_cleaned_fasta(input_file, out_prefix):
-    """
-    Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
-    replaced with underscores.
-    """
-    cleaned_file = f"{out_prefix}.cleaned.fasta"
-    with (
-        open(input_file, "r", encoding="utf-8") as fin,
-        open(cleaned_file, "w", encoding="utf-8") as fout,
-    ):
-        for line in fin:
-            line = line.strip()
-            modified_line = "".join(
-                "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
-            )
-            fout.write(f"{modified_line}{os.linesep}")
-    return cleaned_file
-
-
 def run_as_subprocess(command, out_file, raise_errors=False):
     """
     Run a command using subprocess.run, piping stdout and stderr to `out_file`.
@@ -146,7 +101,7 @@ def run_as_subprocess(command, out_file, raise_errors=False):
         )
         if result.returncode != 0:
             command_str = ' '.join(command)
-            logging.info(f"\t ERROR: command '{command_str}' failed")
+            logging.info("\t ERROR: command %s failed", command_str)
             raise RuntimeError(
                 f"subprocess.run of command '{command_str}' encountered error."
                 f" Check {out_file} for logs."
@@ -361,125 +316,102 @@ def run(args):
     """
     Wrapper so that args be parsed in main() or commec.py interface.
     """
-    input_file = args.fasta_file
-    output_prefix = get_output_prefix(input_file, args.output_prefix)
-    screen_file = f"{output_prefix}.screen"
-
-    if os.path.exists(screen_file):
-        raise RuntimeError(f"Screen output {screen_file} already exists. Aborting.")
-
-    tmp_log = f"{output_prefix}.log.tmp"
+    params : ScreenIOParameters = ScreenIOParameters(args)
+    #Use print so as not to overwrite an existing .screen file.
+    print(" Validating Inputs...") 
+    params.validate()
 
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
         format="%(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(screen_file, "a")],
+        handlers=[logging.StreamHandler(), logging.FileHandler(params.output_screen_file, "a")],
     )
+
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(message)s",
-        handlers=[logging.FileHandler(tmp_log, "a")],
-    )
-
-    # Set run parameters from args
-    run_parameters = ScreenParameters(
-        threads=args.threads,
-        protein_search_tool=args.protein_search_tool,
-        in_fast_mode=args.fast_mode,
-        skip_nt_search=args.skip_nt_search,
-        do_cleanup=args.cleanup
+        handlers=[logging.FileHandler(params.tmp_log, "a")],
     )
 
     # Check that databases exist
     scripts_dir = os.path.dirname(__file__)
-    dbs = ScreenDatabases(args.database_dir, run_parameters.protein_search_tool)
-    dbs.validate(run_parameters.in_fast_mode, run_parameters.skip_nt_search)
 
     # Add the input contents to the log
-    shutil.copyfile(input_file, tmp_log)
-    fasta_to_screen = get_cleaned_fasta(input_file, output_prefix)
+    shutil.copyfile(params.query.fasta_filepath, params.tmp_log)
 
     # Biorisk screen
-    logging.info(">> STEP 1: Checking for biorisk genes...")
-    logging.debug("\t...running transeq")
-    faa_to_screen = f"{output_prefix}.transeq.faa"
-    command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
-    try:
-        run_as_subprocess(command, tmp_log)
-    except RuntimeError as e:
-        raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from e
-    screen_biorisks(faa_to_screen, output_prefix, screen_file, tmp_log, scripts_dir, dbs)
-    logging.info(
-        " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
+    if params.should_do_biorisk_screening:
+        logging.info(">> STEP 1: Checking for biorisk genes...")
+        screen_biorisks(params.query.fasta_aa_filepath,
+                        params.output_prefix,
+                        params.output_screen_file,
+                        params.tmp_log,
+                        scripts_dir,
+                        params)
+        logging.info(
+            " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    else:
+        logging.info(" SKIPPING STEP 1: Biorisk search")
 
     # Taxonomy screen
-    if run_parameters.in_fast_mode:
-        logging.info(" >> FAST MODE: Skipping steps 2-3")
-    else:
+    if params.should_do_protein_screening:
         logging.info(" >> STEP 2: Checking regulated pathogen proteins...")
         screen_proteins(
-            fasta_to_screen,
-            output_prefix,
-            screen_file,
-            tmp_log,
+            params.query.fasta_aa_filepath,
+            params.output_prefix,
+            params.output_screen_file,
+            params.tmp_log,
             scripts_dir,
-            dbs,
-            run_parameters.protein_search_tool,
-            run_parameters.threads,
+            params,
+            params.inputs.search_tool,
+            params.inputs.threads,
         )
         logging.info(
             " STEP 2 completed at %s",
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
-
-    if run_parameters.in_fast_mode or run_parameters.skip_nt_search:
-        logging.info(" SKIPPING STEP 3: Nucleotide search")
     else:
+        logging.info(" SKIPPING STEP 2: Protein search")
+
+    if params.should_do_nucleotide_screening:
         logging.info(" >> STEP 3: Checking regulated pathogen nucleotides...")
         screen_nucleotides(
-            fasta_to_screen,
-            output_prefix,
-            screen_file,
+            params.query.cleaned_fasta_filepath,
+            params.output_prefix,
+            params.output_screen_file,
             scripts_dir,
-            dbs,
-            run_parameters.protein_search_tool,
-            run_parameters.threads,
+            params,
+            params.inputs.search_tool,
+            params.inputs.threads,
         )
         logging.info(
             " STEP 3 completed at %s",
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
+    else:
+        logging.info(" SKIPPING STEP 3: Nucleotide search")
 
-    # Benign screen
-    logging.info(">> STEP 4: Checking any pathogen regions for benign components...")
-    screen_benign(
-        fasta_to_screen,
-        faa_to_screen,
-        output_prefix,
-        screen_file,
-        tmp_log,
-        scripts_dir,
-        dbs.benign_dir,
-    )
-    logging.info(
-        ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
+    # Benign Screen
+    if params.should_do_benign_screening:
+        logging.info(">> STEP 4: Checking any pathogen regions for benign components...")
+        screen_benign(
+            params.query.cleaned_fasta_filepath,
+            params.query.fasta_aa_filepath,
+            params.output_prefix,
+            params.output_screen_file,
+            params.tmp_log,
+            scripts_dir,
+            params.benign_dir,
+        )
+        logging.info(
+            ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    else:
+        logging.info(" SKIPPING STEP 4: Benign search")
 
-    if run_parameters.do_cleanup:
-        for pattern in [
-            "reg_path_coords.csv",
-            "*hmmscan",
-            "*blastn",
-            "faa",
-            "*blastx",
-            "*dmnd",
-            "*.tmp",
-        ]:
-            for file in glob.glob(f"{output_prefix}.{pattern}"):
-                if os.path.isfile(file):
-                    os.remove(file)
+    params.clean()
 
 def main():
     """

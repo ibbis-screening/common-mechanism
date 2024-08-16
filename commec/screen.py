@@ -55,6 +55,13 @@ def add_args(parser):
         "-t", "--threads", dest="threads", type=int, default=1, help="Threads available"
     )
     parser.add_argument(
+        "-j",
+        "--jobs",
+        dest="jobs",
+        type=int,
+        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)"
+    )
+    parser.add_argument(
         "-p",
         "--protein-search-tool",
         dest="protein_search_tool",
@@ -89,9 +96,10 @@ def add_args(parser):
 @dataclass
 class ScreenParameters:
     """
-    Parameters used for screening; provided by parsing arguments. All have default values.
+    Parameters used for screening; provided by parsing arguments.
     """
     threads: int
+    jobs: int
     protein_search_tool: str
     in_fast_mode: bool
     skip_nt_search: bool
@@ -184,6 +192,7 @@ def screen_proteins(
     screen_dbs,
     search_tool,
     threads,
+    jobs=None
 ):
     """
     Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
@@ -208,7 +217,6 @@ def screen_proteins(
         run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
-        processes = 6
         command = [
             f"{scripts_dir}/run_diamond.sh",
             "-i",
@@ -218,10 +226,10 @@ def screen_proteins(
             "-o",
             protein_out,
             "-t",
-            str(int(threads / processes)),
-            "-p",
-            str(processes),
+            str(threads)
         ]
+        if jobs is not None:
+            command.extend(['-j', str(jobs)])
         run_as_subprocess(command, tmp_log)
 
     if not os.path.exists(search_output):
@@ -385,6 +393,7 @@ def run(args):
     # Set run parameters from args
     run_parameters = ScreenParameters(
         threads=args.threads,
+        jobs=args.jobs,
         protein_search_tool=args.protein_search_tool,
         in_fast_mode=args.fast_mode,
         skip_nt_search=args.skip_nt_search,
@@ -428,6 +437,7 @@ def run(args):
             dbs,
             run_parameters.protein_search_tool,
             run_parameters.threads,
+            run_parameters.jobs
         )
         logging.info(
             " STEP 2 completed at %s",

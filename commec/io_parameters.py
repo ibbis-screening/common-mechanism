@@ -22,6 +22,7 @@ class ScreenInputParameters:
     in_fast_mode: bool = False
     skip_nt_search: bool = False
     do_cleanup: bool = False
+    diamond_jobs : int = None
 
 @dataclass
 class Query:
@@ -41,16 +42,12 @@ class Query:
 
     def validate(self, output_prefix : str):
         """ Translate or reverse translate query, so we have it ready in AA or NT format. """
-
         self.cleaned_fasta_filepath = FileTools.get_cleaned_fasta(self.fasta_filepath, output_prefix)
         self.fasta_aa_filepath = f"{output_prefix}.transeq.faa"
-
-        #command = ["transeq", fasta_to_screen, faa_to_screen, "-frame", "6", "-clean"]
-
         command = ["transeq", self.cleaned_fasta_filepath, self.fasta_aa_filepath, "-frame", "6", "-clean"]
-        command_str = " ".join(command)
 
         # hard coded into subprocess.run for now, as have yet to decide where run_as_subprocess should be.
+        # TODO: Update this.
         try:
             result = subprocess.run(command, check=True)
             if result.returncode != 0:
@@ -71,7 +68,7 @@ class ScreenIOParameters():
     def __init__(self, args : argparse.ArgumentParser):
         # Ensure required arguments are present
         required_args = ['fasta_file', 'threads', 'protein_search_tool', 'fast_mode',
-                         'skip_nt_search', 'cleanup', 'output_prefix', 'database_dir']
+                         'skip_nt_search', 'cleanup', 'output_prefix', 'database_dir', 'jobs']
         for arg in required_args:
             if not hasattr(args, arg):
                 raise ValueError(f"Missing required argument: {arg}")
@@ -82,7 +79,8 @@ class ScreenIOParameters():
             args.protein_search_tool,
             args.fast_mode,
             args.skip_nt_search,
-            args.cleanup
+            args.cleanup,
+            args.jobs
         )
 
         # TODO: Think about whether logs belong in here, or externally.

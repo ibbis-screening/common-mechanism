@@ -69,6 +69,13 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="Tool for homology search to identify regulated pathogen proteins",
     )
     parser.add_argument(
+        "-j",
+        "--jobs",
+        dest="jobs",
+        type=int,
+        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)"
+    )
+    parser.add_argument(
         "-f",
         "--fast",
         dest="fast_mode",

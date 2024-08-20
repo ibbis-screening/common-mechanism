@@ -61,6 +61,13 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         "-t", "--threads", dest="threads", type=int, default=default_params.threads, help="Threads available"
     )
     parser.add_argument(
+        "-j",
+        "--jobs",
+        dest="jobs",
+        type=int,
+        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)"
+    )
+    parser.add_argument(
         "-p",
         "--protein-search-tool",
         dest="protein_search_tool",
@@ -98,6 +105,61 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     return parser
 
+<<<<<<< HEAD
+=======
+
+@dataclass
+class ScreenParameters:
+    """
+    Parameters used for screening; provided by parsing arguments.
+    """
+    threads: int
+    jobs: int
+    protein_search_tool: str
+    in_fast_mode: bool
+    skip_nt_search: bool
+    do_cleanup: bool
+
+def get_output_prefix(input_file, prefix_arg=""):
+    """
+    Returns a prefix that can be used for all output files.
+    
+    - If no prefix was given, use the input filename.
+    - If a directory was given, use the input filename as file prefix within that directory.
+    """
+    if not prefix_arg:
+        return os.path.splitext(input_file)[0]
+    if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
+        # Make the directory if it doesn't exist
+        if not os.path.isdir(prefix_arg):
+            os.makedirs(prefix_arg)
+        # Use the input filename as a prefix within that directory (stripping out the path)
+        input_name = os.path.splitext(os.path.basename(input_file))[0]
+        return prefix_arg + input_name
+    # Existing, non-path prefixes can be used as-is
+    return prefix_arg
+
+
+def get_cleaned_fasta(input_file, out_prefix):
+    """
+    Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
+    replaced with underscores.
+    """
+    cleaned_file = f"{out_prefix}.cleaned.fasta"
+    with (
+        open(input_file, "r", encoding="utf-8") as fin,
+        open(cleaned_file, "w", encoding="utf-8") as fout,
+    ):
+        for line in fin:
+            line = line.strip()
+            modified_line = "".join(
+                "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
+            )
+            fout.write(f"{modified_line}{os.linesep}")
+    return cleaned_file
+
+
+>>>>>>> 4646848 (Provide Diamond with --jobs, not "--processes" (#14))
 def run_as_subprocess(command, out_file, raise_errors=False):
     """
     Run a command using subprocess.run, piping stdout and stderr to `out_file`.
@@ -146,6 +208,7 @@ def screen_proteins(
     screen_dbs,
     search_tool,
     threads,
+    jobs=None
 ):
     """
     Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
@@ -170,7 +233,6 @@ def screen_proteins(
         run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
-        processes = 6
         command = [
             f"{scripts_dir}/run_diamond.sh",
             "-i",
@@ -180,10 +242,10 @@ def screen_proteins(
             "-o",
             protein_out,
             "-t",
-            str(int(threads / processes)),
-            "-p",
-            str(processes),
+            str(threads)
         ]
+        if jobs is not None:
+            command.extend(['-j', str(jobs)])
         run_as_subprocess(command, tmp_log)
 
     if not os.path.exists(search_output):
@@ -338,7 +400,21 @@ def run(args):
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(message)s",
+<<<<<<< HEAD
         handlers=[logging.FileHandler(params.tmp_log, "a")],
+=======
+        handlers=[logging.FileHandler(tmp_log, "a")],
+    )
+
+    # Set run parameters from args
+    run_parameters = ScreenParameters(
+        threads=args.threads,
+        jobs=args.jobs,
+        protein_search_tool=args.protein_search_tool,
+        in_fast_mode=args.fast_mode,
+        skip_nt_search=args.skip_nt_search,
+        do_cleanup=args.cleanup
+>>>>>>> 4646848 (Provide Diamond with --jobs, not "--processes" (#14))
     )
 
     # Check that databases exist
@@ -371,9 +447,16 @@ def run(args):
             params.output_screen_file,
             params.tmp_log,
             scripts_dir,
+<<<<<<< HEAD
             params,
             params.inputs.search_tool,
             params.inputs.threads,
+=======
+            dbs,
+            run_parameters.protein_search_tool,
+            run_parameters.threads,
+            run_parameters.jobs
+>>>>>>> 4646848 (Provide Diamond with --jobs, not "--processes" (#14))
         )
         logging.info(
             " STEP 2 completed at %s",

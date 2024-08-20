@@ -71,14 +71,14 @@ def check_biorisk(hmmscan_input_file : str, hmm_folder : str):
         sys.stdout.write("\t\t --> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region]) +
                             " to " + str(hmmer['ali to'][region]) + 
                             ": FLAG\n\t\t     Gene: " + 
-                            ", ".join(set(hmmer['description'][hmmer['Must flag'] is True])) + "\n")
+                            ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
 
     if sum(hmmer['Must flag']) != hmmer.shape[0]:
         for region in hmmer.index[hmmer['Must flag'] == 0]:
             sys.stdout.write("\t\t --> Virulence factor found in bases " + str(hmmer['ali from'][region]) +
                                 " to " + str(hmmer['ali to'][region]) +
                                 ", WARNING\n\t\t     Gene: " +
-                                ", ".join(set(hmmer['description'][hmmer['Must flag'] is False])) + "\n")
+                                ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
 
 def main():
     '''

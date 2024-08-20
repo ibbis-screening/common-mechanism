@@ -10,7 +10,7 @@ set -eu
 DB=""
 QUERY=""
 OUTPUT="out" 
-THREADS=1           #threads per process
+THREADS=1
 FURTHEROPT=""
 
 #Get options from user

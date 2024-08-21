@@ -22,24 +22,25 @@
 ##############################################################################
 # set parameters for the run
 #set -eu 
-PROCESSES=6         #number of processes to run at once
-THREADS=1           #threads available
 QUERY=""            #query input file 
+DB_PATH="" 
 OUTPUT=""           #output prefix
-MULTIQUERY=0        #multiple query files (default: off)
-CLEANUP=0           #cleanup files (default: off)" 
+THREADS=1           #threads available
+JOBS=""             #number of DIAMOND jobs to run at once
 BLAST=0             #blast or diamond (default: diamond) 
 FAST_MODE=0         #fast mode (default: off)
-NT_SEARCH="on"         #nucleotide search (default: on)
-DB_PATH="" 
+NT_SEARCH="on"      #nucleotide search (default: on)
+MULTIQUERY=0        #multiple query files (default: off)
+CLEANUP=0           #cleanup files (default: off)" 
 
-function print_usage() {
+function usage() {
     echo ""
-    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -f -b -m -c]"
+    echo " Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ [-o OUTPUT -t THREADS -j JOBS -b -f -n -m -c]"
     echo "    QUERY           query file to align to each database (required)"
     echo "    DB_PATH         path to databases (required)"
-    echo "    THREADS         threads available (default: 1)"
     echo "    OUTPUT          output prefix for alignments (default: query prefix)"
+    echo "    THREADS         threads available (default: 1)"
+    echo "    JOBS            number of diamond runs to do in parallel (default: # CPUs / THREADS)"
     echo " OPTIONAL FLAGS" 
     echo "    -b              run blast for protein screen (default: diamond)"
     echo "    -f              turn on fast mode (no bast match function) (default: off)"
@@ -50,29 +51,32 @@ function print_usage() {
 }
 
 #Get options from user
-while getopts "t:d:fq:o:cbn:m" OPTION
+while getopts "q:d:o:t:j:bfn:mc" OPTION
     do
         case $OPTION in
-            t)
-                THREADS=$OPTARG
+            q)
+                QUERY=$OPTARG
                 ;;
             d)
                 DB_PATH=$OPTARG
                 ;;
-            q)
-                QUERY=$OPTARG
-                ;;
             o)
                 OUTPUT=$OPTARG
+                ;;
+            t)
+                THREADS=$OPTARG
+                ;;
+            j)
+                JOBS=$OPTARG
                 ;;
             b)
                 BLAST=1
                 ;;
-            n)
-                NT_SEARCH=$OPTARG
-                ;;
             f)
                 FAST_MODE=1
+                ;;
+            n)
+                NT_SEARCH=$OPTARG
                 ;;
             m)
                 MULTIQUERY=1
@@ -80,20 +84,7 @@ while getopts "t:d:fq:o:cbn:m" OPTION
             c)
                 CLEANUP=1
                 ;;
-            \?)
-                echo "Usage: src/run_pipeline.sh -q QUERY -d DB_PATH/ -o OUTPUT [-t THREADS -b -f -m -c]"
-                echo "  QUERY           query file to align to each database (required)"
-                echo "  OUTPUT          output prefix for alignments (default: query prefix)"
-                echo "  DB_PATH         path to detabases (required)"
-                echo "  THREADS         number of threads for each database run (default: 1)"
-                echo "OPTIONAL FLAGS" 
-                echo "  -b              run blast for protein screen [default: diamond]"
-                echo "  -f              run fast mode (default: off)"
-                echo "  -n              run a nucleotide search if no protein hits are found in a region (default: on)"
-                echo "  -m              input contains multiple queries (default: off)"
-                echo "  -c              tidy up intermediate screening files afterward"
-                exit
-                ;;
+            \?) usage ;;
         esac
     done
 
@@ -201,7 +192,19 @@ echo -e "    STEP 1 completed at $s1_time\n" | tee -a ${OUTPUT}.screen
     else 
         if [ ! -f "${OUTPUT}".nr.dmnd ]; then
             echo -e "\t...running run_diamond.sh"
-            ${CM_DIR}/run_diamond.sh -d $DB_PATH/nr_dmnd/ -i ${OUTPUT}.fasta -o ${OUTPUT}.nr -t $((THREADS/PROCESSES)) -p $PROCESSES # use the shortened filename rather than the original
+            cmd=(
+                "${CM_DIR}/run_diamond.sh"
+                -d "${DB_PATH}/nr_dmnd/"
+                -i "${OUTPUT}.fasta"
+                -o "${OUTPUT}.nr"
+                -t "${THREADS}"
+            )
+            # Add -j option only if JOBS is set and non-empty
+            if [[ -n "${JOBS:-}" ]]; then
+                cmd+=(-j "${JOBS}")
+            fi
+            # Execute the command
+            "${cmd[@]}"
         fi
         echo -e "\t...checking diamond results"
         if [ -f "${OUTPUT}".reg_path_coords.csv ]; then 

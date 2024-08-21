@@ -61,6 +61,13 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         "-t", "--threads", dest="threads", type=int, default=default_params.threads, help="Threads available"
     )
     parser.add_argument(
+        "-j",
+        "--jobs",
+        dest="jobs",
+        type=int,
+        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)"
+    )
+    parser.add_argument(
         "-p",
         "--protein-search-tool",
         dest="protein_search_tool",
@@ -146,6 +153,7 @@ def screen_proteins(
     screen_dbs,
     search_tool,
     threads,
+    jobs=None
 ):
     """
     Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
@@ -170,7 +178,6 @@ def screen_proteins(
         run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
-        processes = 6
         command = [
             f"{scripts_dir}/run_diamond.sh",
             "-i",
@@ -180,10 +187,10 @@ def screen_proteins(
             "-o",
             protein_out,
             "-t",
-            str(int(threads / processes)),
-            "-p",
-            str(processes),
+            str(threads)
         ]
+        if jobs is not None:
+            command.extend(['-j', str(jobs)])
         run_as_subprocess(command, tmp_log)
 
     if not os.path.exists(search_output):
@@ -371,9 +378,10 @@ def run(args):
             params.output_screen_file,
             params.tmp_log,
             scripts_dir,
-            params,
+            params.nr_dir,
             params.inputs.search_tool,
             params.inputs.threads,
+            params.inputs.diamond_jobs
         )
         logging.info(
             " STEP 2 completed at %s",

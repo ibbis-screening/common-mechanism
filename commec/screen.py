@@ -28,6 +28,7 @@ import sys
 
 from commec.file_tools import FileTools
 from commec.io_parameters import ScreenIOParameters, ScreenInputParameters
+from commec.screen_databases import CommecDatabases, DatabaseHandler
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
 
@@ -121,27 +122,30 @@ def run_as_subprocess(command, out_file, raise_errors=False):
                 f" Check {out_file} for logs."
             )
 
-def screen_biorisks(
-    input_file, output_prefix, screen_file, log_file, scripts_dir, screen_dbs
-):
+def screen_biorisks(params: ScreenIOParameters, database : DatabaseHandler):
     """
     Call hmmscan` and `check_biorisk.py` to add biorisk results to `screen_file`.
     """
     logging.debug("\t...running hmmscan")
-    biorisk_out = f"{output_prefix}.biorisk.hmmscan"
-    command = ["hmmscan", "--domtblout", biorisk_out, screen_dbs.biorisk_db, input_file]
-    run_as_subprocess(command, log_file)
+
+    #biorisk_in = params.query.fasta_aa_filepath
+    #biorisk_out = f"{params.output_prefix}.biorisk.hmmscan"
+    #biorisk_dir = os.path.join(params.db_dir, "biorisk_db")
+    #biorisk_db = os.path.join(biorisk_dir, "biorisk.hmm")
+
+    #my_biorisk_screener = HMMDataBase(biorisk_dir, biorisk_db, biorisk_in, biorisk_out)
+    database.screen()
 
     logging.debug("\t...checking hmmscan results")
     command = [
         "python3",
-        f"{scripts_dir}/check_biorisk.py",
+        f"{os.path.dirname(__file__)}/check_biorisk.py",
         "-i",
-        biorisk_out,
+        database.out_file,
         "--database",
-        screen_dbs.biorisk_dir,
+        database.db_directory,
     ]
-    run_as_subprocess(command, screen_file)
+    run_as_subprocess(command, params.output_screen_file)
 
 
 def screen_proteins(
@@ -351,21 +355,17 @@ def run(args):
     # Check that databases exist
     scripts_dir = os.path.dirname(__file__)
 
+    dbs : CommecDatabases = CommecDatabases(params)
+
     # Add the input contents to the log
     shutil.copyfile(params.query.fasta_filepath, params.tmp_log)
 
     # Biorisk screen
     if params.should_do_biorisk_screening:
         logging.info(">> STEP 1: Checking for biorisk genes...")
-        screen_biorisks(params.query.fasta_aa_filepath,
-                        params.output_prefix,
-                        params.output_screen_file,
-                        params.tmp_log,
-                        scripts_dir,
-                        params)
-        logging.info(
-            " STEP 1 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
+        screen_biorisks(params, dbs.biorisk_db)
+        logging.info(" STEP 1 completed at %s",
+                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     else:
         logging.info(" SKIPPING STEP 1: Biorisk search")
 

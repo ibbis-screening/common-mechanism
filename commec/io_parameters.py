@@ -94,20 +94,9 @@ class ScreenIOParameters():
         #Query
         self.query : Query = Query(args.fasta_file, f"{self.output_prefix}.transeq.faa")
 
-        # Database directories and files.
+        # Should this instead be elsewhere.
         self.db_dir = args.database_dir
-        self.biorisk_dir = os.path.join(self.db_dir, "biorisk_db")
-        self.benign_dir = os.path.join(self.db_dir, "benign_db")
-        self.nt_dir = os.path.join(self.db_dir, "nt_blast")
 
-        self.biorisk_db = os.path.join(self.biorisk_dir, "biorisk.hmm")
-        self.benign_db = os.path.join(self.benign_dir, "benign.hmm")
-        self.nt_db = os.path.join(self.nt_dir, "nt")
-
-        self.tax_dir = os.path.join(self.db_dir, "taxonomy")
-
-        # Override database directories and files iff args container the appropriate inputs:
-        # TODO: Add custom database locations to args for the input of blast etc.
 
     def validate(self) -> bool:
         """

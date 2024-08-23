@@ -94,20 +94,9 @@ class ScreenIOParameters():
         #Query
         self.query : Query = Query(args.fasta_file, f"{self.output_prefix}.transeq.faa")
 
-        # Database directories and files.
+        # Should this instead be elsewhere.
         self.db_dir = args.database_dir
-        self.biorisk_dir = os.path.join(self.db_dir, "biorisk_db")
-        self.benign_dir = os.path.join(self.db_dir, "benign_db")
-        self.nt_dir = os.path.join(self.db_dir, "nt_blast")
 
-        self.biorisk_db = os.path.join(self.biorisk_dir, "biorisk.hmm")
-        self.benign_db = os.path.join(self.benign_dir, "benign.hmm")
-        self.nt_db = os.path.join(self.nt_dir, "nt")
-
-        self.tax_dir = os.path.join(self.db_dir, "taxonomy")
-
-        # Override database directories and files iff args container the appropriate inputs:
-        # TODO: Add custom database locations to args for the input of blast etc.
 
     def validate(self) -> bool:
         """
@@ -117,25 +106,6 @@ class ScreenIOParameters():
             raise RuntimeError(f"Screen output {self.output_screen_file} already exists. Aborting.")
 
         self.query.validate(self.output_prefix)
-
-        needed_dirs = [self.biorisk_dir, self.benign_dir]
-
-        # Fast mode doesn't need to check protein search directories
-        if not self.inputs.in_fast_mode:
-            needed_dirs.append(self.nr_dir)
-            needed_dirs.append(self.tax_dir)
-
-        if not self.inputs.in_fast_mode and not self.inputs.skip_nt_search:
-            needed_dirs.append(self.nt_dir)
-
-        for db_dir in needed_dirs:
-            if not os.path.isdir(db_dir):
-                raise FileNotFoundError(f"Mandatory screening directory {db_dir} not found.")
-
-        for db in [self.biorisk_db, self.benign_db]:
-            if not os.path.isfile(db):
-                raise FileNotFoundError(f"Mandatory screening database {db} not found.")
-
         return True
 
     @property

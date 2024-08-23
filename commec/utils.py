@@ -400,6 +400,11 @@ def shift_hits_pos_strand(blast):
 
 
 def trim_edges(df):
+
+    # Use this enumeration, instead of below, for pylint errors - needs testing first.
+    #for top, i in enumerate(df.index):  # run through each hit from the top
+    #    for next, j in enumerate(df.index[top + 1:], start=top + 1):  # compare to each below
+
     for top in range(len(df.index)):  # run through each hit from the top
         i = df.index[top]
         for next in range(top + 1, len(df.index)):  # compare to each below

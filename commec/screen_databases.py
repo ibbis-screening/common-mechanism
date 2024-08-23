@@ -9,7 +9,88 @@ from dataclasses import dataclass
 import subprocess
 import logging
 
+from commec.io_parameters import ScreenIOParameters
+
+class CommecDatabases():
+    """
+    Consolidation and initialisation of all databases needed for the commec workflow.
+    """
+    def __init__(self, params : ScreenIOParameters):
+        # Biorisk
+        self.biorisk_db : HMMDataBase = None
+        # Taxonomy
+        self.protein_db : BlastXDataBase = None
+        self.nucleotide_db : BlastNDataBase = None
+        # Benign
+        self.benign_hmm : HMMDataBase = None
+        self.benign_blastn : BlastNDataBase = None
+        self.benign_cmscan : CmscanDataBase = None
+
+        if params.should_do_biorisk_screening:
+            self.biorisk_db = HMMDataBase(
+                os.path.join(params.db_dir, "biorisk_db"),
+                os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
+                params.query.fasta_aa_filepath,
+                f"{params.output_prefix}.biorisk.hmmscan",
+            )
+
+        if params.should_do_protein_screening:
+            if params.search_tool == "blastx":
+                self.biorisk_db = BlastXDataBase(
+                    os.path.join(params.db_dir, "nr_blast"),
+                    os.path.join(params.db_dir, "nr_blast/nr"),
+                    input_file = params.query.fasta_aa_filepath,
+                    out_file = f"{params.output_prefix}.nr.blastx"
+                )
+            elif params.search_tool == "nr.dmnd":
+                self.biorisk_db = BlastXDataBase(
+                    os.path.join(params.db_dir, "nr_dmnd"),
+                    os.path.join(params.db_dir, "nr_blast/nr.dmnd"),
+                    input_file = params.query.fasta_aa_filepath,
+                    out_file = f"{params.output_prefix}.nr.dmnd"
+                )
+            else:
+                raise RuntimeError("Search tool not defined as \"blastx\" or \"nr.dmnd\"")
+
+        if params.should_do_nucleotide_screening:
+            self.nucleotide_db = BlastNDataBase(
+                os.path.join(params.db_dir, "nt_blast"),
+                os.path.join(params.db_dir, "nt_blast/nt"),
+                input_file = f"{params.output_prefix}.noncoding.fasta",
+                out_file = f"{params.output_prefix}.nt.blastn"
+            )
+
+        if params.should_do_benign_screening:
+            self.benign_hmm = HMMDataBase(
+                os.path.join(params.db_dir, "benign_db"),
+                os.path.join(params.db_dir, "benign_db/benign.hmm"),
+                input_file = params.query.cleaned_fasta_filepath,
+                out_file = f"{params.output_prefix}.benign.hmmscan"
+            )
+            self.benign_blastn = BlastNDataBase(
+                os.path.join(params.db_dir, "benign_db"),
+                os.path.join(params.db_dir, "benign_db/benign.fasta"),
+                input_file = params.query.cleaned_fasta_filepath,
+                out_file = f"{params.output_prefix}.benign.blastn"
+            )
+            self.benign_cmscan = CmscanDataBase(
+                os.path.join(params.db_dir, "benign_db"),
+                os.path.join(params.db_dir, "benign_db/benign.cm"),
+                input_file = params.query.cleaned_fasta_filepath,
+                out_file = f"{params.output_prefix}.benign.cmscan"
+            )
+
 @dataclass
+class DatabaseVersion():
+    """ Container class for outputting version related information from a database."""
+    def __init__(self, input_version : str = "x.x.x", input_date : str = "Null", input_comment :str = ""):
+        self.version_string = input_version
+        self.version_date = input_date
+        self.additional_comment = input_comment
+    version_string : str
+    version_date : str
+    additional_comment : str
+
 class DatabaseHandler():
     """ 
     Abstract Class for holding the directory, and file of a database, 
@@ -19,7 +100,14 @@ class DatabaseHandler():
     # Start Database Handler API
     def screen(self):
         """ Virtual function to be called by any child database implementation"""
-        raise NotImplementedError("This class must override the .screen() to use DatabaseHandler.")
+        raise NotImplementedError(
+            "This class must override the .screen() to use DatabaseHandler."
+        )
+
+    def get_version_information(self) -> DatabaseVersion:
+        """ Override to call version retrieval information on a database."""
+        new_version_info = DatabaseVersion("", "", "Version retrieval not yet supported for this database")
+        return new_version_info
 
     def check_output(self):
         """ 
@@ -31,9 +119,9 @@ class DatabaseHandler():
             return True
         return False
 
-    def __init__(self, directory : str, databse_file : str, input_file : str, out_file : str):
+    def __init__(self, directory : str, database_file : str, input_file : str, out_file : str):
         self.db_directory = directory
-        self.db_file = databse_file
+        self.db_file = database_file
         self.out_file = out_file
         self.input_file = input_file
         self.temp_log_file = f"{self.input_file}.log.tmp"
@@ -41,6 +129,17 @@ class DatabaseHandler():
         self.validate_directory()
 
     # End override API
+
+    def check_input(self):
+        """ 
+        Simply checks for the existance of the input file, This is separated 
+        from database location, as sometimes the input file is generated at a 
+        previous step, and may not exist during DatabaseHandler instantiation.
+        """
+        if os.path.isfile(self.input_file):
+            return True
+        return False
+
     def get_arguments(self) -> list:
         """ 
         convert the arguments dictionary into a list, 
@@ -80,7 +179,7 @@ class DatabaseHandler():
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
-            
+
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)
@@ -97,13 +196,49 @@ class HMMDataBase(DatabaseHandler):
             ]
         self.run_as_subprocess(command, self.temp_log_file)
 
+    def get_version_information(self) -> DatabaseVersion:
+        version : str = None
+        date : str = None
+        comment : str = None
+        try:
+            with open(self.db_file, 'r', encoding = "utf-8") as file:
+                for line in file:
+                    if line.startswith("NAME"):
+                        comment = line.split(maxsplit=1)[1].strip()
+                        continue
+                    if line.startswith("DATE"):
+                        date = line.split(maxsplit=1)[1].strip()
+                        continue
+                    if line.startswith("HMMER3/f"):
+                        version = line.split("[",maxsplit=1)[1].split("|").strip()
+                        continue
+                    # Early exit if data has been found
+                    if version and date and comment:
+                        break
+            return DatabaseVersion(version, date, comment)
+
+        except RuntimeError:
+            return super().get_version_information()
+
+class CmscanDataBase(DatabaseHandler):
+    """ A Database handler specifically for use with Hmmer files for commec screening. """
+    def screen(self):
+        command = [
+            "cmscan", 
+            "--tblout",
+            self.out_file,
+            self.db_file,
+            self.input_file
+            ]
+        self.run_as_subprocess(command, self.temp_log_file)
+
 class BlastXDataBase(DatabaseHandler):
     """ A Database handler specifically for use with BlastX files for commec screening. 
     Allows for full customization of any of the callable blast flags. A better implementation
     may be achieved using import blast"""
 
-    def __init__(self, directory : str, databse_file : str, input_file : str, out_file : str):
-        super().__init__(directory, databse_file, input_file, out_file)
+    def __init__(self, directory : str, database_file : str, input_file : str, out_file : str):
+        super().__init__(directory, database_file, input_file, out_file)
         # We fill this with the defaults, however they can always be overridden after instancing, before screening.
         self.arguments_dictionary = {
             "-num_threads": 1,
@@ -133,12 +268,13 @@ class BlastXDataBase(DatabaseHandler):
         command.extend(self.get_arguments())
         self.run_as_subprocess(command,self.temp_log_file)
 
+
 class BlastNDataBase(DatabaseHandler):
     """ A Database handler specifically for use with BlastX files for commec screening. 
     Allows for full customization of any of the callable blast flags. A better implementation
     may be achieved using import blast"""
-    def __init__(self, directory : str, databse_file : str, input_file : str, out_file : str):
-        super().__init__(directory, databse_file, input_file, out_file)
+    def __init__(self, directory : str, database_file : str, input_file : str, out_file : str):
+        super().__init__(directory, database_file, input_file, out_file)
         # We fill this with the defaults, however they can always be overridden after instancing, before screening.
         self.arguments_dictionary = {
             "-num_threads": 8,
@@ -165,8 +301,8 @@ class BlastNDataBase(DatabaseHandler):
 class DiamondDataBase(DatabaseHandler):
     """ A Database handler specifically for use with Diamond files for commec screening. """
 
-    def __init__(self, directory : str, databse_file : str, input_file : str, out_file : str):
-        super().__init__(directory, databse_file, input_file, out_file)
+    def __init__(self, directory : str, database_file : str, input_file : str, out_file : str):
+        super().__init__(directory, database_file, input_file, out_file)
         self.frameshift = 15
         self.do_range_culling = True
         self.threads = 1

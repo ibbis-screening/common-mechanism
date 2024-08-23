@@ -117,6 +117,7 @@ def run_as_subprocess(command, out_file, raise_errors=False):
         if result.returncode != 0:
             command_str = ' '.join(command)
             logging.info("\t ERROR: command %s failed", command_str)
+            logging.info("\t ERROR: command %s failed", command_str)
             raise RuntimeError(
                 f"subprocess.run of command '{command_str}' encountered error."
                 f" Check {out_file} for logs."

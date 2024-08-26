@@ -67,11 +67,11 @@ class ScreenIOParameters():
 
     def __init__(self, args : argparse.ArgumentParser):
         # Ensure required arguments are present
-        required_args = ['fasta_file', 'threads', 'protein_search_tool', 'fast_mode',
-                         'skip_nt_search', 'cleanup', 'output_prefix', 'database_dir', 'jobs']
-        for arg in required_args:
-            if not hasattr(args, arg):
-                raise ValueError(f"Missing required argument: {arg}")
+        #required_args = ['fasta_file', 'threads', 'protein_search_tool', 'fast_mode',
+        #                 'skip_nt_search', 'cleanup', 'output_prefix', 'database_dir', 'jobs']
+        #for arg in required_args:
+        #    if not hasattr(args, arg):
+        #        raise ValueError(f"Missing required argument: {arg}")
 
         # Inputs
         self.inputs : ScreenInputParameters = ScreenInputParameters(
@@ -88,7 +88,7 @@ class ScreenIOParameters():
         # Outputs
         self.output_prefix = self.get_output_prefix(args.fasta_file, args.output_prefix)
         self.output_screen_file = f"{self.output_prefix}.screen"
-        self.output_json_file = f"{self.output_prefix}.json"
+        self.output_json_file = f"{self.output_prefix}.results.json"
         self.tmp_log = f"{self.output_prefix}.log.tmp"
 
         #Query

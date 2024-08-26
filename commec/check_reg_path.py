@@ -11,11 +11,19 @@ Usage:
 import os, sys, argparse
 import textwrap
 import pandas as pd
+import logging
 from commec.utils import *
+
+from commec.json_io import (
+    ScreenData,
+    encode_screen_data_to_json,
+    get_screen_data_from_json
+)
+
 
 pd.set_option("display.max_colwidth", 10000)
 
-def main(): 
+def main():
     parser = argparse.ArgumentParser() 
     parser.add_argument("-i","--input",dest="in_file", 
         required=True, help="Input query file (e.g. QUERY.nr.dmnd)")
@@ -23,23 +31,46 @@ def main():
         required=True,help="database folder (must contain vax_taxids and reg_taxids file)")
     parser.add_argument("-t","--threads", dest="threads",
         required=True,help="number of threads")
-    args=parser.parse_args() 
-    
-    #check input files
-    if (not os.path.exists(args.in_file)):
-        sys.stderr.write("\t...input query file %s does not exist\n" % args.in_file)
-        exit(1)
-    if (not os.path.exists(args.db + "/benign_db/vax_taxids.txt")):
-        sys.stderr.write("\t...benign db file %s does not exist\n" % (args.db + "/benign_db/vax_taxids.txt"))
-        exit(1)
-    if (not os.path.exists(args.db + "/biorisk_db/reg_taxids.txt")):
-        sys.stderr.write("\t...biorisk db file %s does not exist\n" % (args.db + "/biorisk_db/reg_taxids.txt"))
-        exit(1)
-    # read in files
-    reg_ids = pd.read_csv(args.db + "/biorisk_db/reg_taxids.txt", header=None)
-    vax_ids = pd.read_csv(args.db + "/benign_db/vax_taxids.txt", header=None)
+    parser.add_argument("-o","--out", dest="output_json",
+        required=True,help="output_json_filepath")
+    args=parser.parse_args()
 
-    sample_name = re.sub(".nr.*", "", args.in_file)
+    # Set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(message)s",
+        handlers=[logging.StreamHandler(sys.stderr)],
+    )
+
+    check_for_regulatory_pathogens(args.in_file, args.db, args.threads, args.output_json)
+
+
+def check_for_regulatory_pathogens(input_file : str, input_database_dir : str, n_threads : int, output_json : str):
+    """ Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""
+
+    #check input files
+    if (not os.path.exists(input_file)):
+        logging.error("\t...input query file %s does not exist\n" % input_file)
+        exit(1)
+    if (not os.path.exists(input_database_dir + "/benign_db/vax_taxids.txt")):
+        logging.error("\t...benign db file %s does not exist\n" % (input_database_dir + "/benign_db/vax_taxids.txt"))
+        exit(1)
+    if (not os.path.exists(input_database_dir + "/biorisk_db/reg_taxids.txt")):
+        logging.error("\t...biorisk db file %s does not exist\n" % (input_database_dir + "/biorisk_db/reg_taxids.txt"))
+        exit(1)
+
+    # read in files
+    reg_ids = pd.read_csv(input_database_dir + "/biorisk_db/reg_taxids.txt", header=None)
+    vax_ids = pd.read_csv(input_database_dir + "/benign_db/vax_taxids.txt", header=None)
+
+    output_data : ScreenData = get_screen_data_from_json(output_json)
+
+    sample_name = re.sub(".nr.*", "", input_file)
     sample_name = re.sub(".nt.blastn", "", sample_name)
     
     # if there are already regulated regions written to file for this query, add to them
@@ -47,18 +78,18 @@ def main():
     if os.path.exists(sample_name + ".reg_path_coords.csv"):
         hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
-    if is_empty(args.in_file):
-        sys.stdout.write("\tERROR: Homology search has failed\n")
+    if is_empty(input_file):
+        logging.info("\tERROR: Homology search has failed\n")
         sys.exit(1)
-    if not has_hits(args.in_file):
-        sys.stdout.write("\t...no hits\n")
+    if not has_hits(input_file):
+        logging.info("\t...no hits\n")
         sys.exit(0)
-    blast = readblast(args.in_file)
-    blast = taxdist(blast, reg_ids, vax_ids, args.db + "/taxonomy/", args.threads)
+    blast = readblast(input_file)
+    blast = taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
+    #interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
 
     blast2 = trimblast(blast)
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
@@ -68,7 +99,7 @@ def main():
     reg_fung = 0
 
     # if this is the nucleotide screen, check if any weak protein flags can be negated with strong non-regulated nt ones
-    if re.findall(".nt.blastn", args.in_file):
+    if re.findall(".nt.blastn", input_file):
         if hits1 is not None:
             for region in range(0, hits1.shape[0]): # for each regulated pathogen region
                 # look at only the hits that overlap it
@@ -85,8 +116,8 @@ def main():
                             hit = htrim['subject title'][row]
                             descriptions.append(hit)
                         annot_string = "\n\t...".join(str(v) for v in descriptions)
-                        sys.stdout.write("\t...Regulated protein region at bases " + str(int(hits1['q. start'][region])) + " to " + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n")
-                        sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                        logging.info("\t...Regulated protein region at bases " + str(int(hits1['q. start'][region])) + " to " + str(int(hits1['q. end'][region])) + " overlapped with a nucleotide hit\n")
+                        logging.info("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
 
 
     if blast2['regulated'].sum(): # if ANY of the trimmed hits are regulated
@@ -117,9 +148,9 @@ def main():
 
                 # if some of the organisms with this sequence aren't regulated, say so
                 if (n_reg < n_total):
-                    sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    sys.stdout.write("\t\t     Description: %s\n" % (desc))
+                    logging.info("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
+                    logging.info("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                    logging.info("\t\t     Description: %s\n" % (desc))
                     # could explicitly list which are and aren't regulated?
                 # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
@@ -139,12 +170,12 @@ def main():
                          hits = pd.concat([hits, new_hits], ignore_index=True)
                     elif not new_hits.empty:
                         hits = new_hits.copy()
-                    sys.stdout.write("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
-                    sys.stdout.write("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    sys.stdout.write("\t\t     Description: %s\n" % (desc))
+                    logging.info("\t\t --> Best match to sequence(s) %s at bases %s found in only regulated organisms: FLAG (%s)\n" % (gene_names, coordinates, org))
+                    logging.info("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
+                    logging.info("\t\t     Description: %s\n" % (desc))
                 else: # something is wrong, n_reg > n_total
-                    sys.stdout.write("\t...gene: %s\n" % gene_names)
-                    sys.stdout.write("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
+                    logging.info("\t...gene: %s\n" % gene_names)
+                    logging.info("%s\n" % (blast['regulated'][blast['subject acc.'] == gene_names]))
         hits = hits.drop_duplicates()
         #Create output file 
         if hits1 is not None:
@@ -152,7 +183,9 @@ def main():
         hits.to_csv(sample_name + ".reg_path_coords.csv", index=False)
 
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0 and reg_fung == 0:
-        sys.stdout.write("\t\t --> no top hit exclusive to a regulated pathogen: PASS\n")
+        logging.info("\t\t --> no top hit exclusive to a regulated pathogen: PASS\n")
+
+    encode_screen_data_to_json(output_data, output_json)
 
 if __name__ == "__main__":
     main()

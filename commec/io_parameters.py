@@ -67,11 +67,11 @@ class ScreenIOParameters():
 
     def __init__(self, args : argparse.ArgumentParser):
         # Ensure required arguments are present
-        #required_args = ['fasta_file', 'threads', 'protein_search_tool', 'fast_mode',
-        #                 'skip_nt_search', 'cleanup', 'output_prefix', 'database_dir', 'jobs']
-        #for arg in required_args:
-        #    if not hasattr(args, arg):
-        #        raise ValueError(f"Missing required argument: {arg}")
+        required_args = ['fasta_file', 'threads', 'protein_search_tool', 'fast_mode',
+                         'skip_nt_search', 'cleanup', 'output_prefix', 'database_dir', 'jobs']
+        for arg in required_args:
+            if not hasattr(args, arg):
+                raise ValueError(f"Missing required argument: {arg}")
 
         # Inputs
         self.inputs : ScreenInputParameters = ScreenInputParameters(

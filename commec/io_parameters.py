@@ -88,7 +88,7 @@ class ScreenIOParameters():
         # Outputs
         self.output_prefix = self.get_output_prefix(args.fasta_file, args.output_prefix)
         self.output_screen_file = f"{self.output_prefix}.screen"
-        self.output_json_file = f"{self.output_prefix}.json"
+        self.output_json_file = f"{self.output_prefix}.results.json"
         self.tmp_log = f"{self.output_prefix}.log.tmp"
 
         #Query

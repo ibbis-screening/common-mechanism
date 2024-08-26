@@ -126,7 +126,7 @@ class DatabaseHandler():
         self.db_file = database_file
         self.out_file = out_file
         self.input_file = input_file
-        self.temp_log_file = f"{self.input_file}.log.tmp"
+        self.temp_log_file = f"{self.out_file}.log.tmp"
         self.arguments_dictionary = {}
         self.validate_directory()
 
@@ -151,7 +151,7 @@ class DatabaseHandler():
         for key, value in self.arguments_dictionary.items():
             my_list.append(str(key))
             if isinstance(value, list):
-                my_list.extend(str(v) for v in value)  # Extend the list with all elements in the array
+                my_list.append(" ".join(value))  # Extend the list with all elements in the array
             else:
                 my_list.append(str(value))  # Append the value directly if it's not a list
         return my_list
@@ -287,9 +287,9 @@ class BlastNDataBase(DatabaseHandler):
             "-evalue": "10",
             "-max_target_seqs": 50,
             "-culling_limit": 5,
-            "-outfmt": ["7", "qacc", "stitle", "sacc", "staxids",
+            "-outfmt": ["7", "qacc",   "stitle",   "sacc",   "staxids",
                         "evalue", "bitscore", "pident", "qlen",
-                        "qstart", "qend", "slen", "sstart", "send"]
+                        "qstart", "qend",     "slen",   "sstart",  "send"]
         }
         self.blastcall = "blastn"
 

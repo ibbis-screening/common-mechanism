@@ -33,6 +33,7 @@ from commec.screen_databases import CommecDatabases
 
 from commec.check_biorisk import check_biorisk
 from commec.check_benign import check_for_benign
+from commec.check_reg_path import check_for_regulatory_pathogens
 from commec.fetch_nc_bits import fetch_noncoding_regions
 
 from commec.json_io import (
@@ -135,6 +136,9 @@ class Screen:
         print(" Validating Inputs...")
         self.params.validate()
 
+        # Update filepath.
+        #self.output_screen_data_filepath : str =f"{self.params.output_prefix}.results.json"
+
         # Set up logging
         logging.basicConfig(
             level=logging.INFO,
@@ -153,6 +157,11 @@ class Screen:
         # Add the input contents to the log
         shutil.copyfile(self.params.query.fasta_filepath, self.params.tmp_log)
 
+        # Update screen data output with the Query information.
+        self.output_screen_data.query.name = self.params.query.query_description
+        self.output_screen_data.query.length = len(self.params.query.aa_raw)
+        self.output_screen_data.query.sequence = self.params.query.aa_raw
+
         # Update screen data output with the commec run information.
         if self.params.should_do_biorisk_screening and not self.databases.biorisk_db is None:
             biorisk_v_info = self.databases.biorisk_db.get_version_information()
@@ -169,6 +178,8 @@ class Screen:
         if self.params.should_do_benign_screening and not self.databases.benign_hmm is None:
             benign_v_info = self.databases.benign_hmm.get_version_information()
             self.output_screen_data.commec_info.benign_database_info = benign_v_info.version_date
+
+        encode_screen_data_to_json(self.output_screen_data, self.params.output_json_file)
 
     def run(self, args : argparse.ArgumentParser):
         """
@@ -189,7 +200,7 @@ class Screen:
         # Taxonomy screen
         if self.params.should_do_protein_screening:
             logging.info(" >> STEP 2: Checking regulated pathogen proteins...")
-            #self.screen_proteins(
+            self.screen_proteins()
             #    params.query.fasta_aa_filepath,
             #    params.output_prefix,
             #    params.output_screen_file,
@@ -209,7 +220,7 @@ class Screen:
 
         if self.params.should_do_nucleotide_screening:
             logging.info(" >> STEP 3: Checking regulated pathogen nucleotides...")
-            #self.screen_nucleotides(
+            self.screen_nucleotides()
             #    params.query.cleaned_fasta_filepath,
             #    params.output_prefix,
             #    params.output_screen_file,
@@ -228,7 +239,7 @@ class Screen:
         # Benign Screen
         if self.params.should_do_benign_screening:
             logging.info(">> STEP 4: Checking any pathogen regions for benign components...")
-            #self.screen_benign(
+            self.screen_benign()
             #    params.query.cleaned_fasta_filepath,
             #    params.query.fasta_aa_filepath,
             #    params.output_prefix,
@@ -238,31 +249,32 @@ class Screen:
             #    dbs.benign_hmm.db_directory,
             #)
             logging.info(
-                ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ">> STEP 4 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             )
         else:
             logging.info(" SKIPPING STEP 4: Benign search")
 
+        logging.info(
+            ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
         self.params.clean()
 
-        encode_screen_data_to_json(self.output_screen_data, f"{self.params.output_prefix}.results.json")
-
     # Would like to get rid of this someday, as its currently only used as temporary work around for check_reg_path, which needs work.
-    def run_as_subprocess(self, command, out_file, raise_errors=False):
-        """
-        Run a command using subprocess.run, piping stdout and stderr to `out_file`.
-        """
-        with open(out_file, "a", encoding="utf-8") as f:
-            result = subprocess.run(
-                command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
-            )
-            if result.returncode != 0:
-                command_str = ' '.join(command)
-                logging.info("\t ERROR: command %s failed", command_str)
-                raise RuntimeError(
-                    f"subprocess.run of command '{command_str}' encountered error."
-                    f" Check {out_file} for logs."
-                )
+    #def run_as_subprocess(self, command, out_file, raise_errors=False):
+    #    """
+    #    Run a command using subprocess.run, piping stdout and stderr to `out_file`.
+    #    """
+    #    with open(out_file, "a", encoding="utf-8") as f:
+    #        result = subprocess.run(
+    #            command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
+    #        )
+    #        if result.returncode != 0:
+    #            command_str = ' '.join(command)
+    #            logging.info("\t ERROR: command %s failed", command_str)
+    #            raise RuntimeError(
+    #                f"subprocess.run of command '{command_str}' encountered error."
+    #                f" Check {out_file} for logs."
+    #            )
 
     def screen_biorisks(self):
         """
@@ -272,11 +284,10 @@ class Screen:
         self.databases.biorisk_db.screen()
         logging.debug("\t...checking hmmscan results")
         check_biorisk(self.databases.biorisk_db.out_file,
-                      self.databases.biorisk_db.db_directory)
+                      self.databases.biorisk_db.db_directory,
+                      self.params.output_json_file)
 
-    def screen_proteins(self
-        #input_file,out_prefix,screen_file,tmp_log,scripts_dir,screen_dbs,search_tool,threads,jobs=None
-    ):
+    def screen_proteins(self):
         """
         Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
         pathogen protein screening results to `screen_file`.
@@ -326,17 +337,21 @@ class Screen:
         if os.path.isfile(reg_path_coords):
             os.remove(reg_path_coords)
 
-        command = [
-            "python",
-            f"{self.scripts_dir}/check_reg_path.py",
-            "-i",
-            self.databases.protein_db.out_file,
-            "-d",
-            self.params.db_dir,
-            "-t",
-            str(self.params.inputs.threads),
-        ]
-        self.run_as_subprocess(command, self.params.output_screen_file)
+        #command = [
+        #    "python",
+        #    f"{self.scripts_dir}/check_reg_path.py",
+        #    "-i",
+        #    self.databases.protein_db.out_file,
+        #    "-d",
+        #    self.params.db_dir,
+        #    "-t",
+        #    str(self.params.inputs.threads),
+        #]
+        #self.run_as_subprocess(command, self.params.output_screen_file)
+        check_for_regulatory_pathogens(self.databases.protein_db.out_file,
+                                       self.params.db_dir,
+                                       str(self.params.inputs.threads),
+                                       self.params.output_json_file)
 
 
     def screen_nucleotides(self
@@ -391,17 +406,22 @@ class Screen:
             raise RuntimeError(f"Nucleotide search failed and {self.databases.nucleotide_db.out_file} was not created. Aborting.")
 
         logging.debug("\t...checking blastn results")
-        command = [
-            "python",
-            f"{self.scripts_dir}/check_reg_path.py",
-            "-i",
-            self.databases.nucleotide_db.out_file,
-            "-d",
-            self.params.db_dir,
-            "-t",
-            str(self.params.inputs.threads),
-        ]
-        self.run_as_subprocess(command, self.params.output_screen_file)
+        #command = [
+        #    "python",
+        #    f"{self.scripts_dir}/check_reg_path.py",
+        #    "-i",
+        #    self.databases.nucleotide_db.out_file,
+        #    "-d",
+        #    self.params.db_dir,
+        #    "-t",
+        #    str(self.params.inputs.threads),
+        #]
+        #self.run_as_subprocess(command, self.params.output_screen_file)
+
+        check_for_regulatory_pathogens(self.databases.nucleotide_db.out_file,
+                                       self.params.db_dir,
+                                       str(self.params.inputs.threads),
+                                       self.params.output_json_file)
 
 
     def screen_benign(self#,
@@ -418,13 +438,16 @@ class Screen:
         logging.debug("\t...running benign cmscan")
         self.databases.benign_cmscan.screen()
 
-        # TODO: Check_for_benign needs refactoring to remove hard codes and prepare for unit tests.
         sample_name = self.params.output_prefix # Note currently check_for_benign hard codes .benign.hmmscan onto this.
+        if not os.path.exists(sample_name + ".reg_path_coords.csv"):
+            logging.info("\t...no regulated regions to clear\n")
+            return
+        
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
         benign_desc =  pd.read_csv(self.databases.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
         
         logging.debug("\t...checking benign scan results")
-        check_for_benign(sample_name, coords, benign_desc)
+        check_for_benign(sample_name, coords, benign_desc, self.params.output_json_file)
 
         #logging.debug("\t...running benign hmmscan")
         #hmmscan_out = f"{out_prefix}.benign.hmmscan"
@@ -468,14 +491,20 @@ class Screen:
         #]
         #run_as_subprocess(command, screen_file)
 
+def run(parser):
+    """
+    Entry point from commec. Passes args to Screen object, and runs.
+    """
+    my_screen : Screen = Screen()
+    my_screen.run(parser.parse_args())
+
 def main():
     """
     Main function. Passes args to Screen object, which then runs.
     """
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     add_args(parser)
-    my_screen : Screen = Screen()
-    my_screen.run(parser.parse_args())
+    run(parser)
 
 if __name__ == "__main__":
     try:

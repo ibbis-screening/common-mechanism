@@ -54,10 +54,18 @@ class MatchFields:
     # etc etc
 
 @dataclass
+class BioRisk:
+    '''Container to hold information for a match to the query identified as a potential biorisk'''
+    description : str = ""
+    range : MatchRange = field(default_factory = MatchRange)
+    # etc etc
+
+@dataclass
 class BioRiskData:
     '''Container dataclass for a list of matches to biorisks 
     identified from a commec database screen.'''
-    matches : list[MatchFields] = field(default_factory = list)
+    regulated_genes : list[BioRisk] = field(default_factory = list)
+    virulance_factors : list[BioRisk] = field(default_factory = list)
 
 @dataclass
 class TaxonomyData:
@@ -89,8 +97,8 @@ class CommecRunInformation:
 class ScreenData:
     ''' Root dataclass to hold all data related to the screening of an individual query by commec.'''
     recommendation : str = ""
-    query : QueryData = field(default_factory = QueryData)
-    biorisks : list[BioRiskData] = field(default_factory = list)
+    query : QueryData = field(default_factory = QueryData) # maybe this needs to be array too for multiple fasta inputs.
+    biorisks : BioRiskData = field(default_factory = BioRiskData)
     taxonomies : list[TaxonomyData] = field(default_factory = list)
     commec_info : CommecRunInformation = field(default_factory = CommecRunInformation)
 

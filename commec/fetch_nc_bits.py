@@ -97,6 +97,5 @@ def main():
     args = parser.parse_args()
     fetch_noncoding_regions(args.in_file, args.fasta_file_path)
 
-
 if __name__ == "__main__":
     main()

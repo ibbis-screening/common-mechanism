@@ -62,7 +62,6 @@ class FileTools():
             raise argparse.ArgumentTypeError(f"{path} is not a valid file")
         if not os.path.getsize(path) > 0:
             raise argparse.ArgumentTypeError(f"{path} is an empty file")
-
         return path
     
     @staticmethod

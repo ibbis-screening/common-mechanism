@@ -11,19 +11,22 @@ import sys
 import argparse
 import pandas as pd
 from commec.utils import (
-    is_empty,
     has_hits,
     readhmmer,
     trimhmmer,)
 
-def check_biorisk(hmmscan_input_file : str, hmm_folder : str):
+from commec.file_tools import FileTools
+
+
+def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str):
     '''
     Checks an HMM scan output, and parses it for biorisks, according to those found in the biorisk_annotations.csv.
     INPUTS:
         - hmmscan_input_file - the file output from hmmscan, containing information about potential hits.
+        - hmm_folder - the directory containing biorisk_annotations.csv
     '''
     #check input files
-    hmm_folder_csv  = hmm_folder + "/biorisk_annotations.csv"
+    hmm_folder_csv  = biorisk_annotations_directory + "/biorisk_annotations.csv"
     if not os.path.exists(hmmscan_input_file):
         sys.stderr.write("\t...input file does not exist\n")
         sys.exit(1)
@@ -36,7 +39,7 @@ def check_biorisk(hmmscan_input_file : str, hmm_folder : str):
     lookup.fillna(False, inplace=True)
 
     # read in HMMER output and check for valid hits
-    if is_empty(hmmscan_input_file):
+    if FileTools.is_empty(hmmscan_input_file):
         sys.stdout.write("\t...ERROR: biorisk search results empty\n")
         return
 

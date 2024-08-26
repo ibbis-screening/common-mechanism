@@ -16,11 +16,12 @@ class CommecDatabases():
     Consolidation and initialisation of all databases needed for the commec workflow.
     """
     def __init__(self, params : ScreenIOParameters):
-        # Database directories and files.
-
+        # Biorisk
         self.biorisk_db : HMMDataBase = None
+        # Taxonomy
         self.protein_db : BlastXDataBase = None
         self.nucleotide_db : BlastNDataBase = None
+        # Benign
         self.benign_hmm : HMMDataBase = None
         self.benign_blastn : BlastNDataBase = None
         self.benign_cmscan : CmscanDataBase = None
@@ -36,58 +37,60 @@ class CommecDatabases():
         if params.should_do_protein_screening:
             if params.search_tool == "blastx":
                 self.biorisk_db = BlastXDataBase(
-                    os.path.join(params.db_dir, "biorisk_db"),
-                    os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
-                    f"{params.output_prefix}.biorisk.hmmscan",
-                    f"{params.query.fasta_aa_filepath}.biorisk.hmmscan"
+                    os.path.join(params.db_dir, "nr_blast"),
+                    os.path.join(params.db_dir, "nr_blast/nr"),
+                    input_file = params.query.fasta_aa_filepath,
+                    out_file = f"{params.output_prefix}.nr.blastx"
                 )
-            if params.search_tool == "nr.dmnd":
+            elif params.search_tool == "nr.dmnd":
                 self.biorisk_db = BlastXDataBase(
-                    os.path.join(params.db_dir, "biorisk_db"),
-                    os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
-                    f"{params.output_prefix}.biorisk.hmmscan",
-                    f"{params.query.fasta_aa_filepath}.biorisk.hmmscan"
+                    os.path.join(params.db_dir, "nr_dmnd"),
+                    os.path.join(params.db_dir, "nr_blast/nr.dmnd"),
+                    input_file = params.query.fasta_aa_filepath,
+                    out_file = f"{params.output_prefix}.nr.dmnd"
                 )
+            else:
+                raise RuntimeError("Search tool not defined as \"blastx\" or \"nr.dmnd\"")
 
         if params.should_do_nucleotide_screening:
             self.nucleotide_db = BlastNDataBase(
                 os.path.join(params.db_dir, "nt_blast"),
                 os.path.join(params.db_dir, "nt_blast/nt"),
-                f"{params.output_prefix}.biorisk.hmmscan",
-                f"{params.query.fasta_aa_filepath}.biorisk.hmmscan"
+                input_file = f"{params.output_prefix}.noncoding.fasta",
+                out_file = f"{params.output_prefix}.nt.blastn"
             )
 
         if params.should_do_benign_screening:
             self.benign_hmm = HMMDataBase(
                 os.path.join(params.db_dir, "benign_db"),
-                os.path.join(params.db_dir, "benign_db/biorisk.hmm"),
-                f"{params.output_prefix}.biorisk.hmmscan",
-                f"{params.query.fasta_aa_filepath}.biorisk.hmmscan"
+                os.path.join(params.db_dir, "benign_db/benign.hmm"),
+                input_file = params.query.cleaned_fasta_filepath,
+                out_file = f"{params.output_prefix}.benign.hmmscan"
             )
             self.benign_blastn = BlastNDataBase(
                 os.path.join(params.db_dir, "benign_db"),
-                os.path.join(params.db_dir, "benign_db/biorisk.hmm"),
-                f"{params.output_prefix}.biorisk.hmmscan",
-                f"{params.query.fasta_aa_filepath}.biorisk.hmmscan"
+                os.path.join(params.db_dir, "benign_db/benign.fasta"),
+                input_file = params.query.cleaned_fasta_filepath,
+                out_file = f"{params.output_prefix}.benign.blastn"
             )
             self.benign_cmscan = CmscanDataBase(
                 os.path.join(params.db_dir, "benign_db"),
-                os.path.join(params.db_dir, "benign_db/biorisk.hmm"),
-                f"{params.output_prefix}.biorisk.hmmscan",
-                f"{params.query.fasta_aa_filepath}.biorisk.hmmscan"
+                os.path.join(params.db_dir, "benign_db/benign.cm"),
+                input_file = params.query.cleaned_fasta_filepath,
+                out_file = f"{params.output_prefix}.benign.cmscan"
             )
-        #self.db_dir = db_dir
-        #self.biorisk_dir = os.path.join(db_dir, "biorisk_db")
-        #self.benign_dir = os.path.join(db_dir, "benign_db")
-        #self.nt_dir = os.path.join(db_dir, "nt_blast")
-#
-        #self.biorisk_db = os.path.join(biorisk_dir, "biorisk.hmm")
-        #self.benign_db = os.path.join(benign_dir, "benign.hmm")
-        #self.nt_db = os.path.join(nt_dir, "nt")
-#
-        #self.tax_dir = os.path.join(self.db_dir, "taxonomy")
 
 @dataclass
+class DatabaseVersion():
+    """ Container class for outputting version related information from a database."""
+    def __init__(self, input_version : str = "x.x.x", input_date : str = "Null", input_comment :str = ""):
+        self.version_string = input_version
+        self.version_date = input_date
+        self.additional_comment = input_comment
+    version_string : str
+    version_date : str
+    additional_comment : str
+
 class DatabaseHandler():
     """ 
     Abstract Class for holding the directory, and file of a database, 
@@ -101,15 +104,10 @@ class DatabaseHandler():
             "This class must override the .screen() to use DatabaseHandler."
         )
 
-    def check_input(self):
-        """ 
-        Simply checks for the existance of the input file, This is separated 
-        from database location, as sometimes the input file is generated at a 
-        previous step, and may not exist during DatabaseHandler instantiation.
-        """
-        if os.path.isfile(self.input_file):
-            return True
-        return False
+    def get_version_information(self) -> DatabaseVersion:
+        """ Override to call version retrieval information on a database."""
+        new_version_info = DatabaseVersion("", "", "Version retrieval not yet supported for this database")
+        return new_version_info
 
     def check_output(self):
         """ 
@@ -131,6 +129,17 @@ class DatabaseHandler():
         self.validate_directory()
 
     # End override API
+
+    def check_input(self):
+        """ 
+        Simply checks for the existance of the input file, This is separated 
+        from database location, as sometimes the input file is generated at a 
+        previous step, and may not exist during DatabaseHandler instantiation.
+        """
+        if os.path.isfile(self.input_file):
+            return True
+        return False
+
     def get_arguments(self) -> list:
         """ 
         convert the arguments dictionary into a list, 
@@ -170,7 +179,7 @@ class DatabaseHandler():
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
-            
+
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)
@@ -186,6 +195,30 @@ class HMMDataBase(DatabaseHandler):
             self.input_file
             ]
         self.run_as_subprocess(command, self.temp_log_file)
+
+    def get_version_information(self) -> DatabaseVersion:
+        version : str = None
+        date : str = None
+        comment : str = None
+        try:
+            with open(self.db_file, 'r', encoding = "utf-8") as file:
+                for line in file:
+                    if line.startswith("NAME"):
+                        comment = line.split(maxsplit=1)[1].strip()
+                        continue
+                    if line.startswith("DATE"):
+                        date = line.split(maxsplit=1)[1].strip()
+                        continue
+                    if line.startswith("HMMER3/f"):
+                        version = line.split("[",maxsplit=1)[1].split("|").strip()
+                        continue
+                    # Early exit if data has been found
+                    if version and date and comment:
+                        break
+            return DatabaseVersion(version, date, comment)
+
+        except RuntimeError:
+            return super().get_version_information()
 
 class CmscanDataBase(DatabaseHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
@@ -234,6 +267,7 @@ class BlastXDataBase(DatabaseHandler):
         ]
         command.extend(self.get_arguments())
         self.run_as_subprocess(command,self.temp_log_file)
+
 
 class BlastNDataBase(DatabaseHandler):
     """ A Database handler specifically for use with BlastX files for commec screening. 

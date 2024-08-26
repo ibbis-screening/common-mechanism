@@ -106,25 +106,6 @@ class ScreenIOParameters():
             raise RuntimeError(f"Screen output {self.output_screen_file} already exists. Aborting.")
 
         self.query.validate(self.output_prefix)
-
-        needed_dirs = [self.biorisk_dir, self.benign_dir]
-
-        # Fast mode doesn't need to check protein search directories
-        if not self.inputs.in_fast_mode:
-            needed_dirs.append(self.nr_dir)
-            needed_dirs.append(self.tax_dir)
-
-        if not self.inputs.in_fast_mode and not self.inputs.skip_nt_search:
-            needed_dirs.append(self.nt_dir)
-
-        for db_dir in needed_dirs:
-            if not os.path.isdir(db_dir):
-                raise FileNotFoundError(f"Mandatory screening directory {db_dir} not found.")
-
-        for db in [self.biorisk_db, self.benign_db]:
-            if not os.path.isfile(db):
-                raise FileNotFoundError(f"Mandatory screening database {db} not found.")
-
         return True
 
     @property

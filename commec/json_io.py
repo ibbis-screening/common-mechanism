@@ -79,6 +79,10 @@ class CommecRunInformation:
     '''Container dataclass to hold general run information for a commec screen '''
     commec_version : str = "0.1.2"
     json_output_version : str = JSON_COMMEC_FORMAT_VERSION
+    biorisk_database_info : str = ""
+    protein_database_info : str = ""
+    nucleotide_database_info : str = ""
+    benign_database_info : str = ""
     # add other settings / run parameters.
 
 @dataclass

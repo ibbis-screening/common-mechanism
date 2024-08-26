@@ -23,7 +23,6 @@ import datetime
 import logging
 import os
 import shutil
-import subprocess
 import sys
 import pandas as pd
 
@@ -33,7 +32,7 @@ from commec.screen_databases import CommecDatabases
 
 from commec.check_biorisk import check_biorisk
 from commec.check_benign import check_for_benign
-from commec.check_reg_path import check_for_regulatory_pathogens
+from commec.check_reg_path import check_for_regulated_pathogens
 from commec.fetch_nc_bits import fetch_noncoding_regions
 
 from commec.json_io import (
@@ -138,6 +137,9 @@ class Screen:
 
         # Update filepath.
         #self.output_screen_data_filepath : str =f"{self.params.output_prefix}.results.json"
+
+        logging.basicConfig(level=logging.DEBUG)
+
 
         # Set up logging
         logging.basicConfig(
@@ -348,7 +350,7 @@ class Screen:
         #    str(self.params.inputs.threads),
         #]
         #self.run_as_subprocess(command, self.params.output_screen_file)
-        check_for_regulatory_pathogens(self.databases.protein_db.out_file,
+        check_for_regulated_pathogens(self.databases.protein_db.out_file,
                                        self.params.db_dir,
                                        str(self.params.inputs.threads),
                                        self.params.output_json_file)
@@ -366,7 +368,8 @@ class Screen:
         #command = ["python", f"{scripts_dir}/fetch_nc_bits.py", nr_out, input_file]
         #run_as_subprocess(command, screen_file)
 
-        fetch_noncoding_regions(self.databases.protein_db.out_file, self.params.query.cleaned_fasta_filepath)
+        fetch_noncoding_regions(self.databases.protein_db.out_file, 
+                                self.params.query.cleaned_fasta_filepath)
 
         # Only screen nucleotides in noncoding regions
         noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta"
@@ -377,7 +380,8 @@ class Screen:
             return
 
         # Only run new blastn search if there are no previous results
-        self.databases.nucleotide_db.screen()
+        if not self.databases.nucleotide_db.check_output():
+            self.databases.nucleotide_db.screen()
 
         #nt_output = f"{out_prefix}.nt.blastn"
         #if not os.path.isfile(nt_output):
@@ -418,7 +422,7 @@ class Screen:
         #]
         #self.run_as_subprocess(command, self.params.output_screen_file)
 
-        check_for_regulatory_pathogens(self.databases.nucleotide_db.out_file,
+        check_for_regulated_pathogens(self.databases.nucleotide_db.out_file,
                                        self.params.db_dir,
                                        str(self.params.inputs.threads),
                                        self.params.output_json_file)

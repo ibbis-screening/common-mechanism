@@ -15,6 +15,7 @@
 
 import json
 import string
+import os
 from dataclasses import dataclass, asdict, fields, field, is_dataclass
 from typing import Dict, Type, get_origin, Any, get_args
 
@@ -108,12 +109,12 @@ class ScreenData:
 
 # The above could be moved to a custom .py script for variable importing under version control.
 
-def encode_screen_data_to_json(input_screendata: ScreenData, output_json_filepath: string = "output.json"):
+def encode_screen_data_to_json(input_screendata: ScreenData, output_json_filepath: string = "output.json") -> None:
     ''' Converts a ScreenData class object into a JSON file at the given filepath.'''
     with open(output_json_filepath, "w", encoding="utf-8") as json_file:
         json.dump(asdict(input_screendata), json_file, indent=4)
 
-def encode_dict_to_screen_data(input_dict : dict):
+def encode_dict_to_screen_data(input_dict : dict) -> ScreenData:
     ''' Converts a dictionary into a ScreenData object, 
     any keys within the dictionary not part of the ScreenData format are lost.
     any missing information will be simple set as defaults.'''
@@ -160,8 +161,13 @@ def dict_to_dataclass(cls: Type, data: Dict[str, Any]) -> Any:
     # Create an instance of the dataclass with the filtered data
     return cls(**filtered_data)
 
-def get_screen_data_from_json(input_json_filepath: string):
-    ''' Loads a JSON file from given filepath and returns a populated ScreenData object from its contents.'''
+def get_screen_data_from_json(input_json_filepath: string) -> ScreenData:
+    ''' Loads a JSON file from given filepath and returns 
+    a populated ScreenData object from its contents. If the file does not
+    exist, then returns a new screen data object.'''
+    if not os.path.exists(input_json_filepath):
+        return ScreenData()
+
     json_string : str
     with open(input_json_filepath, "r", encoding="utf-8") as json_file:
         # Read the file contents as a string

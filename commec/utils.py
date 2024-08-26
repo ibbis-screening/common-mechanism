@@ -9,6 +9,7 @@ import re
 import pytaxonkit
 import pandas as pd
 import numpy as np
+import logging
 
 
 def is_empty(filepath: str) -> bool:
@@ -89,7 +90,6 @@ def split_taxa(blast):
     blast["phylum"] = ""
     return blast
 
-
 def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     """
     Go through each taxonomy level and check for regulated taxIDs
@@ -109,6 +109,14 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     t = pytaxonkit.lineage(blast["subject tax ids"], data_dir=db_path, threads=threads)
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
+
+    try:
+        a = t["FullLineage"].str.split(";")[0]
+        b = t["FullLineageTaxIDs"].str.split(";")[0]
+        c = t["FullLineageRanks"].str.split(";")[0]
+    except AttributeError:
+        logging.error("The NR database used has not returned any Lineage information!")
+        return blast
 
     for x in range(0, blast.shape[0]):  # for each hit taxID
         # fetch the full lineage for that taxID

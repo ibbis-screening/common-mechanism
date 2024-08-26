@@ -38,10 +38,10 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
     hmm_folder_csv  = biorisk_annotations_directory + "/biorisk_annotations.csv"
     if not os.path.exists(hmmscan_input_file):
         logging.error("\t...input file does not exist\n")
-        sys.exit(1)
+        return 1
     if not os.path.exists(hmm_folder_csv):
-        logging.error("\t...biorisk_annotations.csv does not exist\n")
-        sys.exit(1)
+        logging.error("\t...biorisk_annotations.csv does not exist\n" + hmm_folder_csv)
+        return 1
 
     output_data : ScreenData = get_screen_data_from_json(output_json)
     
@@ -116,6 +116,7 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
             )
             output_data.biorisks.virulance_factors.append(new_match)
     encode_screen_data_to_json(output_data, output_json)
+    return 0
 
 def main():
     '''
@@ -142,7 +143,7 @@ def main():
         handlers=[logging.StreamHandler(sys.stderr)],
     )
 
-    check_biorisk(args.in_file, args.db, args.output_json)
-
+    return_value = check_biorisk(args.in_file, args.db, args.output_json)
+    return return_value
 if __name__ == "__main__":
     main()

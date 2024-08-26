@@ -185,6 +185,7 @@ def check_for_benign(query, coords, benign_desc, output_json):
 
     #Save changes to the json
     encode_screen_data_to_json(output_data, output_json)
+    return 0
 
 
 def main():
@@ -223,7 +224,7 @@ def main():
 
     if not os.path.exists(args.db + "/benign_annotations.tsv"):
         sys.stderr.write("\t...benign_annotations.tsv does not exist\n")
-        sys.exit(1)
+        return 1
 
     # Check database file
     pd.set_option("max_colwidth", 200)
@@ -231,18 +232,19 @@ def main():
 
     if not os.path.exists(args.sample_name + ".reg_path_coords.csv"):
         logging.info("\t...no regulated regions to clear\n")
-        sys.exit(0)
+        return 0
 
     # Read database file
     coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
 
     if coords.shape[0] == 0:
         logging.info("\t...no regulated regions to clear\n")
-        sys.exit(0)
+        return 0
 
     coords.sort_values(by=["q. start"], inplace=True)
     coords.reset_index(drop=True, inplace=True)
-    check_for_benign(args.sample_name, coords, benign_desc, args.output_json)
+    rv = check_for_benign(args.sample_name, coords, benign_desc, args.output_json)
+    sys.exit(rv)
 
 if __name__ == "__main__":
     main()

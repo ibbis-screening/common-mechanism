@@ -12,7 +12,16 @@ import os, sys, argparse
 import textwrap
 import pandas as pd
 import logging
-from commec.utils import *
+import re
+from commec.utils import (
+    taxdist,
+    has_hits,
+    tophits,
+    readblast,
+    trimblast,
+)
+
+from commec.file_tools import FileTools
 
 from commec.json_io import (
     ScreenData,
@@ -24,7 +33,7 @@ from commec.json_io import (
 pd.set_option("display.max_colwidth", 10000)
 
 def main():
-    parser = argparse.ArgumentParser() 
+    parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",dest="in_file", 
         required=True, help="Input query file (e.g. QUERY.nr.dmnd)")
     parser.add_argument("-d","--database", dest="db",
@@ -47,22 +56,23 @@ def main():
         handlers=[logging.StreamHandler(sys.stderr)],
     )
 
-    check_for_regulatory_pathogens(args.in_file, args.db, args.threads, args.output_json)
+    rv = check_for_regulated_pathogens(args.in_file, args.db, args.threads, args.output_json)
+    sys.exit(rv)
 
 
-def check_for_regulatory_pathogens(input_file : str, input_database_dir : str, n_threads : int, output_json : str):
+def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_threads : int, output_json : str):
     """ Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""
 
     #check input files
     if (not os.path.exists(input_file)):
         logging.error("\t...input query file %s does not exist\n" % input_file)
-        exit(1)
+        return 1
     if (not os.path.exists(input_database_dir + "/benign_db/vax_taxids.txt")):
         logging.error("\t...benign db file %s does not exist\n" % (input_database_dir + "/benign_db/vax_taxids.txt"))
-        exit(1)
+        return 1
     if (not os.path.exists(input_database_dir + "/biorisk_db/reg_taxids.txt")):
         logging.error("\t...biorisk db file %s does not exist\n" % (input_database_dir + "/biorisk_db/reg_taxids.txt"))
-        exit(1)
+        return 1
 
     # read in files
     reg_ids = pd.read_csv(input_database_dir + "/biorisk_db/reg_taxids.txt", header=None)
@@ -78,12 +88,14 @@ def check_for_regulatory_pathogens(input_file : str, input_database_dir : str, n
     if os.path.exists(sample_name + ".reg_path_coords.csv"):
         hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
-    if is_empty(input_file):
+    if FileTools.is_empty(input_file):
         logging.info("\tERROR: Homology search has failed\n")
-        sys.exit(1)
+        return 1
+
     if not has_hits(input_file):
         logging.info("\t...no hits\n")
-        sys.exit(0)
+        return 0
+
     blast = readblast(input_file)
     blast = taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
@@ -186,6 +198,7 @@ def check_for_regulatory_pathogens(input_file : str, input_database_dir : str, n
         logging.info("\t\t --> no top hit exclusive to a regulated pathogen: PASS\n")
 
     encode_screen_data_to_json(output_data, output_json)
+    return 0
 
 if __name__ == "__main__":
     main()

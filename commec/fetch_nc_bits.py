@@ -17,10 +17,13 @@ from commec.utils import *
     #query = sys.argv[1]
     #f_file = sys.argv[2]
 
-def fetch_noncoding_regions(query_filepath : str, fasta_file_path : str):
+def fetch_noncoding_regions(nr_output_file : str, cleaned_fasta_file_path : str):
+    """
+    Takes the output of a blastx result from NR, and the query fasta file, and fetches a list of 
+    """
     nc_bits = 0
-    query = query_filepath
-    f_file = fasta_file_path
+    query = nr_output_file
+    f_file = cleaned_fasta_file_path
 
     # check if the nr hits file is empty
     if is_empty(query):
@@ -81,7 +84,7 @@ def fetch_noncoding_regions(query_filepath : str, fasta_file_path : str):
         shutil.copyfile(f_file, outfile)
     elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
         sys.stdout.write("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
-    else: 
+    else:
         seqid = blast.iloc[0, 0]
         fetch_sequences(seqid, nc_bits, f_file, outfile)
 

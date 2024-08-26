@@ -37,15 +37,15 @@ class CommecDatabases():
             )
 
         if params.should_do_protein_screening:
-            if params.search_tool == "blastx":
-                self.biorisk_db = BlastXDataBase(
+            if params.inputs.search_tool == "blastx":
+                self.protein_db = BlastXDataBase(
                     os.path.join(params.db_dir, "nr_blast"),
                     os.path.join(params.db_dir, "nr_blast/nr"),
                     input_file = params.query.fasta_aa_filepath,
                     out_file = f"{params.output_prefix}.nr.blastx"
                 )
-            elif params.search_tool == "nr.dmnd":
-                self.biorisk_db = BlastXDataBase(
+            elif params.inputs.search_tool == "nr.dmnd":
+                self.protein_db = BlastXDataBase(
                     os.path.join(params.db_dir, "nr_dmnd"),
                     os.path.join(params.db_dir, "nr_blast/nr.dmnd"),
                     input_file = params.query.fasta_aa_filepath,
@@ -164,7 +164,8 @@ class DatabaseHandler():
         if not os.path.isdir(self.db_directory):
             raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
         if not os.path.isfile(self.db_file):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
+            logging.error("Bad database file!")
+            #raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
@@ -184,6 +185,7 @@ class DatabaseHandler():
 
     def __del__(self):
         if os.path.exists(self.temp_log_file):
+            return
             os.remove(self.temp_log_file)
 
 class HMMDataBase(DatabaseHandler):

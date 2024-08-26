@@ -29,7 +29,6 @@ import pandas as pd
 
 from commec.file_tools import FileTools
 from commec.io_parameters import ScreenIOParameters, ScreenInputParameters
-
 from commec.screen_databases import CommecDatabases
 
 from commec.check_biorisk import check_biorisk
@@ -71,7 +70,12 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="Output prefix (can be string or directory)",
     )
     parser.add_argument(
-        "-t", "--threads", dest="threads", type=int, default=default_params.threads, help="Threads available"
+        "-t", 
+        "--threads", 
+        dest="threads", 
+        type=int, 
+        default=default_params.threads, 
+        help="Threads available"
     )
     parser.add_argument(
         "-j",
@@ -87,13 +91,6 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         choices=["blastx", "diamond"],
         default=default_params.search_tool,
         help="Tool for homology search to identify regulated pathogen proteins",
-    )
-    parser.add_argument(
-        "-j",
-        "--jobs",
-        dest="jobs",
-        type=int,
-        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)"
     )
     parser.add_argument(
         "-f",
@@ -157,14 +154,21 @@ class Screen:
         shutil.copyfile(self.params.query.fasta_filepath, self.params.tmp_log)
 
         # Update screen data output with the commec run information.
-        biorisk_v_info = self.databases.biorisk_db.get_version_information()
-        protein_v_info = self.databases.protein_db.get_version_information()
-        nucleotide_v_info = self.databases.nucleotide_db.get_version_information()
-        benign_v_info = self.databases.benign_hmm.get_version_information()
-        self.output_screen_data.commec_info.biorisk_database_info = biorisk_v_info.version_date
-        self.output_screen_data.commec_info.protein_database_info = protein_v_info.version_date
-        self.output_screen_data.commec_info.nucleotide_database_info = nucleotide_v_info.version_date
-        self.output_screen_data.commec_info.benign_database_info = benign_v_info.version_date
+        if self.params.should_do_biorisk_screening and not self.databases.biorisk_db is None:
+            biorisk_v_info = self.databases.biorisk_db.get_version_information()
+            self.output_screen_data.commec_info.biorisk_database_info = biorisk_v_info.version_date
+
+        if self.params.should_do_protein_screening and not self.databases.protein_db is None:
+            protein_v_info = self.databases.protein_db.get_version_information()
+            self.output_screen_data.commec_info.protein_database_info = protein_v_info.version_date
+
+        if self.params.should_do_nucleotide_screening and not self.databases.nucleotide_db is None:
+            nucleotide_v_info = self.databases.nucleotide_db.get_version_information()
+            self.output_screen_data.commec_info.nucleotide_database_info = nucleotide_v_info.version_date
+
+        if self.params.should_do_benign_screening and not self.databases.benign_hmm is None:
+            benign_v_info = self.databases.benign_hmm.get_version_information()
+            self.output_screen_data.commec_info.benign_database_info = benign_v_info.version_date
 
     def run(self, args : argparse.ArgumentParser):
         """
@@ -470,9 +474,8 @@ def main():
     """
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     add_args(parser)
-    parser.parse_args()
     my_screen : Screen = Screen()
-    my_screen.run(parser)
+    my_screen.run(parser.parse_args())
 
 if __name__ == "__main__":
     try:

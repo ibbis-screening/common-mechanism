@@ -14,6 +14,8 @@ from commec.io_parameters import ScreenIOParameters
 class CommecDatabases():
     """
     Consolidation and initialisation of all databases needed for the commec workflow.
+    This could be maybe split into a Biorisk_handler, Taxonomy handler, and Benign handler
+    class objects respectively.
     """
     def __init__(self, params : ScreenIOParameters):
         # Biorisk
@@ -197,6 +199,10 @@ class HMMDataBase(DatabaseHandler):
         self.run_as_subprocess(command, self.temp_log_file)
 
     def get_version_information(self) -> DatabaseVersion:
+        """ At the moment this is just grabbing some basic header info of the 
+        first entrant of the hmm database. Not really a true version control.
+        But better than nothing at the moment. There may be some way to return
+        some version information from hmmcan itself, look into that. """
         version : str = None
         date : str = None
         comment : str = None
@@ -210,7 +216,7 @@ class HMMDataBase(DatabaseHandler):
                         date = line.split(maxsplit=1)[1].strip()
                         continue
                     if line.startswith("HMMER3/f"):
-                        version = line.split("[",maxsplit=1)[1].split("|").strip()
+                        version = line.split("[",maxsplit=1)[1].split("|")[0].strip()
                         continue
                     # Early exit if data has been found
                     if version and date and comment:
@@ -297,7 +303,7 @@ class BlastNDataBase(DatabaseHandler):
         command.extend(self.get_arguments())
         self.run_as_subprocess(command,self.temp_log_file)
 
-#TODO: Await updates from Tessas handling of Diamond, to incorperate them here.
+#TODO: Ensure updates from Tessas handling of Diamond are correctly incorperated here.
 class DiamondDataBase(DatabaseHandler):
     """ A Database handler specifically for use with Diamond files for commec screening. """
 

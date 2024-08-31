@@ -37,7 +37,7 @@ class MatchRange:
 class BenignData:
     '''Container to hold data related to the benign status of a taxonomy search'''
     benign : bool = False
-    benign_match_type : str = ""
+    benign_match_type : str = "" # CMscan, Blast, HMM
     percent_identity_e_value : float = 0.0
 
 @dataclass

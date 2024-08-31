@@ -160,7 +160,7 @@ class ScreenIOParameters():
         """
         Tidy up some directories and erroneous files after a run.
         """
-        return
+        #return
         if self.inputs.do_cleanup:
             for pattern in [
                 "reg_path_coords.csv",

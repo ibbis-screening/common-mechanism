@@ -495,12 +495,12 @@ class Screen:
         #]
         #run_as_subprocess(command, screen_file)
 
-def run(parser):
+def run(args : argparse.ArgumentParser):
     """
     Entry point from commec. Passes args to Screen object, and runs.
     """
     my_screen : Screen = Screen()
-    my_screen.run(parser.parse_args())
+    my_screen.run(args)
 
 def main():
     """
@@ -508,7 +508,8 @@ def main():
     """
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     add_args(parser)
-    run(parser)
+    args = parser.parse_args()
+    run(args)
 
 if __name__ == "__main__":
     try:

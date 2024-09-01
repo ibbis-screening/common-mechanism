@@ -33,7 +33,7 @@ from commec.json_io import (
 pd.set_option("display.max_colwidth", 10000)
 
 def main():
-    parser = argparse.ArgumentParser() 
+    parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",dest="in_file", 
         required=True, help="Input query file (e.g. QUERY.nr.dmnd)")
     parser.add_argument("-d","--database", dest="db",

@@ -138,7 +138,12 @@ class Screen:
         # Update filepath.
         #self.output_screen_data_filepath : str =f"{self.params.output_prefix}.results.json"
 
-        logging.basicConfig(level=logging.DEBUG)
+        print(self.params.output_screen_file)
+
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(message)s",
+                            handlers=[logging.StreamHandler(), logging.FileHandler(self.params.output_screen_file, "a")],
+                            )
 
 
         # Set up logging
@@ -147,6 +152,7 @@ class Screen:
             format="%(message)s",
             handlers=[logging.StreamHandler(), logging.FileHandler(self.params.output_screen_file, "a")],
         )
+
         logging.basicConfig(
             level=logging.DEBUG,
             format="%(message)s",
@@ -269,20 +275,18 @@ class Screen:
                                        self.params.output_json_file)
 
 
-    def screen_nucleotides(self
-        #input_file, out_prefix, screen_file, scripts_dir, screen_dbs, search_tool, threads
-    ):
+    def screen_nucleotides(self):
         """
         Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and then `check_reg_path.py` to
         screen regulated pathogen nucleotides in noncoding regions (i.e. that would not be found with
         protein search).
         """
-
-        fetch_noncoding_regions(self.databases.protein_db.out_file, 
-                                self.params.query.cleaned_fasta_filepath)
-
         # Only screen nucleotides in noncoding regions
-        noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta"
+        fetch_noncoding_regions(self.databases.protein_db.out_file,
+                                self.params.query.cleaned_fasta_filepath)
+        
+        noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta" # TODO: This should be passed into fetch_noncoding_regions.
+
         if not os.path.isfile(noncoding_fasta):
             logging.debug(
                 "\t...skipping nucleotide search since no noncoding regions fetched"
@@ -293,7 +297,7 @@ class Screen:
         if not self.databases.nucleotide_db.check_output():
             self.databases.nucleotide_db.screen()
 
-        if not self.databases.nucleotide_db.check_output(): #os.path.exists(nt_output):
+        if not self.databases.nucleotide_db.check_output():
             raise RuntimeError(f"Nucleotide search failed and {self.databases.nucleotide_db.out_file} was not created. Aborting.")
 
         logging.debug("\t...checking blastn results")
@@ -327,7 +331,7 @@ class Screen:
 
 def run(args : argparse.ArgumentParser):
     """
-    Entry point from commec. Passes args to Screen object, and runs.
+    Entry point from commec main. Passes args to Screen object, and runs.
     """
     my_screen : Screen = Screen()
     my_screen.run(args)

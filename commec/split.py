@@ -10,7 +10,7 @@ import argparse
 import os
 import string
 from Bio import SeqIO
-from commec.utils import file_arg
+from commec.file_tools import FileTools
 
 VALID_FILENAME_CHARS = f"-._{string.ascii_letters}{string.digits}"
 DESCRIPTION = "Split a multi-record FASTA file into individual files, one for each record"
@@ -19,7 +19,7 @@ def add_args(parser):
     """
     Add module arguments to an ArgumentParser object.
     """
-    parser.add_argument(action='store', dest='fasta_file', type=file_arg, help='Input fasta file')
+    parser.add_argument(action='store', dest='fasta_file', type=FileTools.file_arg, help='Input fasta file')
     return parser
 
 def clean_description(description):

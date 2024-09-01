@@ -6,17 +6,12 @@ Script that checks the output from hmmscan and prints to screen the results
 Usage:
  python check_biorisk.py -i INPUT.biorisk.hmmscan -d databases/biorisk_db/ 
 """
+import logging
 import os
 import sys
 import argparse
 import pandas as pd
-import logging
-
-from commec.utils import (
-    has_hits,
-    readhmmer,
-    trimhmmer,)
-
+from commec.databases.hmm_db import readhmmer, trimhmmer
 from commec.file_tools import FileTools
 from commec.json_io import (
     ScreenData,
@@ -54,7 +49,7 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
         logging.info("\t...ERROR: biorisk search results empty\n")
         return
 
-    if not has_hits(hmmscan_input_file):
+    if not FileTools.has_hits(hmmscan_input_file):
         logging.info("\t\t --> Biorisks: no hits detected, PASS\n")
         return
 
@@ -94,7 +89,7 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
                     0
                 )
             )
-            output_data.biorisks.regulated_genes.append(new_match)
+            #output_data.biorisks.regulated_genes.append(new_match)
     else:
         logging.info("\t\t --> Biorisks: Regulated genes not found, PASS\n")
 
@@ -114,7 +109,7 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
                     0
                 )
             )
-            output_data.biorisks.virulance_factors.append(new_match)
+            #output_data.biorisks.virulance_factors.append(new_match)
     encode_screen_data_to_json(output_data, output_json)
     return 0
 

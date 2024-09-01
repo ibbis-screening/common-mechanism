@@ -28,7 +28,7 @@ import pandas as pd
 
 from commec.file_tools import FileTools
 from commec.io_parameters import ScreenIOParameters, ScreenInputParameters
-from commec.screen_databases import CommecDatabases
+from commec.databases.screen_databases import CommecDatabases
 
 from commec.check_biorisk import check_biorisk
 from commec.check_benign import check_for_benign
@@ -166,9 +166,9 @@ class Screen:
         shutil.copyfile(self.params.query.fasta_filepath, self.params.tmp_log)
 
         # Update screen data output with the Query information.
-        self.output_screen_data.query.name = self.params.query.query_description
-        self.output_screen_data.query.length = len(self.params.query.aa_raw)
-        self.output_screen_data.query.sequence = self.params.query.aa_raw
+        #self.output_screen_data.query.name = self.params.query.query_description
+        #self.output_screen_data.query.length = len(self.params.query.aa_raw)
+        #self.output_screen_data.query.sequence = self.params.query.aa_raw
 
         # Update screen data output with the commec run information.
         if self.params.should_do_biorisk_screening and not self.databases.biorisk_db is None:

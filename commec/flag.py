@@ -24,7 +24,7 @@ import glob
 import os
 import re
 import pandas as pd
-from commec.utils import directory_arg
+from commec.file_tools import FileTools
 
 DESCRIPTION = "Parse all .screen files in a directory and create two CSVs file of flags raised"
 
@@ -34,7 +34,7 @@ def add_args(parser):
     """
     parser.add_argument(
         action='store',
-        type=directory_arg,
+        type=FileTools.directory_arg,
         dest='screen_dir',
         help='Directory containing .screen files to summarize'
     )

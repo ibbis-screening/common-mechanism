@@ -8,27 +8,22 @@ Usage:
   python check_reg_path.py -i INPUT -d database_folder -t threads
       -i, --input 
 """
-import os, sys, argparse
-import textwrap
-import pandas as pd
 import logging
 import re
-from commec.utils import (
-    taxdist,
-    has_hits,
-    tophits,
-    readblast,
-    trimblast,
-)
+import os
+import sys
+import argparse
+import textwrap
+import pandas as pd
 
 from commec.file_tools import FileTools
+from commec.blast_tools import BlastTools
 
 from commec.json_io import (
     ScreenData,
     encode_screen_data_to_json,
     get_screen_data_from_json
 )
-
 
 pd.set_option("display.max_colwidth", 10000)
 
@@ -64,13 +59,13 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
     """ Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""
 
     #check input files
-    if (not os.path.exists(input_file)):
+    if not os.path.exists(input_file):
         logging.error("\t...input query file %s does not exist\n" % input_file)
         return 1
-    if (not os.path.exists(input_database_dir + "/benign_db/vax_taxids.txt")):
+    if not os.path.exists(input_database_dir + "/benign_db/vax_taxids.txt"):
         logging.error("\t...benign db file %s does not exist\n" % (input_database_dir + "/benign_db/vax_taxids.txt"))
         return 1
-    if (not os.path.exists(input_database_dir + "/biorisk_db/reg_taxids.txt")):
+    if not os.path.exists(input_database_dir + "/biorisk_db/reg_taxids.txt"):
         logging.error("\t...biorisk db file %s does not exist\n" % (input_database_dir + "/biorisk_db/reg_taxids.txt"))
         return 1
 
@@ -92,19 +87,19 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
         logging.info("\tERROR: Homology search has failed\n")
         return 1
 
-    if not has_hits(input_file):
+    if not FileTools.has_hits(input_file):
         logging.info("\t...no hits\n")
         return 0
 
-    blast = readblast(input_file)
-    blast = taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
+    blast = BlastTools.readblast(input_file)
+    blast = BlastTools.taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     #interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
 
-    blast2 = trimblast(blast)
-    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    blast2 = BlastTools.trimblast(blast)
+    blast2 = BlastTools.tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
 
     reg_bac = 0
     reg_vir = 0

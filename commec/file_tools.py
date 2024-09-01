@@ -31,7 +31,7 @@ class FileTools():
     @staticmethod
     def has_hits(filepath: str) -> bool:
         """
-        has_hits
+        has_hits, note this is typically used with a Blast outputfile, and thus may be better put in BlastTools.
         usage: check to see if the file contains any hits (lines that don't start with #)
         input:
         - path to file

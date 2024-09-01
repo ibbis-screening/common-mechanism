@@ -9,19 +9,16 @@ Usage:
       -s, --sequence = input sequence file
       -d, --database = database folder location/path (will check for benign_annotations.tsv)
 """
+import logging
 import argparse
 import os
 import sys
 import pandas as pd
-import logging
-from commec.utils import (
-    has_hits,
-    readhmmer,
-    readcmscan,
-    readblast,
-    trimblast,
-    tophits,
-)
+
+from commec.blast_tools import BlastTools
+from commec.file_tools import FileTools
+from commec.databases.hmm_db import readhmmer
+from commec.databases.cmscan_db import readcmscan
 from commec.json_io import (
     ScreenData,
     encode_screen_data_to_json,
@@ -41,7 +38,7 @@ def check_for_benign(query, coords, benign_desc, output_json):
     # PROTEIN HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     hmmscan = query + ".benign.hmmscan"
-    if not has_hits(hmmscan):
+    if not FileTools.has_hits(hmmscan):
         logging.info("\t...no housekeeping protein hits\n")
     else:
         hmmer = readhmmer(hmmscan)
@@ -90,7 +87,7 @@ def check_for_benign(query, coords, benign_desc, output_json):
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     cmscan = query + ".benign.cmscan"
-    if not has_hits(cmscan):
+    if not FileTools.has_hits(cmscan):
         logging.info("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
@@ -136,12 +133,12 @@ def check_for_benign(query, coords, benign_desc, output_json):
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
     blast = query + ".benign.blastn"
-    if not has_hits(blast):
+    if not FileTools.has_hits(blast):
         logging.info("\t...no Synbio sequence hits\n")
     else:
-        blastn = readblast(blast)  # synbio parts
-        blastn = trimblast(blastn)
-        blastn = tophits(blastn)
+        blastn = BlastTools.readblast(blast)  # synbio parts
+        blastn = BlastTools.trimblast(blastn)
+        blastn = BlastTools.tophits(blastn)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             htrim = blastn[
                 ~(

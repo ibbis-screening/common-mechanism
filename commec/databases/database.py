@@ -112,4 +112,5 @@ class DatabaseHandler():
 
     def __del__(self):
         if os.path.exists(self.temp_log_file):
+            os.remove(self.temp_log_file)
             return

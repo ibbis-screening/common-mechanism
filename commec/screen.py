@@ -38,7 +38,6 @@ from commec.fetch_nc_bits import fetch_noncoding_regions
 from commec.json_io import (
     ScreenData,
     encode_screen_data_to_json,
-    #get_screen_data_from_json
 )
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
@@ -47,7 +46,6 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Add module arguments to an ArgumentParser object.
     """
-
     default_params : ScreenInputParameters = ScreenInputParameters()
 
     parser.add_argument(
@@ -166,6 +164,7 @@ class Screen:
         shutil.copyfile(self.params.query.fasta_filepath, self.params.tmp_log)
 
         # Update screen data output with the Query information.
+        # TODO: Parse the input query, separate out the input names, and 
         #self.output_screen_data.query.name = self.params.query.query_description
         #self.output_screen_data.query.length = len(self.params.query.aa_raw)
         #self.output_screen_data.query.sequence = self.params.query.aa_raw

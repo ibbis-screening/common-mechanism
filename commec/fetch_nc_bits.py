@@ -12,7 +12,9 @@ import sys, shutil
 import re
 from Bio import SeqIO
 import argparse
-from commec.utils import *
+#from commec.utils import *
+from commec.blast_tools import BlastTools
+from commec.file_tools import FileTools
 
     #query = sys.argv[1]
     #f_file = sys.argv[2]
@@ -26,16 +28,16 @@ def fetch_noncoding_regions(nr_output_file : str, cleaned_fasta_file_path : str)
     f_file = cleaned_fasta_file_path
 
     # check if the nr hits file is empty
-    if is_empty(query):
+    if FileTools.is_empty(query):
         nc_bits = "all"
-    elif not has_hits(query):
+    elif not FileTools.has_hits(query):
         sys.stdout.write("\t...no hits to the nr database\n")
         nc_bits = "all"
     # if not, check whether any of the hits has an E-value > 1e-30
     # if so, find the start and end of those hits and use these to get the coordinates of non-coding regions
     else:
-        blast = readblast(query)
-        blast = trimblast(blast)
+        blast = BlastTools.readblast(query)
+        blast = BlastTools.trimblast(blast)
         blast = blast[blast['% identity'] >= 90]
         if blast.shape[0] > 0:
         # find noncoding bits
@@ -77,7 +79,7 @@ def fetch_noncoding_regions(nr_output_file : str, cleaned_fasta_file_path : str)
                         sequence = record.seq[start - 1 : stop]  # Adjust start to 0-based index
                         sequences.append(f">{seqid} {start}-{stop}\n{sequence}\n")
                         break
-            with open(outfile, "w") as output_file:
+            with open(outfile, "w", encoding = "utf-8") as output_file:
                 output_file.writelines(sequences)
 
     if nc_bits == "all":

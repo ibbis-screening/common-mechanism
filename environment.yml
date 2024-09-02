@@ -12,9 +12,9 @@ dependencies:
   - pytaxonkit
   # Runtime non-Python dependencies
   - bedtools
-  - blast
+  - blast=2.15
   - emboss
-  - diamond
+  - diamond>=2.1
   - hmmer
   - infernal
   - parallel

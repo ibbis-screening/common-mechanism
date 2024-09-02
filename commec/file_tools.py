@@ -28,10 +28,11 @@ class FileTools():
             # If there is an error (including FileNotFoundError) consider it empty
             return True
 
+    # Note this is typically used with a Blast outputfile, and thus may be better put in BlastTools.
     @staticmethod
     def has_hits(filepath: str) -> bool:
         """
-        has_hits, note this is typically used with a Blast outputfile, and thus may be better put in BlastTools.
+        has_hits
         usage: check to see if the file contains any hits (lines that don't start with #)
         input:
         - path to file
@@ -63,7 +64,7 @@ class FileTools():
         if not os.path.getsize(path) > 0:
             raise argparse.ArgumentTypeError(f"{path} is an empty file")
         return path
-    
+
     @staticmethod
     def get_cleaned_fasta(input_file, out_prefix):
         """

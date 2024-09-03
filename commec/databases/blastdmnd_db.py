@@ -40,6 +40,7 @@ class DiamondDataBase(DatabaseHandler):
         processes = []
         for i, db_file in enumerate(db_files, 1):
             output_file = f"{self.out_file}.{i}.tsv"
+            output_log = self.temp_log_file + "_" + str(i)
             command = [
                 "diamond", "blastx",
                 "--quiet",
@@ -57,8 +58,9 @@ class DiamondDataBase(DatabaseHandler):
             if self.jobs is not None:
                 command.extend(["-j", str(self.jobs)])
 
-            process = subprocess.Popen(command, self.temp_log_file)
-            processes.append(process)
+            with open(output_log, "a", encoding="utf-8") as f:
+                process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT)
+                processes.append(process)
 
         # Wait for all processes to finish
         for process in processes:

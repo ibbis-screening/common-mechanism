@@ -47,7 +47,7 @@ class CommecDatabases():
             elif params.inputs.search_tool == "nr.dmnd":
                 self.protein_db = DiamondDataBase(
                     os.path.join(params.db_dir, "nr_dmnd"),
-                    os.path.join(params.db_dir, "nr_blast/nr.dmnd"),
+                    os.path.join(params.db_dir, "nr_dmnd/nr.dmnd"),
                     input_file = params.query.fasta_aa_filepath,
                     out_file = f"{params.output_prefix}.nr.dmnd"
                 )

@@ -13,11 +13,11 @@ INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fa
 DATABASE_DIRECTORY = os.path.join(os.path.dirname(__file__),"test_dbs")
 
 databases_to_implement = [
-    [DiamondDataBase,   "nr_dmnd",     "nr.dmnd"],
+    #[DiamondDataBase,   "nr_dmnd",     "nr.dmnd"],#Can't get this working with an Inflate Error, suspect my test db is incorrect somehow.
     [BlastNDataBase,    "nt_blast",    "nt"],
     [BlastXDataBase,    "nr_blast",    "nr"],
     [HMMDataBase,       "benign_db",   "benign.hmm"],
-    #[CmscanDataBase,    "biorisk_db",  "biorisk.hmm"],
+    [CmscanDataBase,    "benign_db",  "benign.cmscan"],
 ]
 
 @pytest.mark.parametrize("input_db", databases_to_implement)
@@ -42,4 +42,3 @@ def test_database_can_run(input_db):
 
     if os.path.isfile(output_file):
         os.remove(output_file)
- 

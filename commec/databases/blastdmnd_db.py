@@ -15,6 +15,7 @@ class DiamondDataBase(DatabaseHandler):
 
     def __init__(self, directory : str, database_file : str, input_file : str, out_file : str):
         super().__init__(directory, database_file, input_file, out_file)
+        self.taxonmap_file = os.path.join(directory,"taxonmap")
         self.frameshift = 15
         self.do_range_culling = True
         self.threads = 1
@@ -38,9 +39,12 @@ class DiamondDataBase(DatabaseHandler):
 
         # Run diamond blastx in parallel using subprocess
         processes = []
+        logs = []
+        output_files = []
         for i, db_file in enumerate(db_files, 1):
             output_file = f"{self.out_file}.{i}.tsv"
-            output_log = self.temp_log_file + "_" + str(i)
+            output_files.append(output_file)
+            output_log : str = self.temp_log_file + "_" + str(i)
             command = [
                 "diamond", "blastx",
                 "--quiet",
@@ -48,30 +52,40 @@ class DiamondDataBase(DatabaseHandler):
                 "--threads", str(self.threads),
                 "-q", self.input_file,
                 "-o", output_file,
-                "--outfmt", self.get_output_format(),
-                "--frameshift", str(self.frameshift),
+                "--taxonmap", self.taxonmap_file,
+                "--outfmt", self.output_format,
+                #"--frameshift", self.frameshift
             ]
 
-            if self.do_range_culling:
-                command.append("--range-culling")
+            command.extend(self.output_format_tokens)
+
+            #if self.do_range_culling:
+                #command.append("--range-culling")
 
             if self.jobs is not None:
                 command.extend(["-j", str(self.jobs)])
 
-            with open(output_log, "a", encoding="utf-8") as f:
-                process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT)
-                processes.append(process)
+            f = open(output_log, "w", encoding="utf-8")
+            process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT)
+            print(" ".join(command))
+            processes.append(process)
+            logs.append(f)
 
         # Wait for all processes to finish
         for process in processes:
             process.wait()
 
+        for log in logs:
+            log.close()
+
         # Concatenate all output files
-        with open("self.out_file", 'w', encoding="utf-8") as outfile:
-            for i in range(1, len(db_files) + 1):
-                with open(f"{self.out_file}.{i}.tsv", 'r', encoding="utf-8") as infile:
-                    outfile.write(infile.read())
+        with open(self.out_file, 'w', encoding="utf-8") as outfile:
+            for o_file in output_files:
+                if os.path.exists(o_file):
+                    with open(o_file, 'r', encoding="utf-8") as infile:
+                        outfile.write(infile.read())
+                    os.remove(o_file)
 
         # Remove the individual output files
-        for i in range(1, len(db_files) + 1):
-            os.remove(f"{self.out_file}.{i}.tsv")
+        #for o_file in output_files:
+            #os.remove(o_file)

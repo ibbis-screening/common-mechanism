@@ -24,7 +24,7 @@ class HMMDataBase(DatabaseHandler):
         At the moment this is just grabbing some basic header info of the 
         first entrant of the hmm database. Not really a true version control.
         But better than nothing at the moment. There may be some way to return
-        some version information from hmmcan itself, look into that. 
+        some version information from hmmcan itself, look into that.
         """
         version : str = None
         date : str = None

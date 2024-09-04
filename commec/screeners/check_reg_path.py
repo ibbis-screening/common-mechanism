@@ -19,12 +19,6 @@ import pandas as pd
 from commec.utils.file_utils import FileTools
 from commec.tools.blast_tools import BlastTools
 
-from commec.config.json_io import (
-    ScreenData,
-    encode_screen_data_to_json,
-    get_screen_data_from_json
-)
-
 pd.set_option("display.max_colwidth", 10000)
 
 def main():
@@ -35,8 +29,6 @@ def main():
         required=True,help="database folder (must contain vax_taxids and reg_taxids file)")
     parser.add_argument("-t","--threads", dest="threads",
         required=True,help="number of threads")
-    parser.add_argument("-o","--out", dest="output_json",
-        required=True,help="output_json_filepath")
     args=parser.parse_args()
 
     # Set up logging
@@ -51,11 +43,11 @@ def main():
         handlers=[logging.StreamHandler(sys.stderr)],
     )
 
-    rv = check_for_regulated_pathogens(args.in_file, args.db, args.threads, args.output_json)
+    rv = check_for_regulated_pathogens(args.in_file, args.db, args.threads)
     sys.exit(rv)
 
 
-def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_threads : int, output_json : str):
+def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_threads : int):
     """ Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""
 
     #check input files
@@ -72,8 +64,6 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
     # read in files
     reg_ids = pd.read_csv(input_database_dir + "/biorisk_db/reg_taxids.txt", header=None)
     vax_ids = pd.read_csv(input_database_dir + "/benign_db/vax_taxids.txt", header=None)
-
-    output_data : ScreenData = get_screen_data_from_json(output_json)
 
     sample_name = re.sub(".nr.*", "", input_file)
     sample_name = re.sub(".nt.blastn", "", sample_name)
@@ -192,7 +182,6 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
     if reg_vir == 0 and reg_bac == 0 and reg_fung == 0 and reg_fung == 0:
         logging.info("\t\t --> no top hit exclusive to a regulated pathogen: PASS\n")
 
-    encode_screen_data_to_json(output_data, output_json)
     return 0
 
 if __name__ == "__main__":

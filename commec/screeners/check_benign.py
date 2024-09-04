@@ -19,19 +19,11 @@ from commec.tools.database_handler import DatabaseHandler # For has_hits.
 from commec.tools.blast_tools import BlastTools
 from commec.tools.hmm_handler import readhmmer
 from commec.tools.cmscan_handler import readcmscan
-from commec.config.json_io import (
-    ScreenData,
-    encode_screen_data_to_json,
-    get_screen_data_from_json
-)
 
-def check_for_benign(query, coords, benign_desc, output_json):
+def check_for_benign(query, coords, benign_desc):
     '''
     Checks a query against taxonomy 
     '''
-
-    output_data : ScreenData = get_screen_data_from_json(output_json)
-
     cleared = [0] * coords.shape[0]
 
     # PROTEIN HITS
@@ -179,8 +171,6 @@ def check_for_benign(query, coords, benign_desc, output_json):
     if sum(cleared) == len(cleared):
         logging.info("\n\t\t -->all regulated regions cleared: PASS\n")
 
-    #Save changes to the json
-    encode_screen_data_to_json(output_data, output_json)
     return 0
 
 

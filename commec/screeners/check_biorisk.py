@@ -11,9 +11,9 @@ import os
 import sys
 import argparse
 import pandas as pd
-from commec.databases.hmm_db import readhmmer, trimhmmer
-from commec.file_tools import FileTools
-from commec.json_io import (
+from commec.tools.hmm_handler import readhmmer, trimhmmer
+from commec.utils.file_utils import FileTools
+from commec.config.json_io import (
     ScreenData,
     BioRisk,
     MatchRange,

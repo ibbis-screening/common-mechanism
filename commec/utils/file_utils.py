@@ -12,6 +12,7 @@ class FileTools():
     Static function container, useful for dealing with common file parsing tasks.
     """
 
+    # Can be moved somewhere else.
     @staticmethod
     def is_empty(filepath: str) -> bool:
         """
@@ -29,6 +30,7 @@ class FileTools():
             return True
 
     # Note this is typically used with a Blast outputfile, and thus may be better put in BlastTools.
+    # Moved away to all databases.
     @staticmethod
     def has_hits(filepath: str) -> bool:
         """
@@ -48,7 +50,10 @@ class FileTools():
         except FileNotFoundError:
             # The file does not exist
             return False
+        
 
+
+    # Below go to config parameters.
     @staticmethod
     def directory_arg(path):
         """Raise ArgumentTypeError if `path` is not a directory."""
@@ -65,21 +70,6 @@ class FileTools():
             raise argparse.ArgumentTypeError(f"{path} is an empty file")
         return path
 
-    @staticmethod
-    def get_cleaned_fasta(input_file, out_prefix):
-        """
-        Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
-        replaced with underscores.
-        """
-        cleaned_file = f"{out_prefix}.cleaned.fasta"
-        with (
-            open(input_file, "r", encoding="utf-8") as fin,
-            open(cleaned_file, "w", encoding="utf-8") as fout,
-        ):
-            for line in fin:
-                line = line.strip()
-                modified_line = "".join(
-                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
-                )
-                fout.write(f"{modified_line}{os.linesep}")
-        return cleaned_file
+
+    
+    

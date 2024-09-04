@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Module for FileTools, containing Static functions useful for dealing with common file parsing tasks.
+Module for BlastTools, a static function library for dealing with general blast file parsing tasks.
+Useful for reading any blast outputs, for example from Blastx or Blastn.
 """
 import logging
 import pytaxonkit

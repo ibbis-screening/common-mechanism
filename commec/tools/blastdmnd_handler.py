@@ -7,7 +7,7 @@ import os
 import glob
 import subprocess
 
-from commec.databases.database import DatabaseHandler
+from commec.tools.database_handler import DatabaseHandler, DatabaseVersion
 
 #TODO: Ensure updates from Tessas handling of Diamond are correctly incorperated here.
 class DiamondDataBase(DatabaseHandler):

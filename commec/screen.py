@@ -26,16 +26,17 @@ import shutil
 import sys
 import pandas as pd
 
-from commec.file_tools import FileTools
-from commec.io_parameters import ScreenIOParameters, ScreenInputParameters
-from commec.databases.screen_databases import CommecDatabases
+from commec.utils.file_utils import FileTools
+from commec.config.io_parameters import ScreenIOParameters, ScreenInputParameters
+from commec.config.screen_databases import CommecDatabases
 
-from commec.check_biorisk import check_biorisk
-from commec.check_benign import check_for_benign
-from commec.check_reg_path import check_for_regulated_pathogens
-from commec.fetch_nc_bits import fetch_noncoding_regions
+from commec.screeners.check_biorisk import check_biorisk
+from commec.screeners.check_benign import check_for_benign
+from commec.screeners.check_reg_path import check_for_regulated_pathogens
 
-from commec.json_io import (
+from commec.tools.fetch_nc_bits import fetch_noncoding_regions
+
+from commec.config.json_io import (
     ScreenData,
     encode_screen_data_to_json,
 )
@@ -321,7 +322,7 @@ class Screen:
         if not os.path.exists(sample_name + ".reg_path_coords.csv"):
             logging.info("\t...no regulated regions to clear\n")
             return
-        
+
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
         benign_desc =  pd.read_csv(self.databases.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
         

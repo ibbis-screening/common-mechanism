@@ -9,8 +9,6 @@ import argparse
 from dataclasses import dataclass
 import subprocess
 
-from commec.file_tools import FileTools
-
 @dataclass
 class ScreenInputParameters:
     """
@@ -36,13 +34,13 @@ class Query:
     cleaned_fasta_filepath : str = ""
 
     # Unused for now.
-    query_description : str = ""
-    nt_raw : str = "" # The full query in string format eg: ATGGCTGACGATCGATCGACTCG
-    aa_raw : str = "" # The full query in string format eg: MAPTGWKPHGDCGHHHHHHGDPM
+    query_names : str = "" # Populate with all the names, such that we can do lookups for json_io.
+    #nt_raw : str = "" # The full query in string format eg: ATGGCTGACGATCGATCGACTCG
+    #aa_raw : str = "" # The full query in string format eg: MAPTGWKPHGDCGHHHHHHGDPM
 
     def validate(self, output_prefix : str):
         """ Translate or reverse translate query, so we have it ready in AA or NT format. """
-        self.cleaned_fasta_filepath = FileTools.get_cleaned_fasta(self.fasta_filepath, output_prefix)
+        self.cleaned_fasta_filepath = Query.get_cleaned_fasta(self.fasta_filepath, output_prefix)
         self.fasta_aa_filepath = f"{output_prefix}.transeq.faa"
         command = ["transeq", self.cleaned_fasta_filepath, self.fasta_aa_filepath, "-frame", "6", "-clean"]
 
@@ -57,6 +55,25 @@ class Query:
                 )
         except RuntimeError as error:
             raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from error
+        
+    @staticmethod
+    def get_cleaned_fasta(input_file, out_prefix):
+        """
+        Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
+        replaced with underscores.
+        """
+        cleaned_file = f"{out_prefix}.cleaned.fasta"
+        with (
+            open(input_file, "r", encoding="utf-8") as fin,
+            open(cleaned_file, "w", encoding="utf-8") as fout,
+        ):
+            for line in fin:
+                line = line.strip()
+                modified_line = "".join(
+                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
+                )
+                fout.write(f"{modified_line}{os.linesep}")
+        return cleaned_file
 
 class ScreenIOParameters():
     """

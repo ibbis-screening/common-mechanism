@@ -16,10 +16,10 @@ import argparse
 import textwrap
 import pandas as pd
 
-from commec.file_tools import FileTools
-from commec.blast_tools import BlastTools
+from commec.utils.file_utils import FileTools
+from commec.tools.blast_tools import BlastTools
 
-from commec.json_io import (
+from commec.config.json_io import (
     ScreenData,
     encode_screen_data_to_json,
     get_screen_data_from_json

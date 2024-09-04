@@ -13,8 +13,8 @@ import re
 from Bio import SeqIO
 import argparse
 #from commec.utils import *
-from commec.blast_tools import BlastTools
-from commec.file_tools import FileTools
+from commec.tools.blast_tools import BlastTools
+from commec.utils.file_utils import FileTools
 
     #query = sys.argv[1]
     #f_file = sys.argv[2]

@@ -11,17 +11,10 @@ import os
 import sys
 import argparse
 import pandas as pd
-from commec.databases.hmm_db import readhmmer, trimhmmer
-from commec.file_tools import FileTools
-from commec.json_io import (
-    ScreenData,
-    BioRisk,
-    MatchRange,
-    encode_screen_data_to_json,
-    get_screen_data_from_json
-)
+from commec.tools.hmm_handler import readhmmer, trimhmmer
+from commec.utils.file_utils import FileTools
 
-def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str, output_json : str):
+def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str):
     '''
     Checks an HMM scan output, and parses it for biorisks, according to those found in the biorisk_annotations.csv.
     INPUTS:
@@ -37,8 +30,6 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
     if not os.path.exists(hmm_folder_csv):
         logging.error("\t...biorisk_annotations.csv does not exist\n" + hmm_folder_csv)
         return 1
-
-    output_data : ScreenData = get_screen_data_from_json(output_json)
     
     #Specify input file and read in database file
     lookup = pd.read_csv(hmm_folder_csv)
@@ -80,16 +71,6 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
                                 ": FLAG\n\t\t     Gene: " + 
                                 ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
             
-            new_match = BioRisk(
-                ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])),
-                MatchRange(
-                    0,0,
-                    int(hmmer['ali from'][region]),
-                    int(hmmer['ali to'][region]),
-                    0
-                )
-            )
-            #output_data.biorisks.regulated_genes.append(new_match)
     else:
         logging.info("\t\t --> Biorisks: Regulated genes not found, PASS\n")
 
@@ -100,17 +81,6 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
                                 ", WARNING\n\t\t     Gene: " +
                                 ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
 
-            new_match = BioRisk(
-                ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])),
-                MatchRange(
-                    0,0,
-                    int(hmmer['ali from'][region]),
-                    int(hmmer['ali to'][region]),
-                    0
-                )
-            )
-            #output_data.biorisks.virulance_factors.append(new_match)
-    encode_screen_data_to_json(output_data, output_json)
     return 0
 
 def main():

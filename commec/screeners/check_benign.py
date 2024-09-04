@@ -15,30 +15,21 @@ import os
 import sys
 import pandas as pd
 
-from commec.blast_tools import BlastTools
-from commec.file_tools import FileTools
-from commec.databases.hmm_db import readhmmer
-from commec.databases.cmscan_db import readcmscan
-from commec.json_io import (
-    ScreenData,
-    encode_screen_data_to_json,
-    get_screen_data_from_json
-)
+from commec.tools.database_handler import DatabaseHandler # For has_hits.
+from commec.tools.blast_tools import BlastTools
+from commec.tools.hmm_handler import readhmmer
+from commec.tools.cmscan_handler import readcmscan
 
-def check_for_benign(query, coords, benign_desc, output_json):
+def check_for_benign(query, coords, benign_desc):
     '''
     Checks a query against taxonomy 
     '''
-
-    output_data : ScreenData = get_screen_data_from_json(output_json)
-
-
     cleared = [0] * coords.shape[0]
 
     # PROTEIN HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     hmmscan = query + ".benign.hmmscan"
-    if not FileTools.has_hits(hmmscan):
+    if not DatabaseHandler.has_hits(hmmscan):
         logging.info("\t...no housekeeping protein hits\n")
     else:
         hmmer = readhmmer(hmmscan)
@@ -87,7 +78,7 @@ def check_for_benign(query, coords, benign_desc, output_json):
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     cmscan = query + ".benign.cmscan"
-    if not FileTools.has_hits(cmscan):
+    if not DatabaseHandler.has_hits(cmscan):
         logging.info("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
@@ -133,7 +124,7 @@ def check_for_benign(query, coords, benign_desc, output_json):
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
     blast = query + ".benign.blastn"
-    if not FileTools.has_hits(blast):
+    if not DatabaseHandler.has_hits(blast):
         logging.info("\t...no Synbio sequence hits\n")
     else:
         blastn = BlastTools.readblast(blast)  # synbio parts
@@ -180,8 +171,6 @@ def check_for_benign(query, coords, benign_desc, output_json):
     if sum(cleared) == len(cleared):
         logging.info("\n\t\t -->all regulated regions cleared: PASS\n")
 
-    #Save changes to the json
-    encode_screen_data_to_json(output_data, output_json)
     return 0
 
 

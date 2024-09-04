@@ -31,7 +31,7 @@ Homepage = "https://ibbis.bio/common-mechanism"
 Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [project.scripts]
-"commec" = "commec.main:main"
+"commec" = "commec.cli:main"
 
 [tool.setuptools]
 packages = {find = {"include" = ["commec"]}}

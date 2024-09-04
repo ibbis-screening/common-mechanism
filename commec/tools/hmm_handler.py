@@ -5,7 +5,7 @@ Database handler for Hidden Markov Model type databases.
 """
 import re
 import pandas as pd
-from commec.databases.database import DatabaseHandler, DatabaseVersion
+from commec.tools.database_handler import DatabaseHandler, DatabaseVersion
 
 class HMMDataBase(DatabaseHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
@@ -24,7 +24,7 @@ class HMMDataBase(DatabaseHandler):
         At the moment this is just grabbing some basic header info of the 
         first entrant of the hmm database. Not really a true version control.
         But better than nothing at the moment. There may be some way to return
-        some version information from hmmcan itself, look into that. 
+        some version information from hmmcan itself, look into that.
         """
         version : str = None
         date : str = None
@@ -48,6 +48,7 @@ class HMMDataBase(DatabaseHandler):
 
         except RuntimeError:
             return super().get_version_information()
+
 
 def readhmmer(fileh):
     """

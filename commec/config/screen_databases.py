@@ -4,12 +4,12 @@
 Defines the `Input and Output Screen Parameters` class, and associated dataclasses.
 """
 import os
-from commec.io_parameters import ScreenIOParameters
-from commec.databases.blastn_db import BlastNDataBase
-from commec.databases.blastx_db import BlastXDataBase
-from commec.databases.blastdmnd_db import DiamondDataBase
-from commec.databases.cmscan_db import CmscanDataBase
-from commec.databases.hmm_db import HMMDataBase
+from commec.config.io_parameters import ScreenIOParameters
+from commec.tools.blastn_handler import BlastNDataBase
+from commec.tools.blastx_handler import BlastXDataBase
+from commec.tools.blastdmnd_handler import DiamondDataBase
+from commec.tools.cmscan_handler import CmscanDataBase
+from commec.tools.hmm_handler import HMMDataBase
 
 class CommecDatabases():
     """

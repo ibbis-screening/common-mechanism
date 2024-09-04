@@ -9,8 +9,6 @@ import argparse
 from dataclasses import dataclass
 import subprocess
 
-from commec.file_tools import FileTools
-
 @dataclass
 class ScreenInputParameters:
     """
@@ -23,26 +21,20 @@ class ScreenInputParameters:
     skip_nt_search: bool = False
     do_cleanup: bool = False
     diamond_jobs : int = None
+    force_overwrite : bool = False
 
 @dataclass
 class Query:
     """
-    Container for all information related to a query. Self calculates AA version.
-    Potential to expand in future to reverse translate from AA too.
+    Query to screen, based on an input FASTA. Self-calculates AA version.
     """
-    fasta_filepath : str
-
-    fasta_aa_filepath : str = ""
-    cleaned_fasta_filepath : str = ""
-
-    # Unused for now.
-    query_description : str = ""
-    nt_raw : str = "" # The full query in string format eg: ATGGCTGACGATCGATCGACTCG
-    aa_raw : str = "" # The full query in string format eg: MAPTGWKPHGDCGHHHHHHGDPM
+    input_fasta_path : str
+    query_nt_path : str = ""
+    query_aa_path : str = ""
 
     def validate(self, output_prefix : str):
         """ Translate or reverse translate query, so we have it ready in AA or NT format. """
-        self.cleaned_fasta_filepath = FileTools.get_cleaned_fasta(self.fasta_filepath, output_prefix)
+        self.cleaned_fasta_filepath = Query.get_cleaned_fasta(self.fasta_filepath, output_prefix)
         self.fasta_aa_filepath = f"{output_prefix}.transeq.faa"
         command = ["transeq", self.cleaned_fasta_filepath, self.fasta_aa_filepath, "-frame", "6", "-clean"]
 
@@ -57,6 +49,25 @@ class Query:
                 )
         except RuntimeError as error:
             raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from error
+        
+    @staticmethod
+    def get_cleaned_fasta(input_file, out_prefix):
+        """
+        Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
+        replaced with underscores.
+        """
+        cleaned_file = f"{out_prefix}.cleaned.fasta"
+        with (
+            open(input_file, "r", encoding="utf-8") as fin,
+            open(cleaned_file, "w", encoding="utf-8") as fout,
+        ):
+            for line in fin:
+                line = line.strip()
+                modified_line = "".join(
+                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
+                )
+                fout.write(f"{modified_line}{os.linesep}")
+        return cleaned_file
 
 class ScreenIOParameters():
     """
@@ -80,7 +91,7 @@ class ScreenIOParameters():
             args.fast_mode,
             args.skip_nt_search,
             args.cleanup,
-            args.jobs
+            args.jobs,
         )
 
         # TODO: Think about whether logs belong in here, or externally.
@@ -88,7 +99,6 @@ class ScreenIOParameters():
         # Outputs
         self.output_prefix = self.get_output_prefix(args.fasta_file, args.output_prefix)
         self.output_screen_file = f"{self.output_prefix}.screen"
-        self.output_json_file = f"{self.output_prefix}.results.json"
         self.tmp_log = f"{self.output_prefix}.log.tmp"
 
         #Query
@@ -146,7 +156,7 @@ class ScreenIOParameters():
         """
         if not prefix_arg:
             return os.path.splitext(input_file)[0]
-        if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
+        if os.path.isdir(prefix_arg) or prefix_arg.endswith(os.path.sep) or prefix_arg in {".", "..", "~"}:
             # Make the directory if it doesn't exist
             if not os.path.isdir(prefix_arg):
                 os.makedirs(prefix_arg)

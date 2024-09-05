@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import patch
 import os
 import argparse
-from commec.config.io_parameters import ScreenInputParameters, ScreenIOParameters
+
+from commec.config.io_parameters import ScreenIOParameters
 from commec.screen import add_args
 
 INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fasta")

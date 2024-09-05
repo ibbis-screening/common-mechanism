@@ -2,15 +2,18 @@
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Defines the `Input and Output Screen Parameters` class, and associated dataclasses.
+Contains information pertinant to commec screen, including input configuration,
+and input fasta / query validation and parsing.
 """
 import os
 import glob
 import argparse
 from dataclasses import dataclass
-import subprocess
+
+from commec.config.query import Query
 
 @dataclass
-class ScreenInputParameters:
+class ScreenConfiguration:
     """
     Namespace for optional input parameters for screening; provided by parsing arguments. 
     All have default values, which are set here, and are reflected into argparse.
@@ -22,52 +25,6 @@ class ScreenInputParameters:
     do_cleanup: bool = False
     diamond_jobs : int = None
     force_overwrite : bool = False
-
-@dataclass
-class Query:
-    """
-    Query to screen, based on an input FASTA. Self-calculates AA version.
-    """
-    input_fasta_path : str
-    query_nt_path : str = ""
-    query_aa_path : str = ""
-
-    def validate(self, output_prefix : str):
-        """ Translate or reverse translate query, so we have it ready in AA or NT format. """
-        self.cleaned_fasta_filepath = Query.get_cleaned_fasta(self.fasta_filepath, output_prefix)
-        self.fasta_aa_filepath = f"{output_prefix}.transeq.faa"
-        command = ["transeq", self.cleaned_fasta_filepath, self.fasta_aa_filepath, "-frame", "6", "-clean"]
-
-        # hard coded into subprocess.run for now, as have yet to decide where run_as_subprocess should be.
-        # TODO: Update this.
-        try:
-            result = subprocess.run(command, check=True)
-            if result.returncode != 0:
-                command_str = ' '.join(command)
-                raise RuntimeError(
-                    f"subprocess.run of command '{command_str}' encountered error."
-                )
-        except RuntimeError as error:
-            raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from error
-        
-    @staticmethod
-    def get_cleaned_fasta(input_file, out_prefix):
-        """
-        Return a FASTA where whitespace (including non-breaking spaces) and illegal characters are
-        replaced with underscores.
-        """
-        cleaned_file = f"{out_prefix}.cleaned.fasta"
-        with (
-            open(input_file, "r", encoding="utf-8") as fin,
-            open(cleaned_file, "w", encoding="utf-8") as fout,
-        ):
-            for line in fin:
-                line = line.strip()
-                modified_line = "".join(
-                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
-                )
-                fout.write(f"{modified_line}{os.linesep}")
-        return cleaned_file
 
 class ScreenIOParameters():
     """
@@ -85,7 +42,7 @@ class ScreenIOParameters():
                 raise ValueError(f"Missing required argument: {arg}")
 
         # Inputs
-        self.inputs : ScreenInputParameters = ScreenInputParameters(
+        self.config : ScreenConfiguration = ScreenConfiguration(
             args.threads,
             args.protein_search_tool,
             args.fast_mode,
@@ -102,9 +59,9 @@ class ScreenIOParameters():
         self.tmp_log = f"{self.output_prefix}.log.tmp"
 
         #Query
-        self.query : Query = Query(args.fasta_file, f"{self.output_prefix}.transeq.faa")
+        self.query : Query = Query(args.fasta_file)
 
-        # Should this instead be elsewhere.
+        # Should this instead be elsewhere... 
         self.db_dir = args.database_dir
 
 
@@ -117,34 +74,6 @@ class ScreenIOParameters():
 
         self.query.validate(self.output_prefix)
         return True
-
-    @property
-    def nr_dir(self):
-        """
-        Get the directory containing the needed NR database (which depends on the tool used).
-        """
-        if self.inputs.search_tool == "blastx":
-            return os.path.join(self.db_dir, "nr_blast")
-        elif self.inputs.search_tool == "diamond":
-            return os.path.join(self.db_dir, "nr_dmnd")
-        else:
-            raise ValueError(
-                "Protein search tool must be either 'blastx' or 'diamond'."
-            )
-
-    @property
-    def nr_db(self):
-        """
-        Get the directory of the needed NR database (which depends on the tool used).
-        """
-        if self.inputs.search_tool == "blastx":
-            return os.path.join(self.nr_dir, "nr")
-        elif self.inputs.search_tool == "diamond":
-            return os.path.join(self.nr_dir, "nr.dmnd")
-        else:
-            raise ValueError(
-                "Protein search tool must be either 'blastx' or 'diamond'."
-            )
 
     @staticmethod
     def get_output_prefix(input_file, prefix_arg=""):
@@ -171,7 +100,7 @@ class ScreenIOParameters():
         Tidy up some directories and erroneous files after a run.
         """
         #return
-        if self.inputs.do_cleanup:
+        if self.config.do_cleanup:
             for pattern in [
                 "reg_path_coords.csv",
                 "*hmmscan",
@@ -191,11 +120,11 @@ class ScreenIOParameters():
 
     @property
     def should_do_protein_screening(self) -> bool:
-        return not self.inputs.in_fast_mode
+        return not self.config.in_fast_mode
 
     @property
     def should_do_nucleotide_screening(self) -> bool:
-        return not (self.inputs.in_fast_mode or self.inputs.skip_nt_search)
+        return not (self.config.in_fast_mode or self.config.skip_nt_search)
 
     @property
     def should_do_benign_screening(self) -> bool:

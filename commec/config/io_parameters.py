@@ -26,18 +26,11 @@ class ScreenInputParameters:
 @dataclass
 class Query:
     """
-    Container for all information related to a query. Self calculates AA version.
-    Potential to expand in future to reverse translate from AA too.
+    Query to screen, based on an input FASTA. Self-calculates AA version.
     """
-    fasta_filepath : str
-
-    fasta_aa_filepath : str = ""
-    cleaned_fasta_filepath : str = ""
-
-    # Unused for now.
-    query_names : str = "" # Populate with all the names, such that we can do lookups for json_io.
-    #nt_raw : str = "" # The full query in string format eg: ATGGCTGACGATCGATCGACTCG
-    #aa_raw : str = "" # The full query in string format eg: MAPTGWKPHGDCGHHHHHHGDPM
+    input_fasta_path : str
+    query_nt_path : str = ""
+    query_aa_path : str = ""
 
     def validate(self, output_prefix : str):
         """ Translate or reverse translate query, so we have it ready in AA or NT format. """

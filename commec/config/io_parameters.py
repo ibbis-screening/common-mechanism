@@ -156,7 +156,7 @@ class ScreenIOParameters():
         """
         if not prefix_arg:
             return os.path.splitext(input_file)[0]
-        if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
+        if os.path.isdir(prefix_arg) or prefix_arg.endswith(os.path.sep) or prefix_arg in {".", "..", "~"}:
             # Make the directory if it doesn't exist
             if not os.path.isdir(prefix_arg):
                 os.makedirs(prefix_arg)

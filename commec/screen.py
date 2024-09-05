@@ -27,8 +27,8 @@ import sys
 import pandas as pd
 
 from commec.utils.file_utils import FileTools
-from commec.config.io_parameters import ScreenIOParameters, ScreenInputParameters
-from commec.config.screen_databases import CommecDatabases
+from commec.config.io_parameters import ScreenIOParameters, ScreenConfiguration
+from commec.config.screen_tools import CommecDatabases
 
 from commec.screeners.check_biorisk import check_biorisk
 from commec.screeners.check_benign import check_for_benign
@@ -42,7 +42,7 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Add module arguments to an ArgumentParser object.
     """
-    default_params : ScreenInputParameters = ScreenInputParameters()
+    default_params : ScreenConfiguration = ScreenConfiguration()
 
     parser.add_argument(
         dest="fasta_file",
@@ -151,7 +151,7 @@ class Screen:
         self.databases : CommecDatabases = CommecDatabases(self.params)
 
         # Add the input contents to the log
-        shutil.copyfile(self.params.query.fasta_filepath, self.params.tmp_log)
+        shutil.copyfile(self.params.query.input_fasta_path, self.params.tmp_log)
 
     def run(self, args : argparse.ArgumentParser):
         """
@@ -221,12 +221,12 @@ class Screen:
         Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
         pathogen protein screening results to `screen_file`.
         """
-        logging.debug("\t...running %s", self.params.inputs.search_tool)
+        logging.debug("\t...running %s", self.params.config.search_tool)
         self.databases.protein_db.screen()
         if not self.databases.protein_db.check_output(): #os.path.exists(search_output):
             raise RuntimeError(f"Protein search failed and {self.databases.protein_db.out_file} was not created. Aborting.")
 
-        logging.debug("\t...checking %s results", self.params.inputs.search_tool)
+        logging.debug("\t...checking %s results", self.params.config.search_tool)
         # Delete any previous check_reg_path results
         reg_path_coords = f"{self.params.output_prefix}.reg_path_coords.csv"
         if os.path.isfile(reg_path_coords):
@@ -234,7 +234,7 @@ class Screen:
 
         check_for_regulated_pathogens(self.databases.protein_db.out_file,
                                        self.params.db_dir,
-                                       str(self.params.inputs.threads))
+                                       str(self.params.config.threads))
 
 
     def screen_nucleotides(self):
@@ -245,7 +245,7 @@ class Screen:
         """
         # Only screen nucleotides in noncoding regions
         fetch_noncoding_regions(self.databases.protein_db.out_file,
-                                self.params.query.cleaned_fasta_filepath)
+                                self.params.query.nt_path)
         
         noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta" # TODO: This should be passed into fetch_noncoding_regions.
 
@@ -265,7 +265,7 @@ class Screen:
         logging.debug("\t...checking blastn results")
         check_for_regulated_pathogens(self.databases.nucleotide_db.out_file,
                                        self.params.db_dir,
-                                       str(self.params.inputs.threads))
+                                       str(self.params.config.threads))
 
     def screen_benign(self):
         """

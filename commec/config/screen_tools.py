@@ -42,14 +42,14 @@ class CommecDatabases():
                 self.protein_db = BlastXHandler(
                     os.path.join(params.db_dir, "nr_blast"),
                     os.path.join(params.db_dir, "nr_blast/nr"),
-                    input_file = params.query.aa_path,
+                    input_file = params.query.nt_path,
                     out_file = f"{params.output_prefix}.nr.blastx"
                 )
             elif params.config.search_tool == "nr.dmnd" or params.config.search_tool == "diamond":
                 self.protein_db = DiamondHandler(
                     os.path.join(params.db_dir, "nr_dmnd"),
                     os.path.join(params.db_dir, "nr_dmnd/nr.dmnd"),
-                    input_file = params.query.aa_path,
+                    input_file = params.query.nt_path,
                     out_file = f"{params.output_prefix}.nr.dmnd"
                 )
                 if params.config.search_tool == "nr.dmnd":

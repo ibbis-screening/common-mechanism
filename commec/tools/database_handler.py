@@ -5,6 +5,7 @@ Abstract base class for a database handler.
 Customize to screen desired database functionality.
 """
 import os
+import glob
 from dataclasses import dataclass
 import subprocess
 import logging
@@ -131,13 +132,21 @@ class DatabaseHandler():
         if not os.path.isdir(self.db_directory):
             raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
         if not os.path.isfile(self.db_file):
-            logging.error("Bad database file!")
-            #raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
+
+            # The specified file doesn't exist, try to find a pattern of multiple files
+            filename, extension = os.path.splitext(self.db_file)
+            search_file = os.path.join(self.db_directory, "*" + os.path.basename(filename) + "*" + extension)
+            files = glob.glob(search_file)
+            if len(files) == 0:
+                logging.error(f"{self.__class__.__name__} : Bad database file!")
+                raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
         """
+        logging.debug("SUBPROCESS: " + " ".join(command))
+
         with open(out_file, "a", encoding="utf-8") as f:
             result = subprocess.run(
                 command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors

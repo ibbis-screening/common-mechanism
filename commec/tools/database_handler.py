@@ -138,13 +138,15 @@ class DatabaseHandler():
             search_file = os.path.join(self.db_directory, "*" + os.path.basename(filename) + "*" + extension)
             files = glob.glob(search_file)
             if len(files) == 0:
-                logging.error(self.__class__.__name__ + " : Bad database file!")
+                logging.error(f"{self.__class__.__name__} : Bad database file!")
                 raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
         """
+        logging.debug("SUBPROCESS: " + " ".join(command))
+
         with open(out_file, "a", encoding="utf-8") as f:
             result = subprocess.run(
                 command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors

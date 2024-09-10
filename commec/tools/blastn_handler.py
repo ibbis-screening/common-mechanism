@@ -13,22 +13,22 @@ class BlastNHandler(DatabaseHandler):
         super().__init__(directory, database_file, input_file, out_file)
         # We fill this with the defaults, however they can always be overridden after instancing, before screening.
         self.arguments_dictionary = {
-            "-num_threads": 8,
-            "-evalue": "10",
-            "-max_target_seqs": 50,
-            "-culling_limit": 5,
             "-outfmt": ["7", "qacc",   "stitle",   "sacc",   "staxids",
                         "evalue", "bitscore", "pident", "qlen",
-                        "qstart", "qend",     "slen",   "sstart",  "send"]
+                        "qstart", "qend",     "slen",   "sstart",  "send"],
+                        "-num_threads": 8,
+            "-evalue": "10",
+            "-max_target_seqs": 50,
+            "-culling_limit": 5
         }
         self.blastcall = "blastn"
 
     def screen(self):
         command = [
             self.blastcall,
-            "-db", self.db_file,
             "-query", self.input_file,
-            "-out", self.out_file,
+            "-db", self.db_file,
+            "-out", self.out_file
         ]
         command.extend(self.get_arguments())
         self.run_as_subprocess(command,self.temp_log_file)

@@ -64,7 +64,6 @@ def test_json_io(tmp_path, request, test_data_fixture):
         f"Test JSON output data: \n{asdict(test_data_retrieved)}"
     )
 
-
 def test_erroneous_info(tmp_path, test_screendata):
     ''' Test to ensure that read/write for JSON ScreenData I/O is working correctly.'''
     test_data = test_screendata
@@ -90,3 +89,11 @@ def test_erroneous_info(tmp_path, test_screendata):
         f"Test JSON Reference data: \n{asdict(test_data)}\n"
         f"Test JSON output data: \n{asdict(test_data_retrieved)}"
     )
+
+
+def test_adding_data_to_existing():
+    new_screen_data = ScreenData()
+    new_screen_data.queries.append(QueryData("test01", 10, "ATGCATGCAT", CommecRecomendation.FLAG))
+    write_query = new_screen_data.get_query("test01")
+    write_query.recommendation = CommecRecomendation.PASS
+    assert new_screen_data.queries[0].recommendation == CommecRecomendation.PASS

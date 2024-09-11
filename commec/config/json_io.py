@@ -34,6 +34,9 @@ from enum import StrEnum
 JSON_COMMEC_FORMAT_VERSION = "1.0"
 
 class CommecRecomendation(StrEnum):
+    """
+    All possible recommendation outputs from commec for a query.
+    """
     NULL = '-' # This was not set.
     SKIP = 'Skip' # Intentionally skipped this step.
     PASS = 'Pass' # Commec has approved this query at this step.
@@ -131,6 +134,16 @@ class ScreenData:
     def format(self):
         ''' Format this ScreenData as a json string to pass to a standard out if desired.'''
         return str(asdict(self))
+    
+    def get_query(self, query_name : str) -> QueryData:
+        """
+        Searches for a query, such that it can be updated or read from.
+        """
+        for data in self.queries:
+            if data.name == query_name:
+                return data
+        return None
+
 
 # The above could be moved to a custom .py script for variable importing under version control.
 

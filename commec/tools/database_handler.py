@@ -148,17 +148,25 @@ class DatabaseHandler():
         logging.debug("SUBPROCESS: " + " ".join(command))
 
         with open(out_file, "a", encoding="utf-8") as f:
+
             result = subprocess.run(
                 command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
             )
-            if result.returncode != 0:
+
+            if not self.is_succesful_result(result):
                 command_str = ' '.join(command)
                 logging.info("\t ERROR: command %s failed", command_str)
                 raise RuntimeError(
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
-
+            
+    def is_succesful_result(self , result : subprocess.CompletedProcess[bytes]):
+        """ Override for custom return code behaviour"""
+        if result.returncode != 0:
+            return False
+        return True
+    
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)

@@ -16,6 +16,7 @@ class Query:
         self.nt_path : str = ""
         self.aa_path : str = ""
         self.querie_names = []
+        self.querie_raw = []
 
     def validate(self, output_prefix : str):
         """ 
@@ -44,6 +45,8 @@ class Query:
             for line in fin:
                 if line.startswith('>'):
                     self.querie_names.append(line[1:-1])
+                    continue
+                self.querie_raw.append(line)
         return
         
     @staticmethod

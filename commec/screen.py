@@ -20,6 +20,7 @@ Command-line usage:
 """
 import argparse
 import datetime
+import time
 import logging
 import os
 import shutil
@@ -29,7 +30,7 @@ import pandas as pd
 from commec.utils.file_utils import FileTools
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfiguration
 from commec.config.screen_tools import CommecDatabases
-from commec.config.json_io import ScreenData
+from commec.config.json_io import ScreenData, QueryData, CommecRecomendation, encode_screen_data_to_json, get_screen_data_from_json
 
 from commec.screeners.check_biorisk import check_biorisk
 from commec.screeners.check_benign import check_for_benign
@@ -121,13 +122,13 @@ class Screen:
         self.databases : CommecDatabases = None
         self.scripts_dir : str = os.path.dirname(__file__) # Legacy.
         self.screen_data : ScreenData = ScreenData()
+        self.start_time = time.time()
 
     def setup(self, args : argparse.ArgumentParser):
         """ Instantiates and validates parameters, and databases, ready for a run."""
         self.params : ScreenIOParameters = ScreenIOParameters(args)
 
         #Use print so as not to overwrite an existing .screen file.
-        print(" Validating Inputs...")
         self.params.validate()
 
         # Set up logging
@@ -148,6 +149,32 @@ class Screen:
 
         # Add the input contents to the log
         shutil.copyfile(self.params.query.input_fasta_path, self.params.tmp_log)
+
+        # Initialise the json file:
+        for i, _value in enumerate(self.params.query.querie_names):
+            self.screen_data.queries.append(QueryData(
+                self.params.query.querie_names[i],
+                len(self.params.query.querie_raw[i]),
+                self.params.query.querie_raw[i],
+                CommecRecomendation.NULL)
+                )
+            
+        if self.params.should_do_biorisk_screening:
+            self.screen_data.commec_info.biorisk_database_info = self.databases.biorisk_db.get_version_information()
+
+        if self.params.should_do_protein_screening:
+            self.screen_data.commec_info.protein_database_info = self.databases.biorisk_db.get_version_information()
+
+        if self.params.should_do_nucleotide_screening:
+            self.screen_data.commec_info.nucleotide_database_info = self.databases.biorisk_db.get_version_information()
+
+        if self.params.should_do_benign_screening:
+            self.screen_data.commec_info.benign_database_info = self.databases.benign_hmm.get_version_information()
+
+        self.screen_data.commec_info.date_run = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        encode_screen_data_to_json(self.screen_data, self.params.output_json)
+        
 
     def run(self, args : argparse.ArgumentParser):
         """
@@ -200,6 +227,15 @@ class Screen:
         logging.info(
             ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
+
+        self.screen_data = get_screen_data_from_json(self.params.output_json)
+        time_taken = (time.time() - self.start_time)
+        # Convert the elapsed time to hours, minutes, and seconds
+        hours, rem = divmod(time_taken, 3600)
+        minutes, seconds = divmod(rem, 60)
+        self.screen_data.commec_info.time_taken = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+        encode_screen_data_to_json(self.screen_data, self.params.output_json)
+
         self.params.clean()
 
     def screen_biorisks(self):
@@ -285,7 +321,7 @@ class Screen:
         benign_desc =  pd.read_csv(self.databases.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
         
         logging.debug("\t...checking benign scan results")
-        check_for_benign(sample_name, coords, benign_desc)
+        check_for_benign(sample_name, coords, benign_desc, self.params.output_json)
 
 def run(args : argparse.ArgumentParser):
     """

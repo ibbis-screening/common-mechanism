@@ -87,8 +87,8 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
         unique_targets = unique_query_data['target name'].unique()
         for affected_target in unique_targets:
             unique_target_data : pd.DataFrame = unique_query_data[unique_query_data['target name'] == affected_target]
-            target_description = ", ".join(set(unique_target_data['description'][0])) # First should be unique.
-            must_flag = unique_target_data['Must flag'][0] # First should be unique.
+            target_description = ", ".join(set(unique_target_data['description'])) # First should be unique.
+            must_flag = unique_target_data['Must flag'].iloc[0] # First should be unique.
             match_ranges = []
             for _, region in unique_target_data.iterrows():
                 match_range = MatchRange(

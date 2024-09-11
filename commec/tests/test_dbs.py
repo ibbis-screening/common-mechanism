@@ -41,5 +41,8 @@ def test_database_can_run(input_db):
     new_db.screen()
     assert new_db.check_output()
 
+    version : str = new_db.get_version_information()
+    assert version
+    
     if os.path.isfile(output_file):
         os.remove(output_file)

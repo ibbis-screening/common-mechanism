@@ -128,17 +128,11 @@ class Screen:
         print(" Validating Inputs...")
         self.params.validate()
 
-        logging.basicConfig(level=logging.DEBUG,
-                            format="%(message)s",
-                            handlers=[logging.StreamHandler(), logging.FileHandler(self.params.output_screen_file, "a")],
-                            )
-
-
         # Set up logging
         logging.basicConfig(
             level=logging.INFO,
             format="%(message)s",
-            handlers=[logging.StreamHandler(), logging.FileHandler(self.params.output_screen_file, "a")],
+            handlers=[logging.StreamHandler(), logging.FileHandler(self.params.output_screen_file, "a"), logging.FileHandler(self.params.tmp_log, "a")],
         )
 
         logging.basicConfig(

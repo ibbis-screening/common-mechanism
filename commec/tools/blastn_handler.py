@@ -3,6 +3,8 @@
 """
 Defines the `Input and Output Screen Parameters` class, and associated dataclasses.
 """
+
+import subprocess
 from commec.tools.database_handler import DatabaseHandler, DatabaseVersion
 
 class BlastNHandler(DatabaseHandler):
@@ -32,3 +34,11 @@ class BlastNHandler(DatabaseHandler):
         ]
         command.extend(self.get_arguments())
         self.run_as_subprocess(command,self.temp_log_file)
+
+    def get_version_information(self) -> DatabaseVersion:
+        try:
+            result = subprocess.run(['blastn', '-version'], capture_output=True, text=True, check=True)
+            version_info = result.stdout.strip()
+            return version_info
+        except subprocess.CalledProcessError:
+            return None

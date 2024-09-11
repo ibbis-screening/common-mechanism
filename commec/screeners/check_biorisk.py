@@ -14,11 +14,10 @@ import pandas as pd
 from commec.tools.hmm_handler import readhmmer, trimhmmer
 from commec.utils.file_utils import FileTools
 from commec.config.json_io import (
-    ScreenData,
+    get_screen_data_from_json, 
+    encode_screen_data_to_json,
     BioRisk,
     MatchRange,
-    encode_screen_data_to_json,
-    get_screen_data_from_json
 )
 
 def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str, output_json : str):
@@ -37,9 +36,10 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
     if not os.path.exists(hmm_folder_csv):
         logging.error("\t...biorisk_annotations.csv does not exist\n" + hmm_folder_csv)
         return 1
-
-    output_data : ScreenData = get_screen_data_from_json(output_json)
     
+    output_data = get_screen_data_from_json(output_json)
+
+
     #Specify input file and read in database file
     lookup = pd.read_csv(hmm_folder_csv)
     lookup.fillna(False, inplace=True)
@@ -89,7 +89,6 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
             unique_target_data : pd.DataFrame = unique_query_data[unique_query_data['target name'] == affected_target]
             target_description = ", ".join(set(unique_target_data['description'][0])) # First should be unique.
             must_flag = unique_target_data['Must flag'][0] # First should be unique.
-
             match_ranges = []
             for _, region in unique_target_data.iterrows():
                 match_range = MatchRange(

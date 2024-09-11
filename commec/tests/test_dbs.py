@@ -4,21 +4,21 @@ Will fail if databases have not been installed as expected, with correct version
 """
 import os
 import pytest
-from commec.tools.blastdmnd_handler import DiamondDataBase
-from commec.tools.blastn_handler import BlastNDataBase
-from commec.tools.blastx_handler import BlastXDataBase
-from commec.tools.hmm_handler import HMMDataBase
-from commec.tools.cmscan_handler import CmscanDataBase
+from commec.tools.blastdmnd_handler import DiamondHandler
+from commec.tools.blastn_handler import BlastNHandler
+from commec.tools.blastx_handler import BlastXHandler
+from commec.tools.hmm_handler import HMMHandler
+from commec.tools.cmscan_handler import CmscanHandler
 
 INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fasta")
 DATABASE_DIRECTORY = os.path.join(os.path.dirname(__file__),"test_dbs")
 
 databases_to_implement = [
-    [DiamondDataBase,   "nr_dmnd",     "nr.dmnd"],
-    [BlastNDataBase,    "nt_blast",    "nt"],
-    [BlastXDataBase,    "nr_blast",    "nr"],
-    [HMMDataBase,       "benign_db",   "benign.hmm"],
-    [CmscanDataBase,    "benign_db",   "benign.cmscan"],
+    [DiamondHandler,   "nr_dmnd",     "nr.dmnd"],
+    [BlastNHandler,    "nt_blast",    "nt"],
+    [BlastXHandler,    "nr_blast",    "nr"],
+    [HMMHandler,       "benign_db",   "benign.hmm"],
+    [CmscanHandler,    "benign_db",   "benign.cmscan"],
 ]
 
 @pytest.mark.parametrize("input_db", databases_to_implement)
@@ -41,5 +41,8 @@ def test_database_can_run(input_db):
     new_db.screen()
     assert new_db.check_output()
 
+    version : str = new_db.get_version_information()
+    assert version
+    
     if os.path.isfile(output_file):
         os.remove(output_file)

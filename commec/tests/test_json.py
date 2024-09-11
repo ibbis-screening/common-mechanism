@@ -91,9 +91,16 @@ def test_erroneous_info(tmp_path, test_screendata):
     )
 
 
+
 def test_adding_data_to_existing():
+    """
+    Tests to ensure the mutability of writing to queries is working as expected.
+    """
+    def write_info(InputQuery : QueryData):
+        InputQuery.recommendation = CommecRecomendation.PASS
+    
     new_screen_data = ScreenData()
     new_screen_data.queries.append(QueryData("test01", 10, "ATGCATGCAT", CommecRecomendation.FLAG))
     write_query = new_screen_data.get_query("test01")
-    write_query.recommendation = CommecRecomendation.PASS
+    write_info(write_query)
     assert new_screen_data.queries[0].recommendation == CommecRecomendation.PASS

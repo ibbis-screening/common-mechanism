@@ -47,11 +47,11 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
     # read in HMMER output and check for valid hits
     if FileTools.is_empty(hmmscan_input_file):
         logging.info("\t...ERROR: biorisk search results empty\n")
-        return
+        return 0
 
     if not FileTools.has_hits(hmmscan_input_file):
         logging.info("\t\t --> Biorisks: no hits detected, PASS\n")
-        return
+        return 0
 
     hmmer = readhmmer(hmmscan_input_file)
     keep1 = [i for i, x in enumerate(hmmer['E-value']) if x < 1e-20]
@@ -68,30 +68,62 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
 
     if hmmer.shape[0] == 0:
         logging.info("\t\t --> Biorisks: no significant hits detected, PASS\n")
-        return
+        return 0
+    
+    if sum(hmmer['Must flag']) == 0:
+        logging.info("\t\t --> Biorisks: Regulated genes not found, PASS\n")
+        return 0
+    
+    # Update the ScreenData state to capture the biorisk outputs:
+    unique_queries = hmmer['query name'].unique()
+    for affected_query in unique_queries:
+    
+        query_data = output_data.get_query(affected_query)
+        if not query_data:
+            logging.error("Query from hmmscan could not be found! [%s]", affected_query)
+            continue
 
+        unique_query_data : pd.DataFrame = hmmer[hmmer['query name'] == affected_query]
+        unique_targets = unique_query_data['target name'].unique()
+        for affected_target in unique_targets:
+            unique_target_data : pd.DataFrame = unique_query_data[unique_query_data['target name'] == affected_target]
+            target_description = ", ".join(set(unique_target_data['description'][0])) # First should be unique.
+            must_flag = unique_target_data['Must flag'][0] # First should be unique.
+
+            match_ranges = []
+            for _, region in unique_target_data.iterrows():
+                match_range = MatchRange(
+                    int(region['hmm from']), int(region['hmm to']),
+                    int(region['ali from']), int(region['ali to']),
+                    0
+                )
+                match_ranges.append(match_range)
+
+            biorisk_data : BioRisk = query_data.biorisks.get_existing(affected_target)
+            if biorisk_data:
+                biorisk_data.range.extend(match_ranges)
+                continue
+
+            if must_flag > 0:
+                query_data.biorisks.regulated_genes.append(BioRisk(affected_target, target_description, True, "Input Regulated Info", match_ranges))
+                continue
+            if must_flag == 0:
+                query_data.biorisks.virulance_factors.append(BioRisk(affected_target, target_description, False, "Input Regulated Info", match_ranges))
+                continue
+
+    encode_screen_data_to_json(output_data, output_json)
+
+    # Legacy Screen file outputs:
     if sum(hmmer['Must flag']) > 0:
         for region in hmmer.index[hmmer['Must flag'] != 0]:
             if hmmer['ali from'][region] > hmmer['qlen'][region]:
                 hmmer['ali from'][region] = divmod(hmmer['ali from'][region], hmmer['qlen'][region])[0]
                 hmmer['ali to'][region] = divmod(hmmer['ali to'][region], hmmer['qlen'][region])[0]
+
             logging.info("\t\t --> Biorisks: Regulated gene in bases " + str(hmmer['ali from'][region]) +
-                                " to " + str(hmmer['ali to'][region]) + 
-                                ": FLAG\n\t\t     Gene: " + 
-                                ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
-            
-            new_match = BioRisk(
-                ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])),
-                MatchRange(
-                    0,0,
-                    int(hmmer['ali from'][region]),
-                    int(hmmer['ali to'][region]),
-                    0
-                )
-            )
-            #output_data.biorisks.regulated_genes.append(new_match)
-    else:
-        logging.info("\t\t --> Biorisks: Regulated genes not found, PASS\n")
+                            " to " + str(hmmer['ali to'][region]) + 
+                            ": FLAG\n\t\t     Gene: " + 
+                            ", ".join(set(hmmer['description'][hmmer['Must flag'] == True])) + "\n")
 
     if sum(hmmer['Must flag']) != hmmer.shape[0]:
         for region in hmmer.index[hmmer['Must flag'] == 0]:
@@ -100,17 +132,6 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
                                 ", WARNING\n\t\t     Gene: " +
                                 ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])) + "\n")
 
-            new_match = BioRisk(
-                ", ".join(set(hmmer['description'][hmmer['Must flag'] == False])),
-                MatchRange(
-                    0,0,
-                    int(hmmer['ali from'][region]),
-                    int(hmmer['ali to'][region]),
-                    0
-                )
-            )
-            #output_data.biorisks.virulance_factors.append(new_match)
-    encode_screen_data_to_json(output_data, output_json)
     return 0
 
 def main():
@@ -140,5 +161,6 @@ def main():
 
     return_value = check_biorisk(args.in_file, args.db, args.output_json)
     return return_value
+
 if __name__ == "__main__":
     main()

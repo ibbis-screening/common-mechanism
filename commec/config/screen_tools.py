@@ -12,7 +12,7 @@ from commec.tools.blastdmnd_handler import DiamondHandler
 from commec.tools.cmscan_handler import CmscanHandler
 from commec.tools.hmm_handler import HMMHandler
 
-class CommecDatabases():
+class ScreenTools():
     """
     Consolidation and initialisation of all databases needed for the commec workflow.
     This could be maybe split into a Biorisk_handler, Taxonomy handler, and Benign handler

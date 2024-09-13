@@ -18,6 +18,7 @@ from commec.config.json_io import (
     encode_screen_data_to_json,
     BioRisk,
     MatchRange,
+    CommecRecomendation,
 )
 
 def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str, output_json : str):
@@ -109,6 +110,14 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
             if must_flag == 0:
                 query_data.biorisks.virulance_factors.append(BioRisk(affected_target, target_description, False, "Input Regulated Info", match_ranges))
                 continue
+
+    # Update the recomendation status for the queries.
+    for query in output_data.queries:
+        if len(query.biorisks.virulance_factors) > 0:
+            query.recommendation.biorisk_screen = CommecRecomendation.WARN
+        if len(query.biorisks.regulated_genes) > 0:
+            query.recommendation.biorisk_screen = CommecRecomendation.FLAG
+        query.recommendation.update_commec_recommendation()
 
     encode_screen_data_to_json(output_data, output_json)
 

@@ -61,7 +61,7 @@ class ScreenIOParameters():
         #Query
         self.query : Query = Query(args.fasta_file)
 
-        # Should this instead be elsewhere... 
+        # Should this instead be elsewhere...
         self.db_dir = args.database_dir
 
 
@@ -72,7 +72,7 @@ class ScreenIOParameters():
         if os.path.exists(self.output_screen_file):
             raise RuntimeError(f"Screen output {self.output_screen_file} already exists. Aborting.")
 
-        self.query.validate(self.output_prefix)
+        self.query.setup(self.output_prefix)
         return True
 
     @staticmethod

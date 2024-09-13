@@ -123,9 +123,6 @@ class Screen:
     def setup(self, args : argparse.ArgumentParser):
         """ Instantiates and validates parameters, and databases, ready for a run."""
         self.params : ScreenIOParameters = ScreenIOParameters(args)
-
-        #Use print so as not to overwrite an existing .screen file.
-        print(" Validating Inputs...")
         self.params.validate()
 
         # Set up logging
@@ -143,6 +140,7 @@ class Screen:
 
         logging.info(" Validating Inputs...")
         self.database_tools : ScreenTools = ScreenTools(self.params)
+        self.params.query.translate_query()
 
         # Add the input contents to the log
         shutil.copyfile(self.params.query.input_fasta_path, self.params.tmp_log)
@@ -266,11 +264,11 @@ class Screen:
         Call `hmmscan`, `blastn`, and `cmscan` and then pass results to `check_benign.py` to identify
         regions that can be cleared.
         """
-        sample_name = self.params.output_prefix # Note currently check_for_benign hard codes .benign.hmmscan onto this.
+        sample_name = self.params.output_prefix
         if not os.path.exists(sample_name + ".reg_path_coords.csv"):
             logging.info("\t...no regulated regions to clear\n")
             return
-        
+
         logging.debug("\t...running benign hmmscan")
         self.database_tools.benign_hmm.screen()
         logging.debug("\t...running benign blastn")
@@ -282,6 +280,7 @@ class Screen:
         benign_desc =  pd.read_csv(self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
         
         logging.debug("\t...checking benign scan results")
+        # Note currently check_for_benign hard codes .benign.hmmscan, and should grab from handler instead.
         check_for_benign(sample_name, coords, benign_desc)
 
 def run(args : argparse.ArgumentParser):

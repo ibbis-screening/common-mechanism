@@ -266,17 +266,17 @@ class Screen:
         Call `hmmscan`, `blastn`, and `cmscan` and then pass results to `check_benign.py` to identify
         regions that can be cleared.
         """
+        sample_name = self.params.output_prefix # Note currently check_for_benign hard codes .benign.hmmscan onto this.
+        if not os.path.exists(sample_name + ".reg_path_coords.csv"):
+            logging.info("\t...no regulated regions to clear\n")
+            return
+        
         logging.debug("\t...running benign hmmscan")
         self.database_tools.benign_hmm.screen()
         logging.debug("\t...running benign blastn")
         self.database_tools.benign_blastn.screen()
         logging.debug("\t...running benign cmscan")
         self.database_tools.benign_cmscan.screen()
-
-        sample_name = self.params.output_prefix # Note currently check_for_benign hard codes .benign.hmmscan onto this.
-        if not os.path.exists(sample_name + ".reg_path_coords.csv"):
-            logging.info("\t...no regulated regions to clear\n")
-            return
 
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
         benign_desc =  pd.read_csv(self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")

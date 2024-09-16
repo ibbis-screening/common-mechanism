@@ -9,6 +9,7 @@ import os
 import glob
 import argparse
 from dataclasses import dataclass
+from typing import Optional
 
 from commec.config.query import Query
 
@@ -23,8 +24,7 @@ class ScreenConfiguration:
     in_fast_mode: bool = False
     skip_nt_search: bool = False
     do_cleanup: bool = False
-    diamond_jobs : int = None
-    force_overwrite : bool = False
+    diamond_jobs : Optional[int] = None
 
 class ScreenIOParameters():
     """
@@ -48,7 +48,7 @@ class ScreenIOParameters():
             args.fast_mode,
             args.skip_nt_search,
             args.cleanup,
-            args.jobs,
+            args.jobs
         )
 
         # TODO: Think about whether logs belong in here, or externally.

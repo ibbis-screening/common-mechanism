@@ -16,34 +16,28 @@ class Query:
         self.nt_path : str = ""
         self.aa_path : str = ""
 
-    def validate(self, output_prefix : str):
+    def setup(self, output_prefix : str):
         """ 
         Translate or reverse translate query, to be ready in AA or NT format. 
         """
-        self.nt_path = Query.get_cleaned_fasta(self.input_fasta_path, output_prefix)
+        self.nt_path = self.get_cleaned_fasta(output_prefix)
         self.aa_path = f"{output_prefix}.transeq.faa"
 
-        # Run command transeq, to translate our input sequences.
+    def translate_query(self):
+        """ Run command transeq, to translate our input sequences. """
         command = ["transeq", self.nt_path, self.aa_path, "-frame", "6", "-clean"]
-        try:
-            result = subprocess.run(command, check=True)
-            if result.returncode != 0:
-                command_str = ' '.join(command)
-                raise RuntimeError(
-                    f"subprocess.run of command '{command_str}' encountered error."
-                )
-        except RuntimeError as error:
-            raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated.") from error
+        result = subprocess.run(command, check=True)
+        if result.returncode != 0:
+            raise RuntimeError("Input FASTA {fasta_to_screen} could not be translated:\n{result.stderr}")
         
-    @staticmethod
-    def get_cleaned_fasta(input_file, out_prefix):
+    def get_cleaned_fasta(self, out_prefix):
         """
         Return a FASTA where whitespace (including non-breaking spaces) and 
         illegal characters are replaced with underscores.
         """
         cleaned_file = f"{out_prefix}.cleaned.fasta"
         with (
-            open(input_file, "r", encoding="utf-8") as fin,
+            open(self.input_fasta_path, "r", encoding="utf-8") as fin,
             open(cleaned_file, "w", encoding="utf-8") as fout,
         ):
             for line in fin:

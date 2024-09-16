@@ -16,8 +16,8 @@ import argparse
 import textwrap
 import pandas as pd
 
-from commec.utils.file_utils import FileTools
-from commec.tools.blast_tools import BlastTools
+from commec.tools.blast_tools import readblast, trimblast, taxdist, tophits
+from commec.tools.blastn_handler import BlastNHandler
 
 pd.set_option("display.max_colwidth", 10000)
 
@@ -75,23 +75,23 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
     if os.path.exists(sample_name + ".reg_path_coords.csv"):
         hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
-    if FileTools.is_empty(input_file):
+    if BlastNHandler.is_empty(input_file):
         logging.info("\tERROR: Homology search has failed\n")
         return 1
 
-    if not FileTools.has_hits(input_file):
+    if not BlastNHandler.has_hits(input_file):
         logging.info("\t...no hits\n")
         return 0
 
-    blast = BlastTools.readblast(input_file)
-    blast = BlastTools.taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
+    blast = readblast(input_file)
+    blast = taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     #interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
 
-    blast2 = BlastTools.trimblast(blast)
-    blast2 = BlastTools.tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    blast2 = trimblast(blast)
+    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
 
     reg_bac = 0
     reg_vir = 0

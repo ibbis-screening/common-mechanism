@@ -15,4 +15,4 @@ def test_default_parameters():
     add_args(args)
     args = args.parse_args()
     new_params = ScreenIOParameters(args)
-    assert new_params.validate()
+    assert new_params.setup()

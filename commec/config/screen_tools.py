@@ -12,7 +12,7 @@ from commec.tools.blastdmnd_handler import DiamondHandler
 from commec.tools.cmscan_handler import CmscanHandler
 from commec.tools.hmm_handler import HMMHandler
 
-class CommecDatabases():
+class ScreenTools():
     """
     Consolidation and initialisation of all databases needed for the commec workflow.
     This could be maybe split into a Biorisk_handler, Taxonomy handler, and Benign handler
@@ -52,6 +52,7 @@ class CommecDatabases():
                     input_file = params.query.nt_path,
                     out_file = f"{params.output_prefix}.nr.dmnd"
                 )
+                self.protein_db.jobs = params.config.diamond_jobs
                 if params.config.search_tool == "nr.dmnd":
                     logging.info("""Using old \"nr.dmnd\" keyword for search tool used
                                   will not be supported in future releases, 

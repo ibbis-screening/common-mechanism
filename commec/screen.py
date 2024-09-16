@@ -27,10 +27,17 @@ import shutil
 import sys
 import pandas as pd
 
-from commec.utils.file_utils import FileTools
+from commec.utils.file_utils import file_arg, directory_arg
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfiguration
-from commec.config.screen_tools import CommecDatabases
-from commec.config.json_io import ScreenData, QueryData, CommecRecomendation, encode_screen_data_to_json, get_screen_data_from_json
+from commec.config.screen_tools import ScreenTools
+
+from commec.config.json_io import (
+    ScreenData,
+    CommecRecomendation,
+    QueryData,
+    get_screen_data_from_json,
+    encode_screen_data_to_json
+)
 
 from commec.screeners.check_biorisk import check_biorisk
 from commec.screeners.check_benign import check_for_benign
@@ -48,14 +55,14 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     parser.add_argument(
         dest="fasta_file",
-        type=FileTools.file_arg,
+        type=file_arg,
         help="FASTA file to screen"
     )
     parser.add_argument(
         "-d",
         "--databases",
         dest="database_dir",
-        type=FileTools.directory_arg,
+        type=directory_arg,
         required=True,
         help="Path to databases directory",
     )
@@ -119,7 +126,7 @@ class Screen:
 
     def __init__(self):
         self.params : ScreenIOParameters = None
-        self.databases : CommecDatabases = None
+        self.database_tools : ScreenTools = None
         self.scripts_dir : str = os.path.dirname(__file__) # Legacy.
         self.screen_data : ScreenData = ScreenData()
         self.start_time = time.time()
@@ -127,9 +134,7 @@ class Screen:
     def setup(self, args : argparse.ArgumentParser):
         """ Instantiates and validates parameters, and databases, ready for a run."""
         self.params : ScreenIOParameters = ScreenIOParameters(args)
-
-        #Use print so as not to overwrite an existing .screen file.
-        self.params.validate()
+        self.params.setup()
 
         # Set up logging
         logging.basicConfig(
@@ -145,31 +150,32 @@ class Screen:
         )
 
         logging.info(" Validating Inputs...")
-        self.databases : CommecDatabases = CommecDatabases(self.params)
+        self.database_tools : ScreenTools = ScreenTools(self.params)
+        self.params.query.translate_query()
 
         # Add the input contents to the log
         shutil.copyfile(self.params.query.input_fasta_path, self.params.tmp_log)
 
         # Initialise the json file:
-        for i, _value in enumerate(self.params.query.querie_names):
+        for query in self.params.query.raw:
             self.screen_data.queries.append(QueryData(
-                self.params.query.querie_names[i],
-                len(self.params.query.querie_raw[i]),
-                self.params.query.querie_raw[i],
+                query.name,
+                len(str(query.seq)),
+                str(query.seq),
                 CommecRecomendation.NULL)
                 )
             
         if self.params.should_do_biorisk_screening:
-            self.screen_data.commec_info.biorisk_database_info = self.databases.biorisk_db.get_version_information()
+            self.screen_data.commec_info.biorisk_database_info = self.database_tools.biorisk_db.get_version_information()
 
         if self.params.should_do_protein_screening:
-            self.screen_data.commec_info.protein_database_info = self.databases.protein_db.get_version_information()
+            self.screen_data.commec_info.protein_database_info = self.database_tools.protein_db.get_version_information()
 
         if self.params.should_do_nucleotide_screening:
-            self.screen_data.commec_info.nucleotide_database_info = self.databases.nucleotide_db.get_version_information()
+            self.screen_data.commec_info.nucleotide_database_info = self.database_tools.nucleotide_db.get_version_information()
 
         if self.params.should_do_benign_screening:
-            self.screen_data.commec_info.benign_database_info = self.databases.benign_hmm.get_version_information()
+            self.screen_data.commec_info.benign_database_info = self.database_tools.benign_hmm.get_version_information()
 
         self.screen_data.commec_info.date_run = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -244,10 +250,10 @@ class Screen:
         Call hmmscan` and `check_biorisk.py` to add biorisk results to `screen_file`.
         """
         logging.debug("\t...running hmmscan")
-        self.databases.biorisk_db.screen()
+        self.database_tools.biorisk_db.screen()
         logging.debug("\t...checking hmmscan results")
-        check_biorisk(self.databases.biorisk_db.out_file,
-                      self.databases.biorisk_db.db_directory,
+        check_biorisk(self.database_tools.biorisk_db.out_file,
+                      self.database_tools.biorisk_db.db_directory,
                       self.params.output_json)
 
     def screen_proteins(self):
@@ -256,9 +262,9 @@ class Screen:
         pathogen protein screening results to `screen_file`.
         """
         logging.debug("\t...running %s", self.params.config.search_tool)
-        self.databases.protein_db.screen()
-        if not self.databases.protein_db.check_output(): #os.path.exists(search_output):
-            raise RuntimeError(f"Protein search failed and {self.databases.protein_db.out_file} was not created. Aborting.")
+        self.database_tools.protein_db.screen()
+        if not self.database_tools.protein_db.check_output(): #os.path.exists(search_output):
+            raise RuntimeError(f"Protein search failed and {self.database_tools.protein_db.out_file} was not created. Aborting.")
 
         logging.debug("\t...checking %s results", self.params.config.search_tool)
         # Delete any previous check_reg_path results
@@ -266,7 +272,7 @@ class Screen:
         if os.path.isfile(reg_path_coords):
             os.remove(reg_path_coords)
 
-        check_for_regulated_pathogens(self.databases.protein_db.out_file,
+        check_for_regulated_pathogens(self.database_tools.protein_db.out_file,
                                        self.params.db_dir,
                                        str(self.params.config.threads))
 
@@ -278,26 +284,24 @@ class Screen:
         protein search).
         """
         # Only screen nucleotides in noncoding regions
-        fetch_noncoding_regions(self.databases.protein_db.out_file,
+        fetch_noncoding_regions(self.database_tools.protein_db.out_file,
                                 self.params.query.nt_path)
         
         noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta" # TODO: This should be passed into fetch_noncoding_regions.
 
         if not os.path.isfile(noncoding_fasta):
-            logging.debug(
-                "\t...skipping nucleotide search since no noncoding regions fetched"
-            )
+            logging.debug("\t...skipping nucleotide search since no noncoding regions fetched")
             return
 
         # Only run new blastn search if there are no previous results
-        if not self.databases.nucleotide_db.check_output():
-            self.databases.nucleotide_db.screen()
+        if not self.database_tools.nucleotide_db.check_output():
+            self.database_tools.nucleotide_db.screen()
 
-        if not self.databases.nucleotide_db.check_output():
-            raise RuntimeError(f"Nucleotide search failed and {self.databases.nucleotide_db.out_file} was not created. Aborting.")
+        if not self.database_tools.nucleotide_db.check_output():
+            raise RuntimeError(f"Nucleotide search failed and {self.database_tools.nucleotide_db.out_file} was not created. Aborting.")
 
         logging.debug("\t...checking blastn results")
-        check_for_regulated_pathogens(self.databases.nucleotide_db.out_file,
+        check_for_regulated_pathogens(self.database_tools.nucleotide_db.out_file,
                                        self.params.db_dir,
                                        str(self.params.config.threads))
 
@@ -306,20 +310,20 @@ class Screen:
         Call `hmmscan`, `blastn`, and `cmscan` and then pass results to `check_benign.py` to identify
         regions that can be cleared.
         """
-        logging.debug("\t...running benign hmmscan")
-        self.databases.benign_hmm.screen()
-        logging.debug("\t...running benign blastn")
-        self.databases.benign_blastn.screen()
-        logging.debug("\t...running benign cmscan")
-        self.databases.benign_cmscan.screen()
-
-        sample_name = self.params.output_prefix # Note currently check_for_benign hard codes .benign.hmmscan onto this.
+        sample_name = self.params.output_prefix
         if not os.path.exists(sample_name + ".reg_path_coords.csv"):
             logging.info("\t...no regulated regions to clear\n")
             return
 
+        logging.debug("\t...running benign hmmscan")
+        self.database_tools.benign_hmm.screen()
+        logging.debug("\t...running benign blastn")
+        self.database_tools.benign_blastn.screen()
+        logging.debug("\t...running benign cmscan")
+        self.database_tools.benign_cmscan.screen()
+
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
-        benign_desc =  pd.read_csv(self.databases.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
+        benign_desc =  pd.read_csv(self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
         
         logging.debug("\t...checking benign scan results")
         check_for_benign(sample_name, coords, benign_desc, self.params.output_json)

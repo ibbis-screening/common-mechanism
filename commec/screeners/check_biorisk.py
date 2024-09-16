@@ -11,10 +11,9 @@ import os
 import sys
 import argparse
 import pandas as pd
-from commec.tools.hmm_handler import readhmmer, trimhmmer
-from commec.utils.file_utils import FileTools
+from commec.tools.hmm_handler import readhmmer, trimhmmer, HMMHandler
 from commec.config.json_io import (
-    get_screen_data_from_json, 
+    get_screen_data_from_json,
     encode_screen_data_to_json,
     BioRisk,
     MatchRange,
@@ -46,11 +45,11 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
     lookup.fillna(False, inplace=True)
 
     # read in HMMER output and check for valid hits
-    if FileTools.is_empty(hmmscan_input_file):
+    if HMMHandler.is_empty(hmmscan_input_file):
         logging.info("\t...ERROR: biorisk search results empty\n")
         return 0
 
-    if not FileTools.has_hits(hmmscan_input_file):
+    if not HMMHandler.has_hits(hmmscan_input_file):
         logging.info("\t\t --> Biorisks: no hits detected, PASS\n")
         return 0
 
@@ -113,6 +112,7 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
 
     # Update the recomendation status for the queries.
     for query in output_data.queries:
+        query.recommendation.biorisk_screen = CommecRecomendation.PASS
         if len(query.biorisks.virulance_factors) > 0:
             query.recommendation.biorisk_screen = CommecRecomendation.WARN
         if len(query.biorisks.regulated_genes) > 0:

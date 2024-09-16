@@ -67,6 +67,7 @@ class CommecRecomendationContainer():
         Parses the current state of the json, 
         and updates the global commec recommendation.
         """
+
         if self.biorisk_screen == CommecRecomendation.FLAG:
             self.commec_recommendation = CommecRecomendation.FLAG
             return
@@ -84,6 +85,10 @@ class CommecRecomendationContainer():
         if self.biorisk_screen == CommecRecomendation.WARN:
             self.commec_recommendation = CommecRecomendation.WARN
             return
+
+        if self.commec_recommendation == CommecRecomendation.NULL:
+            self.commec_recommendation = self.biorisk_screen
+
 
 @dataclass
 class CommecSummaryStatistics:

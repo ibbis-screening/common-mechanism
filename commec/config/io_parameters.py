@@ -9,6 +9,7 @@ import os
 import glob
 import argparse
 from dataclasses import dataclass
+from typing import Optional
 
 from commec.config.query import Query
 
@@ -23,8 +24,7 @@ class ScreenConfiguration:
     in_fast_mode: bool = False
     skip_nt_search: bool = False
     do_cleanup: bool = False
-    diamond_jobs : int = None
-    force_overwrite : bool = False
+    diamond_jobs : Optional[int] = None
 
 class ScreenIOParameters():
     """
@@ -48,7 +48,7 @@ class ScreenIOParameters():
             args.fast_mode,
             args.skip_nt_search,
             args.cleanup,
-            args.jobs,
+            args.jobs
         )
 
         # TODO: Think about whether logs belong in here, or externally.
@@ -62,18 +62,20 @@ class ScreenIOParameters():
         #Query
         self.query : Query = Query(args.fasta_file)
 
-        # Should this instead be elsewhere... 
+        # Should this instead be elsewhere...
         self.db_dir = args.database_dir
 
 
-    def validate(self) -> bool:
+    def setup(self) -> bool:
         """
-        Make sure all the needed databases exist.
+        Post instantiation additonal setup. Or setup which requires logging.
         """
+
+        # In the future, we may pass -force argument to enable or disable this?
         if os.path.exists(self.output_screen_file):
             raise RuntimeError(f"Screen output {self.output_screen_file} already exists. Aborting.")
 
-        self.query.validate(self.output_prefix)
+        self.query.setup(self.output_prefix)
         return True
 
     @staticmethod

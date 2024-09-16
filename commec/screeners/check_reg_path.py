@@ -61,6 +61,8 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
         logging.error("\t...biorisk db file %s does not exist\n" % (input_database_dir + "/biorisk_db/reg_taxids.txt"))
         return 1
 
+    logging.info("\t...Input query file: %s\n" % input_file)
+
     # read in files
     reg_ids = pd.read_csv(input_database_dir + "/biorisk_db/reg_taxids.txt", header=None)
     vax_ids = pd.read_csv(input_database_dir + "/benign_db/vax_taxids.txt", header=None)
@@ -123,32 +125,39 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
-        # for each hit (subject acc) linked with at least one regulated taxid
+            # for each hit (subject acc) linked with at least one regulated taxid
             for site in set(blast2['q. start'][blast2['regulated'] != False]):
                 subset = blast2[(blast2['q. start'] == site)]
                 subset = subset.sort_values(by=['regulated'], ascending=False)
                 subset = subset.reset_index(drop=True)
                 org = ""
-            
-                blast2 = blast2.dropna(subset = ['species'])
-                n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
-                n_total = len(blast2['regulated'][blast2['q. start'] == site])
-                gene_names = ", ".join(set(subset['subject acc.']))
-                end = blast2['q. end'][blast2['q. start'] == site].max()
-                coordinates = str(int(site)) + " - " + str(int(end))
 
-                species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
-                desc = blast2['subject title'][blast2['q. start'] == site].values[0]
-                taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
-                percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
-                reg_ids = (" ".join(map(str, set(blast2['regulated'][(blast2['q. start'] == site) & (blast2['regulated'] != False)]))))
+                blast2 = blast2.dropna(subset=['species'])
+                site_subset = blast2[blast2['q. start'] == site]
+                n_reg = (site_subset['regulated'] != False).sum()
+                n_total = len(site_subset)
+                gene_names = ", ".join(set(subset['subject acc.']))
+                end = site_subset['q. end'].max()
+                coordinates = f"{int(site)} - {int(end)}"
+
+                # Separate regulated and non-regulated species and taxids
+                regulated_species = set(site_subset[site_subset['regulated'] != False]['species'])
+                non_regulated_species = set(site_subset[site_subset['regulated'] == False]['species'])
+                regulated_taxids = set(site_subset[site_subset['regulated'] != False]['subject tax ids'])
+                non_regulated_taxids = set(site_subset[site_subset['regulated'] == False]['subject tax ids'])
+
+                desc = site_subset['subject title'].iloc[0]
+                percent_ids = " ".join(map(str, set(site_subset['% identity'])))
 
                 # if some of the organisms with this sequence aren't regulated, say so
-                if (n_reg < n_total):
-                    logging.info("\t\t --> Best match to sequence(s) %s at bases %s found in both regulated and non-regulated organisms\n" % (gene_names, coordinates))
-                    logging.info("\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n" % (species_list, taxid_list, percent_ids))
-                    logging.info("\t\t     Description: %s\n" % (desc))
-                    # could explicitly list which are and aren't regulated?
+                if n_reg < n_total:
+                    logging.info(f"\t\t --> Best match to sequence(s) {gene_names} at bases {coordinates} found in both regulated and non-regulated organisms\n")
+                    logging.info(f"\t\t     Regulated species: {', '.join(regulated_species)}\n")
+                    logging.info(f"\t\t     Regulated taxid(s): {', '.join(map(str, regulated_taxids))}\n")
+                    logging.info(f"\t\t     Non-regulated species: {', '.join(non_regulated_species)}\n")
+                    logging.info(f"\t\t     Non-regulated taxid(s): {', '.join(map(str, non_regulated_taxids))}\n")
+                    logging.info(f"\t\t     Percent identity to query: {percent_ids}\n")
+                    logging.info(f"\t\t     Description: {desc}\n")
                 # otherwise, raise a flag and say which superkingdom the flag belongs to
                 elif (n_reg == n_total):
                     if subset['superkingdom'][0] == "Viruses":

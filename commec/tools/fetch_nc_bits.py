@@ -14,7 +14,7 @@ from Bio import SeqIO
 import argparse
 import logging
 #from commec.utils import *
-from commec.tools.blast_tools import BlastTools
+from commec.tools.blast_tools import readblast, trimblast
 from commec.utils.file_utils import FileTools
 
     #query = sys.argv[1]
@@ -37,8 +37,8 @@ def fetch_noncoding_regions(nr_output_file : str, cleaned_fasta_file_path : str)
     # if not, check whether any of the hits has an E-value > 1e-30
     # if so, find the start and end of those hits and use these to get the coordinates of non-coding regions
     else:
-        blast = BlastTools.readblast(query)
-        blast = BlastTools.trimblast(blast)
+        blast = readblast(query)
+        blast = trimblast(blast)
         blast = blast[blast['% identity'] >= 90]
         if blast.shape[0] > 0:
         # find noncoding bits

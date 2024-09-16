@@ -17,7 +17,7 @@ import textwrap
 import pandas as pd
 
 from commec.utils.file_utils import FileTools
-from commec.tools.blast_tools import BlastTools
+from commec.tools.blast_tools import readblast, trimblast, taxdist, tophits
 
 pd.set_option("display.max_colwidth", 10000)
 
@@ -81,15 +81,15 @@ def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_
         logging.info("\t...no hits\n")
         return 0
 
-    blast = BlastTools.readblast(input_file)
-    blast = BlastTools.taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
+    blast = readblast(input_file)
+    blast = taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
     #interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
 
-    blast2 = BlastTools.trimblast(blast)
-    blast2 = BlastTools.tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    blast2 = trimblast(blast)
+    blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
 
     reg_bac = 0
     reg_vir = 0

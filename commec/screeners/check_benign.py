@@ -16,7 +16,7 @@ import sys
 import pandas as pd
 
 from commec.tools.database_handler import DatabaseHandler # For has_hits.
-from commec.tools.blast_tools import BlastTools
+from commec.tools.blast_tools import tophits, readblast, trimblast
 from commec.tools.hmm_handler import readhmmer
 from commec.tools.cmscan_handler import readcmscan
 
@@ -127,9 +127,9 @@ def check_for_benign(query, coords, benign_desc):
     if not DatabaseHandler.has_hits(blast):
         logging.info("\t...no Synbio sequence hits\n")
     else:
-        blastn = BlastTools.readblast(blast)  # synbio parts
-        blastn = BlastTools.trimblast(blastn)
-        blastn = BlastTools.tophits(blastn)
+        blastn = readblast(blast)  # synbio parts
+        blastn = trimblast(blastn)
+        blastn = tophits(blastn)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             htrim = blastn[
                 ~(
@@ -229,7 +229,7 @@ def main():
 
     coords.sort_values(by=["q. start"], inplace=True)
     coords.reset_index(drop=True, inplace=True)
-    rv = check_for_benign(args.sample_name, coords, benign_desc, args.output_json)
+    rv = check_for_benign(args.sample_name, coords, benign_desc)
     sys.exit(rv)
 
 if __name__ == "__main__":

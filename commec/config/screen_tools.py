@@ -52,6 +52,7 @@ class ScreenTools():
                     input_file = params.query.nt_path,
                     out_file = f"{params.output_prefix}.nr.dmnd"
                 )
+                self.protein_db.jobs = params.config.diamond_jobs
                 if params.config.search_tool == "nr.dmnd":
                     logging.info("""Using old \"nr.dmnd\" keyword for search tool used
                                   will not be supported in future releases, 

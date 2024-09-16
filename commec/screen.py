@@ -123,7 +123,7 @@ class Screen:
     def setup(self, args : argparse.ArgumentParser):
         """ Instantiates and validates parameters, and databases, ready for a run."""
         self.params : ScreenIOParameters = ScreenIOParameters(args)
-        self.params.validate()
+        self.params.setup()
 
         # Set up logging
         logging.basicConfig(

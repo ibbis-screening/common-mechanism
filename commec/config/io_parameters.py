@@ -65,10 +65,12 @@ class ScreenIOParameters():
         self.db_dir = args.database_dir
 
 
-    def validate(self) -> bool:
+    def setup(self) -> bool:
         """
-        Make sure all the needed databases exist.
+        Post instantiation additonal setup. Or setup which requires logging.
         """
+
+        # In the future, we may pass -force argument to enable or disable this?
         if os.path.exists(self.output_screen_file):
             raise RuntimeError(f"Screen output {self.output_screen_file} already exists. Aborting.")
 

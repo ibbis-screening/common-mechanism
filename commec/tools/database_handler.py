@@ -69,8 +69,9 @@ class DatabaseHandler():
         if os.path.isfile(self.input_file):
             return True
         return False
-    
-    def is_empty(self) -> bool:
+
+    @staticmethod
+    def is_empty(out_file : str) -> bool:
         """
         is_empty
 
@@ -79,7 +80,7 @@ class DatabaseHandler():
         - name of file
         """
         try:
-            abspath = os.path.abspath(os.path.expanduser(self.out_file))
+            abspath = os.path.abspath(os.path.expanduser(out_file))
             return os.path.getsize(abspath) == 0
         except OSError:
             # If there is an error (including FileNotFoundError) consider it empty

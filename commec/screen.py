@@ -26,7 +26,7 @@ import shutil
 import sys
 import pandas as pd
 
-from commec.utils.file_utils import FileTools
+from commec.utils.file_utils import file_arg, directory_arg
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfiguration
 from commec.config.screen_tools import ScreenTools
 
@@ -46,14 +46,14 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     parser.add_argument(
         dest="fasta_file",
-        type=FileTools.file_arg,
+        type=file_arg,
         help="FASTA file to screen"
     )
     parser.add_argument(
         "-d",
         "--databases",
         dest="database_dir",
-        type=FileTools.directory_arg,
+        type=directory_arg,
         required=True,
         help="Path to databases directory",
     )
@@ -123,7 +123,7 @@ class Screen:
     def setup(self, args : argparse.ArgumentParser):
         """ Instantiates and validates parameters, and databases, ready for a run."""
         self.params : ScreenIOParameters = ScreenIOParameters(args)
-        self.params.validate()
+        self.params.setup()
 
         # Set up logging
         logging.basicConfig(
@@ -242,9 +242,7 @@ class Screen:
         noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta" # TODO: This should be passed into fetch_noncoding_regions.
 
         if not os.path.isfile(noncoding_fasta):
-            logging.debug(
-                "\t...skipping nucleotide search since no noncoding regions fetched"
-            )
+            logging.debug("\t...skipping nucleotide search since no noncoding regions fetched")
             return
 
         # Only run new blastn search if there are no previous results

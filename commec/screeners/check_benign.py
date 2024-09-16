@@ -15,7 +15,7 @@ import os
 import sys
 import pandas as pd
 
-from commec.tools.database_handler import DatabaseHandler # For has_hits.
+from commec.tools.blastn_handler import BlastNHandler # For has_hits.
 from commec.tools.blast_tools import tophits, readblast, trimblast
 from commec.tools.hmm_handler import readhmmer
 from commec.tools.cmscan_handler import readcmscan
@@ -29,7 +29,7 @@ def check_for_benign(query, coords, benign_desc):
     # PROTEIN HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     hmmscan = query + ".benign.hmmscan"
-    if not DatabaseHandler.has_hits(hmmscan):
+    if not BlastNHandler.has_hits(hmmscan):
         logging.info("\t...no housekeeping protein hits\n")
     else:
         hmmer = readhmmer(hmmscan)
@@ -78,7 +78,7 @@ def check_for_benign(query, coords, benign_desc):
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     cmscan = query + ".benign.cmscan"
-    if not DatabaseHandler.has_hits(cmscan):
+    if not BlastNHandler.has_hits(cmscan):
         logging.info("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
@@ -124,7 +124,7 @@ def check_for_benign(query, coords, benign_desc):
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
     blast = query + ".benign.blastn"
-    if not DatabaseHandler.has_hits(blast):
+    if not BlastNHandler.has_hits(blast):
         logging.info("\t...no Synbio sequence hits\n")
     else:
         blastn = readblast(blast)  # synbio parts

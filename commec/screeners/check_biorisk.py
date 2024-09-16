@@ -11,8 +11,7 @@ import os
 import sys
 import argparse
 import pandas as pd
-from commec.tools.hmm_handler import readhmmer, trimhmmer
-from commec.utils.file_utils import FileTools
+from commec.tools.hmm_handler import readhmmer, trimhmmer, HMMHandler
 
 def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str):
     '''
@@ -36,11 +35,11 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str)
     lookup.fillna(False, inplace=True)
 
     # read in HMMER output and check for valid hits
-    if FileTools.is_empty(hmmscan_input_file):
+    if HMMHandler.is_empty(hmmscan_input_file):
         logging.info("\t...ERROR: biorisk search results empty\n")
         return
 
-    if not FileTools.has_hits(hmmscan_input_file):
+    if not HMMHandler.has_hits(hmmscan_input_file):
         logging.info("\t\t --> Biorisks: no hits detected, PASS\n")
         return
 

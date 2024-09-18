@@ -1,13 +1,44 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Module for BlastTools, a static function library for dealing with general blast file parsing tasks.
+Module for Blast related tools, a library for dealing with general blast file parsing tasks.
 Useful for reading any blast outputs, for example from Blastx or Blastn.
+Also contains the abstract base class for blastX/N/Diamond database handlers.
 """
+import os
 import logging
+import glob
 import pytaxonkit
 import pandas as pd
 import numpy as np
+
+from commec.tools.database_handler import DatabaseHandler
+
+class BlastHandler(DatabaseHandler):
+    """ 
+    A Database handler specifically for use with Blast files. 
+    Inherit from this, and implement screen()
+    """
+    # Start Database Handler API
+    def screen(self):
+        """ Virtual function to be called by any child database implementation"""
+        raise NotImplementedError(
+            "This class must override the .screen() to use Blast Handler."
+        )
+
+    def validate_directory(self):
+        """ 
+        Blast expects a set of files with shared prefix, rather than a single file.
+        """
+        if not os.path.isdir(self.db_directory):
+            raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
+
+        # Search for files of provided prefix.
+        filename, extension = os.path.splitext(self.db_file)
+        search_file = os.path.join(self.db_directory, "*" + os.path.basename(filename) + "*" + extension)
+        files = glob.glob(search_file)
+        if len(files) == 0:
+            raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
 
 def split_taxa(blast):
     """
@@ -59,7 +90,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         b = t["FullLineageTaxIDs"].str.split(";")[0]
         c = t["FullLineageRanks"].str.split(";")[0]
     except AttributeError:
-        logging.error("The NR database used has not returned any Lineage information!")
+        logging.error("The Blast database used has not returned any Lineage information!")
         return blast
 
     for x in range(0, blast.shape[0]):  # for each hit taxID

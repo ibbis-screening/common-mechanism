@@ -6,11 +6,11 @@ Defines the `Input and Output Screen Parameters` class, and associated dataclass
 import subprocess
 import re
 import pandas as pd
-from commec.tools.database_handler import DatabaseHandler, DatabaseVersion
+from commec.tools.search_handler import SearchHandler, DatabaseVersion
 
-class CmscanHandler(DatabaseHandler):
+class CmscanHandler(SearchHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
-    def screen(self):
+    def search(self):
         command = [
             "cmscan", 
             "--tblout",

@@ -15,10 +15,10 @@ import os
 import sys
 import pandas as pd
 
-from commec.tools.blastn_handler import BlastNHandler # For has_hits.
+from commec.tools.blastn import BlastNHandler # For has_hits.
 from commec.tools.blast_tools import tophits, readblast, trimblast
-from commec.tools.hmm_handler import readhmmer
-from commec.tools.cmscan_handler import readcmscan
+from commec.tools.hmmer import readhmmer
+from commec.tools.cmscan import readcmscan
 
 def check_for_benign(query, coords, benign_desc):
     '''

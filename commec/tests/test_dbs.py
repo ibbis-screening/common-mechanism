@@ -4,11 +4,11 @@ Will fail if databases have not been installed as expected, with correct version
 """
 import os
 import pytest
-from commec.tools.blastdmnd_handler import DiamondHandler
-from commec.tools.blastn_handler import BlastNHandler
-from commec.tools.blastx_handler import BlastXHandler
-from commec.tools.hmm_handler import HMMHandler
-from commec.tools.cmscan_handler import CmscanHandler
+from commec.tools.diamond import DiamondHandler
+from commec.tools.blastn import BlastNHandler
+from commec.tools.blastx import BlastXHandler
+from commec.tools.hmmer import HmmerHandler
+from commec.tools.cmscan import CmscanHandler
 
 INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fasta")
 DATABASE_DIRECTORY = os.path.join(os.path.dirname(__file__),"test_dbs")
@@ -17,7 +17,7 @@ databases_to_implement = [
     [DiamondHandler,   "nr_dmnd",     "nr.dmnd"],
     [BlastNHandler,    "nt_blast",    "nt"],
     [BlastXHandler,    "nr_blast",    "nr"],
-    [HMMHandler,       "benign_db",   "benign.hmm"],
+    [HmmerHandler,       "benign_db",   "benign.hmm"],
     [CmscanHandler,    "benign_db",   "benign.cmscan"],
 ]
 

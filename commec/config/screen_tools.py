@@ -6,11 +6,11 @@ Defines the `Input and Output Screen Parameters` class, and associated dataclass
 import os
 import logging
 from commec.config.io_parameters import ScreenIOParameters
-from commec.tools.blastn_handler import BlastNHandler
-from commec.tools.blastx_handler import BlastXHandler
-from commec.tools.blastdmnd_handler import DiamondHandler
-from commec.tools.cmscan_handler import CmscanHandler
-from commec.tools.hmm_handler import HMMHandler
+from commec.tools.blastn import BlastNHandler
+from commec.tools.blastx import BlastXHandler
+from commec.tools.diamond import DiamondHandler
+from commec.tools.cmscan import CmscanHandler
+from commec.tools.hmmer import HmmerHandler
 
 class ScreenTools():
     """
@@ -20,17 +20,17 @@ class ScreenTools():
     """
     def __init__(self, params : ScreenIOParameters):
         # Biorisk
-        self.biorisk_db : HMMHandler = None
+        self.biorisk_db : HmmerHandler = None
         # Taxonomy
         self.protein_db = None
         self.nucleotide_db : BlastNHandler = None
         # Benign
-        self.benign_hmm : HMMHandler = None
+        self.benign_hmm : HmmerHandler = None
         self.benign_blastn : BlastNHandler = None
         self.benign_cmscan : CmscanHandler = None
 
         if params.should_do_biorisk_screening:
-            self.biorisk_db = HMMHandler(
+            self.biorisk_db = HmmerHandler(
                 os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
                 params.query.aa_path,
                 f"{params.output_prefix}.biorisk.hmmscan",
@@ -65,7 +65,7 @@ class ScreenTools():
             )
 
         if params.should_do_benign_screening:
-            self.benign_hmm = HMMHandler(
+            self.benign_hmm = HmmerHandler(
                 os.path.join(params.db_dir, "benign_db/benign.hmm"),
                 input_file = params.query.nt_path,
                 out_file = f"{params.output_prefix}.benign.hmmscan"

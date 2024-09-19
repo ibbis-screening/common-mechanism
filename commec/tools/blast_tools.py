@@ -12,15 +12,15 @@ import pytaxonkit
 import pandas as pd
 import numpy as np
 
-from commec.tools.database_handler import DatabaseHandler
+from commec.tools.search_handler import SearchHandler
 
-class BlastHandler(DatabaseHandler):
+class BlastHandler(SearchHandler):
     """ 
     A Database handler specifically for use with Blast files. 
     Inherit from this, and implement screen()
     """
     # Start Database Handler API
-    def screen(self):
+    def search(self):
         """ Virtual function to be called by any child database implementation"""
         raise NotImplementedError(
             "This class must override the .screen() to use Blast Handler."

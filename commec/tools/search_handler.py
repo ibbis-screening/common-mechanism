@@ -16,7 +16,7 @@ class SearchToolVersion():
     version_date: str = "Null"
     additional_comment: str = ""
 
-class SearchHandler():
+class SearchHandler(ABC):
     """
     Abstract class defining tool interface including a database directory / file to search, an input
     query, and an output file to be used for screening.
@@ -27,8 +27,8 @@ class SearchHandler():
         self.out_file = out_file
         self.input_file = input_file
         self.temp_log_file = f"{self.out_file}.log.tmp"
-        self.arguments_dictionary = {}
-        self.validate_directory()
+        self.arguments_dictionary = None
+        self.validate_db()
 
     @abstractmethod
     def search(self):
@@ -50,6 +50,16 @@ class SearchHandler():
         Can be overridden if more complex checks for a particular tool are desired.
         """
         return os.path.isfile(self.out_file)
+
+    def validate_db(self):
+        """
+        Validates that the directory,
+        and database file exists. Called on init.
+        """
+        if not os.path.isdir(self.db_directory):
+            raise FileNotFoundError(f"Database directory not found: {self.db_directory}.")
+        if not os.path.isfile(self.db_file):
+            raise FileNotFoundError(f"Database file not found: {self.db_file}.")
 
     @staticmethod
     def is_empty(filepath: str) -> bool:
@@ -83,16 +93,6 @@ class SearchHandler():
                 my_list.append(str(value))  # Append the value directly if it's not a list
         return my_list
 
-    def validate_directory(self):
-        """
-        Validates that the directory,
-        and database file exists. Called on init.
-        """
-        if not os.path.isdir(self.db_directory):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
-        if not os.path.isfile(self.db_file):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
-
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
@@ -100,26 +100,17 @@ class SearchHandler():
         logging.debug("SUBPROCESS: %s"," ".join(command))
 
         with open(out_file, "a", encoding="utf-8") as f:
-
             result = subprocess.run(
                 command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
             )
 
-            if not self.is_succesful_result(result):
+            if result.returncode != 0:
                 command_str = ' '.join(command)
                 logging.info("\t ERROR: command %s failed with error %s", command_str, result.stderr)
                 raise RuntimeError(
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
-
-    def is_succesful_result(self , result : subprocess.CompletedProcess[bytes]):
-        """ Override for custom return code behaviour"""
-        if result.returncode != 0:
-            return False
-        return True
-
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)
-

@@ -7,7 +7,7 @@ import re
 import pandas as pd
 from commec.tools.database_handler import DatabaseHandler, DatabaseVersion
 
-class HMMHandler(DatabaseHandler):
+class HmmerHandler(DatabaseHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
     def screen(self):
         command = [

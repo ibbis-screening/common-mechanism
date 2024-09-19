@@ -9,26 +9,41 @@ from dataclasses import dataclass
 import subprocess
 import logging
 
+
 @dataclass
-class SearchToolVersion():
-    """ Container class for outputting version related information from a database."""
+class SearchToolVersion:
+    """Container class for outputting version related information from a database."""
+
     version_string: str = "x.x.x"
     version_date: str = "Null"
     additional_comment: str = ""
+
+
+class DatabaseValidationError(Exception):
+    """Custom exception for database validation errors."""
+
 
 class SearchHandler(ABC):
     """
     Abstract class defining tool interface including a database directory / file to search, an input
     query, and an output file to be used for screening.
     """
-    def __init__(self, database_file : str, input_file : str, out_file : str):
-        self.db_directory = os.path.dirname(database_file)
-        self.db_file = database_file
-        self.out_file = out_file
-        self.input_file = input_file
+
+    def __init__(
+        self,
+        database_file: str | os.PathLike,
+        input_file: str | os.PathLike,
+        out_file: str | os.PathLike,
+    ):
+        self.db_file = os.path.abspath(database_file)
+        self.input_file = os.path.abspath(input_file)
+        self.out_file = os.path.abspath(out_file)
+
+        self.db_directory = os.path.dirname(self.db_file)
         self.temp_log_file = f"{self.out_file}.log.tmp"
-        self.arguments_dictionary = None
-        self.validate_db()
+        self.arguments_dictionary = {}
+
+        self._validate_db()
 
     @abstractmethod
     def search(self):
@@ -51,15 +66,14 @@ class SearchHandler(ABC):
         """
         return os.path.isfile(self.out_file)
 
-    def validate_db(self):
+    def _validate_db(self):
         """
-        Validates that the directory,
-        and database file exists. Called on init.
+        Validates that the database file exists. Called on init.
         """
-        if not os.path.isdir(self.db_directory):
-            raise FileNotFoundError(f"Database directory not found: {self.db_directory}.")
         if not os.path.isfile(self.db_file):
-            raise FileNotFoundError(f"Database file not found: {self.db_file}.")
+            raise DatabaseValidationError(
+                f"Provided database file not found: {self.db_file}."
+            )
 
     @staticmethod
     def is_empty(filepath: str) -> bool:
@@ -88,16 +102,20 @@ class SearchHandler(ABC):
         for key, value in self.arguments_dictionary.items():
             my_list.append(str(key))
             if isinstance(value, list):
-                my_list.append(" ".join(value))  # Extend the list with all elements in the array
+                my_list.append(
+                    " ".join(value)
+                )  # Extend the list with all elements in the array
             else:
-                my_list.append(str(value))  # Append the value directly if it's not a list
+                my_list.append(
+                    str(value)
+                )  # Append the value directly if it's not a list
         return my_list
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
         """
-        logging.debug("SUBPROCESS: %s"," ".join(command))
+        logging.debug("SUBPROCESS: %s", " ".join(command))
 
         with open(out_file, "a", encoding="utf-8") as f:
             result = subprocess.run(
@@ -105,12 +123,17 @@ class SearchHandler(ABC):
             )
 
             if result.returncode != 0:
-                command_str = ' '.join(command)
-                logging.info("\t ERROR: command %s failed with error %s", command_str, result.stderr)
+                command_str = " ".join(command)
+                logging.info(
+                    "\t ERROR: command %s failed with error %s",
+                    command_str,
+                    result.stderr,
+                )
                 raise RuntimeError(
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
+
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)

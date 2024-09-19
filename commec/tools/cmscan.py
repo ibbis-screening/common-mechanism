@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Defines the `Input and Output Screen Parameters` class, and associated dataclasses.
+Module for a handlers, specifically for calling cmscan command line interface.
+Additional methods for reading handler output, readcmscan, which returns a pandas database.
+Instantiate a CmscanHandler, with input local database, input fasta, and output file.
+Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
 import subprocess
 import re

@@ -26,7 +26,7 @@ class BlastHandler(SearchHandler):
             "This class must override the .screen() to use Blast Handler."
         )
 
-    def validate_db(self):
+    def _validate_db(self):
         """ 
         Blast expects a set of files with shared prefix, rather than a single file.
         """

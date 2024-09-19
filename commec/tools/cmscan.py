@@ -6,7 +6,7 @@ Defines the `Input and Output Screen Parameters` class, and associated dataclass
 import subprocess
 import re
 import pandas as pd
-from commec.tools.search_handler import SearchHandler, DatabaseVersion
+from commec.tools.search_handler import SearchHandler, SearchToolVersion
 
 class CmscanHandler(SearchHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
@@ -20,7 +20,7 @@ class CmscanHandler(SearchHandler):
             ]
         self.run_as_subprocess(command, self.temp_log_file)
 
-    def get_version_information(self) -> DatabaseVersion:
+    def get_version_information(self) -> SearchToolVersion:
         try:
             result = subprocess.run(['cmscan', '-h'], capture_output=True, text=True, check=True)
             version_info = result.stdout.splitlines()[1].strip()[2:]

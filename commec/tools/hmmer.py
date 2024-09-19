@@ -5,7 +5,7 @@ Database handler for Hidden Markov Model type databases.
 """
 import re
 import pandas as pd
-from commec.tools.search_handler import SearchHandler, DatabaseVersion
+from commec.tools.search_handler import SearchHandler, SearchToolVersion
 
 class HmmerHandler(SearchHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
@@ -19,7 +19,7 @@ class HmmerHandler(SearchHandler):
             ]
         self.run_as_subprocess(command, self.temp_log_file)
 
-    def get_version_information(self) -> DatabaseVersion:
+    def get_version_information(self) -> SearchToolVersion:
         """ 
         At the moment this is just grabbing some basic header info of the 
         first entrant of the hmm database. Not really a true version control.
@@ -44,7 +44,7 @@ class HmmerHandler(SearchHandler):
                     # Early exit if data has been found
                     if version and date and comment:
                         break
-            return DatabaseVersion(version, date, comment)
+            return SearchToolVersion(version, date, comment)
 
         except RuntimeError:
             return super().get_version_information()

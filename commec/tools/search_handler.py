@@ -1,53 +1,26 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Abstract base class for a database handler. 
-Customize to screen desired database functionality.
+Abstract base class defining a shared interface for search tools.
 """
+from abc import ABC, abstractmethod
 import os
 from dataclasses import dataclass
 import subprocess
 import logging
 
 @dataclass
-class DatabaseVersion():
+class SearchToolVersion():
     """ Container class for outputting version related information from a database."""
-    def __init__(self, input_version : str = "x.x.x", input_date : str = "Null", input_comment :str = ""):
-        self.version_string = input_version
-        self.version_date = input_date
-        self.additional_comment = input_comment
-    version_string : str
-    version_date : str
-    additional_comment : str
+    version_string: str = "x.x.x"
+    version_date: str = "Null"
+    additional_comment: str = ""
 
 class SearchHandler():
-    """ 
-    Abstract Class for holding the directory, and file of a database, 
-    including input and output files for screening, as well as screening arguments. 
-    Override the Screen() method for a custom database implementation.
     """
-    # Start Database Handler API
-    def search(self):
-        """ Virtual function to be called by any child database implementation"""
-        raise NotImplementedError(
-            "This class must override the .screen() to use DatabaseHandler."
-        )
-
-    def get_version_information(self) -> DatabaseVersion:
-        """ Override to call version retrieval information on a database."""
-        new_version_info = DatabaseVersion("", "", "Version retrieval not yet supported for this database")
-        return new_version_info
-
-    def check_output(self):
-        """ 
-        Simply checks for the existance of the output file, 
-        indicating that the database screening ran. Can be overrided if
-        more complex checks for a particular db is desired.
-        """
-        if os.path.isfile(self.out_file): # Consider adding checks from File_Tools such that empty outputs are invalid?
-            return True
-        return False
-
+    Abstract class defining tool interface including a database directory / file to search, an input
+    query, and an output file to be used for screening. 
+    """
     def __init__(self, database_file : str, input_file : str, out_file : str):
         self.db_directory = os.path.dirname(database_file)
         self.db_file = database_file
@@ -57,16 +30,26 @@ class SearchHandler():
         self.arguments_dictionary = {}
         self.validate_directory()
 
-    # End override API
-    def check_input(self):
-        """ 
-        Simply checks for the existance of the input file, This is separated 
-        from database location, as sometimes the input file is generated at a 
-        previous step, and may not exist during DatabaseHandler instantiation.
+    @abstractmethod
+    def search(self):
         """
-        if os.path.isfile(self.input_file):
-            return True
-        return False
+        Use a tool to search the input query against a database.
+        Should be implemented by all subclasses to perform the actual search against the database.
+        """
+
+    @abstractmethod
+    def get_version_information(self) -> SearchToolVersion:
+        """
+        Provide version for the search tool used, to allow reproducibility.
+        This method should be implemented by all subclasses to return tool-specific version info.
+        """
+
+    def check_output(self):
+        """ 
+        Check the output file exists, indicating that the search ran.
+        Can be overridden if more complex checks for a particular tool are desired.
+        """
+        return os.path.isfile(self.out_file)
 
     @staticmethod
     def is_empty(filepath: str) -> bool:

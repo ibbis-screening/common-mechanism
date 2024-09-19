@@ -9,7 +9,7 @@ import subprocess
 from typing import Optional
 
 from commec.tools.blast_tools import BlastHandler
-from commec.tools.search_handler import DatabaseVersion
+from commec.tools.search_handler import SearchToolVersion
 
 class DiamondHandler(BlastHandler):
     """ A Database handler specifically for use with Diamond files for commec screening. """
@@ -90,7 +90,7 @@ class DiamondHandler(BlastHandler):
                         outlog.write(infile.read())
                     os.remove(log_f)
 
-    def get_version_information(self) -> DatabaseVersion:
+    def get_version_information(self) -> SearchToolVersion:
         try:
             result = subprocess.run(['diamond', 'version'], capture_output=True, text=True, check=True)
             version_info = result.stdout.strip()

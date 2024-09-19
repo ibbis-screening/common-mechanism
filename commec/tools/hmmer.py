@@ -5,11 +5,11 @@ Database handler for Hidden Markov Model type databases.
 """
 import re
 import pandas as pd
-from commec.tools.database_handler import DatabaseHandler, DatabaseVersion
+from commec.tools.search_handler import SearchHandler, DatabaseVersion
 
-class HmmerHandler(DatabaseHandler):
+class HmmerHandler(SearchHandler):
     """ A Database handler specifically for use with Hmmer files for commec screening. """
-    def screen(self):
+    def search(self):
         command = [
             "hmmscan", 
             "--domtblout",

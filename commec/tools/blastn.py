@@ -6,7 +6,7 @@ Defines the `Input and Output Screen Parameters` class, and associated dataclass
 
 import subprocess
 from commec.tools.blast_tools import BlastHandler
-from commec.tools.database_handler import DatabaseVersion
+from commec.tools.search_handler import DatabaseVersion
 
 class BlastNHandler(BlastHandler):
     """ A Database handler specifically for use with BlastX files for commec screening. 
@@ -26,7 +26,7 @@ class BlastNHandler(BlastHandler):
         }
         self.blastcall = "blastn"
 
-    def screen(self):
+    def search(self):
         command = [
             self.blastcall,
             "-query", self.input_file,

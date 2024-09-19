@@ -20,14 +20,14 @@ class DatabaseVersion():
     version_date : str
     additional_comment : str
 
-class DatabaseHandler():
+class SearchHandler():
     """ 
     Abstract Class for holding the directory, and file of a database, 
     including input and output files for screening, as well as screening arguments. 
     Override the Screen() method for a custom database implementation.
     """
     # Start Database Handler API
-    def screen(self):
+    def search(self):
         """ Virtual function to be called by any child database implementation"""
         raise NotImplementedError(
             "This class must override the .screen() to use DatabaseHandler."

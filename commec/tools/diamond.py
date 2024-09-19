@@ -9,7 +9,7 @@ import subprocess
 from typing import Optional
 
 from commec.tools.blast_tools import BlastHandler
-from commec.tools.database_handler import DatabaseVersion
+from commec.tools.search_handler import DatabaseVersion
 
 class DiamondHandler(BlastHandler):
     """ A Database handler specifically for use with Diamond files for commec screening. """
@@ -25,7 +25,7 @@ class DiamondHandler(BlastHandler):
             "evalue", "bitscore", "pident", "qlen",
             "qstart", "qend",     "slen",   "sstart",  "send"]
 
-    def screen(self):
+    def search(self):
         # Find all files matching the pattern nr*.dmnd in DB_PATH
         db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
 

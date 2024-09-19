@@ -19,18 +19,15 @@ class ScreenTools():
     class objects respectively.
     """
     def __init__(self, params : ScreenIOParameters):
-        # Biorisk
-        self.biorisk_db : HmmerHandler = None
-        # Taxonomy
-        self.protein_db = None
-        self.nucleotide_db : BlastNHandler = None
-        # Benign
+        self.biorisk_hmm : HmmerHandler = None
+        self.regulated_protein = None
+        self.regulated_nt : BlastNHandler = None
         self.benign_hmm : HmmerHandler = None
         self.benign_blastn : BlastNHandler = None
         self.benign_cmscan : CmscanHandler = None
 
         if params.should_do_biorisk_screening:
-            self.biorisk_db = HmmerHandler(
+            self.biorisk_hmm = HmmerHandler(
                 os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
                 params.query.aa_path,
                 f"{params.output_prefix}.biorisk.hmmscan",
@@ -38,18 +35,18 @@ class ScreenTools():
 
         if params.should_do_protein_screening:
             if params.config.search_tool == "blastx":
-                self.protein_db = BlastXHandler(
+                self.regulated_protein = BlastXHandler(
                     os.path.join(params.db_dir, "nr_blast/nr"),
                     input_file = params.query.nt_path,
                     out_file = f"{params.output_prefix}.nr.blastx"
                 )
-            elif params.config.search_tool == "nr.dmnd" or params.config.search_tool == "diamond":
-                self.protein_db = DiamondHandler(
+            elif params.config.search_tool in ('nr.dmnd', 'diamond'):
+                self.regulated_protein = DiamondHandler(
                     os.path.join(params.db_dir, "nr_dmnd/nr.dmnd"),
                     input_file = params.query.nt_path,
                     out_file = f"{params.output_prefix}.nr.dmnd"
                 )
-                self.protein_db.jobs = params.config.diamond_jobs
+                self.regulated_protein.jobs = params.config.diamond_jobs
                 if params.config.search_tool == "nr.dmnd":
                     logging.info("""Using old \"nr.dmnd\" keyword for search tool used
                                   will not be supported in future releases, 
@@ -58,7 +55,7 @@ class ScreenTools():
                 raise RuntimeError("Search tool not defined as \"blastx\" or \"diamond\"")
 
         if params.should_do_nucleotide_screening:
-            self.nucleotide_db = BlastNHandler(
+            self.regulated_nt = BlastNHandler(
                 os.path.join(params.db_dir, "nt_blast/nt"),
                 input_file = f"{params.output_prefix}.noncoding.fasta",
                 out_file = f"{params.output_prefix}.nt.blastn"

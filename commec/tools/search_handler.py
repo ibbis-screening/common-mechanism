@@ -1,72 +1,65 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Abstract base class for a database handler. 
-Customize to screen desired database functionality.
+Abstract base class defining a shared interface for search tools.
 """
+from abc import ABC, abstractmethod
 import os
 from dataclasses import dataclass
 import subprocess
 import logging
 
 @dataclass
-class DatabaseVersion():
+class SearchToolVersion():
     """ Container class for outputting version related information from a database."""
-    def __init__(self, input_version : str = "x.x.x", input_date : str = "Null", input_comment :str = ""):
-        self.version_string = input_version
-        self.version_date = input_date
-        self.additional_comment = input_comment
-    version_string : str
-    version_date : str
-    additional_comment : str
+    version_string: str = "x.x.x"
+    version_date: str = "Null"
+    additional_comment: str = ""
 
-class SearchHandler():
-    """ 
-    Abstract Class for holding the directory, and file of a database, 
-    including input and output files for screening, as well as screening arguments. 
-    Override the Screen() method for a custom database implementation.
+class SearchHandler(ABC):
     """
-    # Start Database Handler API
-    def search(self):
-        """ Virtual function to be called by any child database implementation"""
-        raise NotImplementedError(
-            "This class must override the .screen() to use DatabaseHandler."
-        )
-
-    def get_version_information(self) -> DatabaseVersion:
-        """ Override to call version retrieval information on a database."""
-        new_version_info = DatabaseVersion("", "", "Version retrieval not yet supported for this database")
-        return new_version_info
-
-    def check_output(self):
-        """ 
-        Simply checks for the existance of the output file, 
-        indicating that the database screening ran. Can be overrided if
-        more complex checks for a particular db is desired.
-        """
-        if os.path.isfile(self.out_file): # Consider adding checks from File_Tools such that empty outputs are invalid?
-            return True
-        return False
-
+    Abstract class defining tool interface including a database directory / file to search, an input
+    query, and an output file to be used for screening.
+    """
     def __init__(self, database_file : str, input_file : str, out_file : str):
         self.db_directory = os.path.dirname(database_file)
         self.db_file = database_file
         self.out_file = out_file
         self.input_file = input_file
         self.temp_log_file = f"{self.out_file}.log.tmp"
-        self.arguments_dictionary = {}
-        self.validate_directory()
+        self.arguments_dictionary = None
+        self.validate_db()
 
-    # End override API
-    def check_input(self):
-        """ 
-        Simply checks for the existance of the input file, This is separated 
-        from database location, as sometimes the input file is generated at a 
-        previous step, and may not exist during DatabaseHandler instantiation.
+    @abstractmethod
+    def search(self):
         """
-        if os.path.isfile(self.input_file):
-            return True
-        return False
+        Use a tool to search the input query against a database.
+        Should be implemented by all subclasses to perform the actual search against the database.
+        """
+
+    @abstractmethod
+    def get_version_information(self) -> SearchToolVersion:
+        """
+        Provide version for the search tool used, to allow reproducibility.
+        This method should be implemented by all subclasses to return tool-specific version info.
+        """
+
+    def check_output(self):
+        """
+        Check the output file exists, indicating that the search ran.
+        Can be overridden if more complex checks for a particular tool are desired.
+        """
+        return os.path.isfile(self.out_file)
+
+    def validate_db(self):
+        """
+        Validates that the directory,
+        and database file exists. Called on init.
+        """
+        if not os.path.isdir(self.db_directory):
+            raise FileNotFoundError(f"Database directory not found: {self.db_directory}.")
+        if not os.path.isfile(self.db_file):
+            raise FileNotFoundError(f"Database file not found: {self.db_file}.")
 
     @staticmethod
     def is_empty(filepath: str) -> bool:
@@ -87,8 +80,8 @@ class SearchHandler():
             return False
 
     def get_arguments(self) -> list:
-        """ 
-        convert the arguments dictionary into a list, 
+        """
+        convert the arguments dictionary into a list,
         structurally ready for appending to a command list of strs.
         """
         my_list = []
@@ -100,43 +93,24 @@ class SearchHandler():
                 my_list.append(str(value))  # Append the value directly if it's not a list
         return my_list
 
-    def validate_directory(self):
-        """ 
-        Validates that the directory, 
-        and database file exists. Called on init.
-        """
-        if not os.path.isdir(self.db_directory):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
-        if not os.path.isfile(self.db_file):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
-
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
         """
         logging.debug("SUBPROCESS: %s"," ".join(command))
-        
-        with open(out_file, "a", encoding="utf-8") as f:
 
+        with open(out_file, "a", encoding="utf-8") as f:
             result = subprocess.run(
                 command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
             )
 
-            if not self.is_succesful_result(result):
+            if result.returncode != 0:
                 command_str = ' '.join(command)
                 logging.info("\t ERROR: command %s failed with error %s", command_str, result.stderr)
                 raise RuntimeError(
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
- 
-    def is_succesful_result(self , result : subprocess.CompletedProcess[bytes]):
-        """ Override for custom return code behaviour"""
-        if result.returncode != 0:
-            return False
-        return True
-
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)
-

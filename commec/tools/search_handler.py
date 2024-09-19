@@ -19,7 +19,7 @@ class SearchToolVersion():
 class SearchHandler():
     """
     Abstract class defining tool interface including a database directory / file to search, an input
-    query, and an output file to be used for screening. 
+    query, and an output file to be used for screening.
     """
     def __init__(self, database_file : str, input_file : str, out_file : str):
         self.db_directory = os.path.dirname(database_file)
@@ -45,7 +45,7 @@ class SearchHandler():
         """
 
     def check_output(self):
-        """ 
+        """
         Check the output file exists, indicating that the search ran.
         Can be overridden if more complex checks for a particular tool are desired.
         """
@@ -70,8 +70,8 @@ class SearchHandler():
             return False
 
     def get_arguments(self) -> list:
-        """ 
-        convert the arguments dictionary into a list, 
+        """
+        convert the arguments dictionary into a list,
         structurally ready for appending to a command list of strs.
         """
         my_list = []
@@ -84,8 +84,8 @@ class SearchHandler():
         return my_list
 
     def validate_directory(self):
-        """ 
-        Validates that the directory, 
+        """
+        Validates that the directory,
         and database file exists. Called on init.
         """
         if not os.path.isdir(self.db_directory):
@@ -98,7 +98,7 @@ class SearchHandler():
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
         """
         logging.debug("SUBPROCESS: %s"," ".join(command))
-        
+
         with open(out_file, "a", encoding="utf-8") as f:
 
             result = subprocess.run(
@@ -112,7 +112,7 @@ class SearchHandler():
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
- 
+
     def is_succesful_result(self , result : subprocess.CompletedProcess[bytes]):
         """ Override for custom return code behaviour"""
         if result.returncode != 0:

@@ -9,26 +9,42 @@ from dataclasses import dataclass
 import subprocess
 import logging
 
+
 @dataclass
-class SearchToolVersion():
-    """ Container class for outputting version related information from a database."""
+class SearchToolVersion:
+    """Container class for outputting version related information from a database."""
+
     version_string: str = "x.x.x"
     version_date: str = "Null"
     additional_comment: str = ""
+
+
+class DatabaseValidationError(Exception):
+    """Custom exception for database validation errors."""
+    pass
+
 
 class SearchHandler(ABC):
     """
     Abstract class defining tool interface including a database directory / file to search, an input
     query, and an output file to be used for screening.
     """
-    def __init__(self, database_file : str, input_file : str, out_file : str):
-        self.db_directory = os.path.dirname(database_file)
-        self.db_file = database_file
-        self.out_file = out_file
-        self.input_file = input_file
+
+    def __init__(
+        self,
+        database_file: str | os.PathLike,
+        input_file: str | os.PathLike,
+        out_file: str | os.PathLike,
+    ):
+        self.db_file = os.path.abspath(database_file)
+        self.input_file = os.path.abspath(input_file)
+        self.out_file = os.path.abspath(out_file)
+
+        self.db_directory = os.path.dirname(self.db_file)
         self.temp_log_file = f"{self.out_file}.log.tmp"
-        self.arguments_dictionary = None
-        self.validate_db()
+        self.arguments_dictionary = {}
+
+        self._validate_db()
 
     @abstractmethod
     def search(self):
@@ -51,15 +67,14 @@ class SearchHandler(ABC):
         """
         return os.path.isfile(self.out_file)
 
-    def validate_db(self):
+    def _validate_db(self):
         """
-        Validates that the directory,
-        and database file exists. Called on init.
+        Validates that the database file exists. Called on init.
         """
-        if not os.path.isdir(self.db_directory):
-            raise FileNotFoundError(f"Database directory not found: {self.db_directory}.")
         if not os.path.isfile(self.db_file):
-            raise FileNotFoundError(f"Database file not found: {self.db_file}.")
+            raise DatabaseValidationError(
+                f"Provided database file not found: {self.db_file}."
+            )
 
     @staticmethod
     def is_empty(filepath: str) -> bool:

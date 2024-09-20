@@ -21,7 +21,6 @@ class SearchToolVersion:
 
 class DatabaseValidationError(Exception):
     """Custom exception for database validation errors."""
-    pass
 
 
 class SearchHandler(ABC):
@@ -103,16 +102,20 @@ class SearchHandler(ABC):
         for key, value in self.arguments_dictionary.items():
             my_list.append(str(key))
             if isinstance(value, list):
-                my_list.append(" ".join(value))  # Extend the list with all elements in the array
+                my_list.append(
+                    " ".join(value)
+                )  # Extend the list with all elements in the array
             else:
-                my_list.append(str(value))  # Append the value directly if it's not a list
+                my_list.append(
+                    str(value)
+                )  # Append the value directly if it's not a list
         return my_list
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
         Run a command using subprocess.run, piping stdout and stderr to `out_file`.
         """
-        logging.debug("SUBPROCESS: %s"," ".join(command))
+        logging.debug("SUBPROCESS: %s", " ".join(command))
 
         with open(out_file, "a", encoding="utf-8") as f:
             result = subprocess.run(
@@ -120,12 +123,17 @@ class SearchHandler(ABC):
             )
 
             if result.returncode != 0:
-                command_str = ' '.join(command)
-                logging.info("\t ERROR: command %s failed with error %s", command_str, result.stderr)
+                command_str = " ".join(command)
+                logging.info(
+                    "\t ERROR: command %s failed with error %s",
+                    command_str,
+                    result.stderr,
+                )
                 raise RuntimeError(
                     f"subprocess.run of command '{command_str}' encountered error."
                     f" Check {out_file} for logs."
                 )
+
     def __del__(self):
         if os.path.exists(self.temp_log_file):
             os.remove(self.temp_log_file)

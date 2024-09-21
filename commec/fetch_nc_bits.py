@@ -50,31 +50,24 @@ def get_ranges_with_no_hits(blast_df):
 
     return nc_ranges
 
-
-def write_nc_sequences(nc_ranges, fasta_to_filter: str, outfile: str):
-    """
-    Write a filtered FASTA containing only the parts without a high-quality protein match.
-    """
-    with open(fasta_to_filter, "r", encoding="utf-8") as fasta_file:
+def get_records(fasta_file_path):
+    """Parse SeqIO records from input FASTA."""
+    with open(fasta_file_path, "r", encoding="utf-8") as fasta_file:
         records = list(SeqIO.parse(fasta_file, "fasta"))
+        return records
 
-        if len(records > 1):
-            sys.stdout.write(
-                "\t...WARNING: Only fetching nucleotides from first record in "
-                + f"multifasta: {fasta_to_filter}\n"
-            )
+def write_nc_sequences(nc_ranges, record, outfile: str):
+    """
+    Write a FASTA containing only the parts of the record without a high-quality protein match.
+    """
+    nc_sequences = []
+    for start, stop in nc_ranges:
+        # subtract 1 just from `start` to adjust to 0-based index and capture full range
+        sequence = record.seq[int(start) - 1 : int(stop)]
+        nc_sequences.append(f">{record.id} {record.description} {start}-{stop}\n{sequence}\n")
 
-        first_record = records[0]
-        nc_sequences = []
-        for start, stop in nc_ranges:
-            start, stop = int(start), int(stop)
-            sequence = first_record.seq[start - 1 : stop - 1]  # Adjust to 0-based index
-            nc_sequences.append(
-                f">{first_record.id} {first_record.description} {start}-{stop}\n{sequence}\n"
-            )
-
-        with open(outfile, "w", encoding="utf-8") as output_file:
-            output_file.writelines(nc_sequences)
+    with open(outfile, "w", encoding="utf-8") as output_file:
+        output_file.writelines(nc_sequences)
 
 
 def main(protein_results, query_fasta):
@@ -106,8 +99,16 @@ def main(protein_results, query_fasta):
             "\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n"
         )
         return
+    
+    records = get_records(query_fasta)
 
-    write_nc_sequences(ranges_to_screen, query_fasta, outfile)
+    if len(records) > 1:
+        sys.stdout.write(
+            "\t...WARNING: Only fetching nucleotides from first record in multifasta: " + 
+            f"{query_fasta}\n"
+        )
+
+    write_nc_sequences(ranges_to_screen, records[0], outfile)
 
 
 if __name__ == "__main__":

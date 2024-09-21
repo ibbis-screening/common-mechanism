@@ -58,9 +58,10 @@ def test_write_nc_sequences_partial_sequence(mock_fasta_file):
         write_calls = mock_file.return_value.__enter__.return_value.writelines.call_args_list
         assert len(write_calls) == 1, f"Expected 1 writelines call, but got {len(write_calls)}"
 
-        expected_call = call(
-                f">test_sequence test_sequence 5-59\n{''.join([str(i % 10) for i in range(4, 58)])}\n" +
-                f">test_sequence test_sequence 91-170\n{''.join([str(i % 10) for i in range(90, 169)])}\n"
-        )
+        sequences_written = write_calls[0][0][0]  # not sure why these indices, don't @ me
+        expected_sequences = [
+            f">test_sequence test_sequence 5-59\n{''.join([str(i % 10) for i in range(4, 59)])}\n",
+            f">test_sequence test_sequence 91-170\n{''.join([str(i % 10) for i in range(90, 170)])}\n",
+        ]
 
-        assert expected_call == write_calls
+        assert expected_sequences == sequences_written

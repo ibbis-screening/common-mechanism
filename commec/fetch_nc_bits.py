@@ -76,6 +76,8 @@ def main(protein_results, query_fasta):
     """Fetch noncoding regions > 50bp and write to a new file."""
     outfile = re.sub(".nr.*", "", protein_results) + ".noncoding.fasta"
 
+    sys.stdout.write(f"\t...checking protein hits in: {protein_results}\n")
+
     if is_empty(protein_results) or not has_hits(protein_results):
         sys.stdout.write("\t...no protein hits found, screening entire sequence\n")
         shutil.copyfile(query_fasta, outfile)
@@ -111,7 +113,7 @@ def main(protein_results, query_fasta):
     sys.stdout.write(
         "\t\t Fetching the following noncoding regions: "
         + ", ".join(f"{start}-{end}" for start, end in ranges_to_screen)
-        + "\n"
+        + f", writing to {outfile}\n"
     )
     write_nc_sequences(ranges_to_screen, records[0], outfile)
 

@@ -13,7 +13,7 @@ from Bio import SeqIO
 from commec.utils import readblast, trimblast, is_empty, has_hits
 
 
-def get_high_identity_matches(blast_output_file, threshold = 90):
+def get_high_identity_matches(blast_output_file, threshold=90):
     """Read all hits with high sequence identity from a BLAST results file."""
     hits = readblast(blast_output_file)
     hits = trimblast(hits)
@@ -50,11 +50,13 @@ def get_ranges_with_no_hits(blast_df):
 
     return nc_ranges
 
+
 def get_records(fasta_file_path):
     """Parse SeqIO records from input FASTA."""
     with open(fasta_file_path, "r", encoding="utf-8") as fasta_file:
         records = list(SeqIO.parse(fasta_file, "fasta"))
         return records
+
 
 def write_nc_sequences(nc_ranges, record, outfile: str):
     """
@@ -95,19 +97,22 @@ def main(protein_results, query_fasta):
 
     # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
     if not ranges_to_screen:
-        sys.stdout.write(
-            "\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n"
-        )
+        sys.stdout.write("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
         return
-    
+
     records = get_records(query_fasta)
 
     if len(records) > 1:
         sys.stdout.write(
-            "\t...WARNING: Only fetching nucleotides from first record in multifasta: " + 
-            f"{query_fasta}\n"
+            "\t\t...WARNING: Only fetching nucleotides from first record in multifasta: "
+            + f"{query_fasta}\n"
         )
 
+    sys.stdout.write(
+        "\t\t Fetching the following noncoding regions: "
+        + ", ".join(f"{start}-{end}" for start, end in ranges_to_screen)
+        + "\n"
+    )
     write_nc_sequences(ranges_to_screen, records[0], outfile)
 
 

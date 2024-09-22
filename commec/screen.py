@@ -116,11 +116,10 @@ def get_output_prefix(input_file, prefix_arg=""):
         return os.path.splitext(input_file)[0]
     if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
         # Make the directory if it doesn't exist
-        if not os.path.isdir(prefix_arg):
-            os.makedirs(prefix_arg)
+        os.makedirs(prefix_arg, exist_ok=True)
         # Use the input filename as a prefix within that directory (stripping out the path)
         input_name = os.path.splitext(os.path.basename(input_file))[0]
-        return prefix_arg + input_name
+        return os.path.join(prefix_arg, input_name)
     # Existing, non-path prefixes can be used as-is
     return prefix_arg
 
@@ -232,7 +231,7 @@ def screen_proteins(
             command.extend(['-j', str(jobs)])
         run_as_subprocess(command, tmp_log)
 
-    if not os.path.exists(search_output):
+    if not os.path.isfile(search_output):
         raise RuntimeError(f"Protein search failed and {search_output} was not created. Aborting.")
 
     logging.debug("\t...checking %s results", search_tool)

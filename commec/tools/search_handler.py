@@ -68,8 +68,13 @@ class SearchHandler(ABC):
 
     def _validate_db(self):
         """
-        Validates that the database file exists. Called on init.
+        Validates that the database directory and file exists. Called on init.
         """
+        if not os.path.isdir(self.db_directory):
+            raise DatabaseValidationError(
+                f"Mandatory screening directory {self.db_directory} not found."
+            )
+
         if not os.path.isfile(self.db_file):
             raise DatabaseValidationError(
                 f"Provided database file not found: {self.db_file}."

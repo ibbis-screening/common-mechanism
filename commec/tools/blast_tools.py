@@ -12,7 +12,7 @@ import pytaxonkit
 import pandas as pd
 import numpy as np
 
-from commec.tools.search_handler import SearchHandler
+from commec.tools.search_handler import SearchHandler, DatabaseValidationError
 
 class BlastHandler(SearchHandler):
     """ 
@@ -29,16 +29,19 @@ class BlastHandler(SearchHandler):
     def _validate_db(self):
         """ 
         Blast expects a set of files with shared prefix, rather than a single file.
+        Here we validate such directory structures for Blast related search handlers.
         """
         if not os.path.isdir(self.db_directory):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
+            raise DatabaseValidationError(
+                f"Mandatory screening directory {self.db_directory} not found."
+            )
 
         # Search for files of provided prefix.
         filename, extension = os.path.splitext(self.db_file)
         search_file = os.path.join(self.db_directory, "*" + os.path.basename(filename) + "*" + extension)
         files = glob.glob(search_file)
         if len(files) == 0:
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
+            raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
 
 def split_taxa(blast):
     """

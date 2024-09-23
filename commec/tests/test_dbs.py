@@ -57,6 +57,14 @@ def test_database_can_run(input_db, request):
         for line1, line2 in zip(f1, f2):
             if line1.startswith("# Option settings:"):
                 continue
+            if line1.startswith("# Query file:"):
+                continue
+            if line1.startswith("# Target file:"):
+                continue
+            if line1.startswith("# Current dir:"):
+                continue
+            if line1.startswith("# Database:"):
+                continue
             if line1.startswith("# Date:"):
                 continue
             assert line1 == line2

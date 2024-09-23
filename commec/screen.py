@@ -170,13 +170,13 @@ class Screen:
                 )
             
         if self.params.should_do_biorisk_screening:
-            self.screen_data.commec_info.biorisk_database_info = self.database_tools.biorisk_db.get_version_information()
+            self.screen_data.commec_info.biorisk_database_info = self.database_tools.biorisk_hmm.get_version_information()
 
         if self.params.should_do_protein_screening:
-            self.screen_data.commec_info.protein_database_info = self.database_tools.protein_db.get_version_information()
+            self.screen_data.commec_info.protein_database_info = self.database_tools.regulated_protein.get_version_information()
 
         if self.params.should_do_nucleotide_screening:
-            self.screen_data.commec_info.nucleotide_database_info = self.database_tools.nucleotide_db.get_version_information()
+            self.screen_data.commec_info.nucleotide_database_info = self.database_tools.regulated_nt.get_version_information()
 
         if self.params.should_do_benign_screening:
             self.screen_data.commec_info.benign_database_info = self.database_tools.benign_hmm.get_version_information()
@@ -256,8 +256,8 @@ class Screen:
         logging.debug("\t...running hmmscan")
         self.database_tools.biorisk_hmm.search()
         logging.debug("\t...checking hmmscan results")
-        check_biorisk(self.database_tools.biorisk_db.out_file,
-                      self.database_tools.biorisk_db.db_directory,
+        check_biorisk(self.database_tools.biorisk_hmm.out_file,
+                      self.database_tools.biorisk_hmm.db_directory,
                       self.params.output_json)
 
     def screen_proteins(self):

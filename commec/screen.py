@@ -232,7 +232,7 @@ def screen_proteins(
     run_as_subprocess(command, tmp_log)
 
     if not os.path.isfile(search_output):
-        raise RuntimeError(f"Protein search failed and {search_output} was not created. Aborting.")
+        raise RuntimeError(f"ERROR: Expected protein search output not created: {search_output}")
 
     logging.debug("\t...checking %s results", search_tool)
     reg_path_coords = f"{out_prefix}.reg_path_coords.csv"
@@ -298,8 +298,8 @@ def screen_nucleotides(
         ]
         run_as_subprocess(command, screen_file)
 
-    if not os.path.exists(nt_output):
-        raise RuntimeError(f"Nucleotide search failed and {nt_output} was not created. Aborting.")
+    if not os.path.isfile(nt_output):
+        raise RuntimeError(f"ERROR: Expected nucleotide search output not created: {nt_output}")
 
     logging.debug("\t...checking blastn results")
     command = [

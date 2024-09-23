@@ -9,6 +9,7 @@ from commec.tools.blastn import BlastNHandler
 from commec.tools.blastx import BlastXHandler
 from commec.tools.hmmer import HmmerHandler
 from commec.tools.cmscan import CmscanHandler
+from commec.tools.search_handler import DatabaseValidationError
 
 INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fasta")
 DATABASE_DIRECTORY = os.path.join(os.path.dirname(__file__),"test_dbs")
@@ -46,3 +47,30 @@ def test_database_can_run(input_db):
     
     if os.path.isfile(output_file):
         os.remove(output_file)
+
+bad_databases = [
+    [DiamondHandler,   "nr_dmnd",     "bad.dmnd"],
+    [BlastNHandler,    "nt_blast",    "bad"],
+    [BlastXHandler,    "nr_blast",    "bad"],
+    [HmmerHandler,     "benign_db",   "bad.hmm"],
+    [CmscanHandler,    "benign_db",   "bad.cmscan"],
+    [DiamondHandler,   "bad",       "bad.dmnd"],
+    [BlastNHandler,    "bad",       "bad"],
+    [BlastXHandler,    "bad",       "bad"],
+    [HmmerHandler,     "bad",       "bad.hmm"],
+    [CmscanHandler,    "bad",       "bad.cmscan"]
+]
+@pytest.mark.parametrize("input_db", bad_databases)
+def test_database_no_file(input_db):
+    """
+    Simply ensures that the input databases are failing there validation.
+    """
+    db_dir = os.path.join(DATABASE_DIRECTORY, input_db[1])
+    db_file = os.path.join(db_dir, input_db[2])
+    output_file = "db.out"
+
+    try:
+        input_db[0](db_file, INPUT_QUERY, output_file)
+        assert False
+    except(DatabaseValidationError):
+        assert True

@@ -2,17 +2,22 @@
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Module for Blast related tools, a library for dealing with general blast file parsing tasks.
-Useful for reading any blast outputs, for example from Blastx or Blastn.
+Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
+(split_taxa, taxdist, readblast, trimblast, tophits)
 Also contains the abstract base class for blastX/N/Diamond database handlers.
 """
 import os
 import logging
 import glob
+from abc import abstractmethod
 import pytaxonkit
 import pandas as pd
 import numpy as np
 
-from commec.tools.search_handler import SearchHandler, DatabaseValidationError
+from commec.tools.search_handler import (
+    SearchHandler,
+    DatabaseValidationError
+)
 
 class BlastHandler(SearchHandler):
     """ 
@@ -20,11 +25,12 @@ class BlastHandler(SearchHandler):
     Inherit from this, and implement screen()
     """
     # Start Database Handler API
+    @abstractmethod
     def search(self):
-        """ Virtual function to be called by any child database implementation"""
-        raise NotImplementedError(
-            "This class must override the .screen() to use Blast Handler."
-        )
+        """
+        Use a tool to search the input query against a database.
+        Should be implemented by all subclasses to perform the actual search against the database.
+        """
 
     def _validate_db(self):
         """ 

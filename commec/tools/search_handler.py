@@ -14,14 +14,13 @@ import logging
 class SearchToolVersion:
     """Container class for outputting version related information from a database."""
 
-    version_string: str = "x.x.x"
+    tool_version: str = "x.x.x"
+    database_version: str = "x.x.x"
     version_date: str = "Null"
     additional_comment: str = ""
 
-
 class DatabaseValidationError(Exception):
     """Custom exception for database validation errors."""
-
 
 class SearchHandler(ABC):
     """

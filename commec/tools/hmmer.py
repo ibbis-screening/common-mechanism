@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Database handler for Hidden Markov Model type databases.
+Module for a hidden markov model handler, specifically for calling hmmscan command line interface.
+Additional methods for reading hmmscan output, readhmmer, which returns a pandas database.
+Instantiate a HmmerHandler, with input local database, input fasta, and output file.
+Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
 import re
 import pandas as pd

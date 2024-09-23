@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Defines the `Input and Output Screen Parameters` class, and associated dataclasses.
+Module for a handlers, specifically for calling Blastx command line interface.
+Instantiate a BlastXHandler, with input local database, input fasta, and output file.
+Alter instants member variable arguments_dictionary with desired alternatives from the defaults.
+Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
+
 import subprocess
 from commec.tools.blast_tools import BlastHandler
 from commec.tools.search_handler import SearchToolVersion
@@ -10,8 +14,7 @@ from commec.tools.search_handler import SearchToolVersion
 class BlastXHandler(BlastHandler):
     """ 
     A Database handler specifically for use with BlastX files for commec screening. 
-    Allows for full customization of any of the callable blast flags. A better implementation
-    may be achieved using import blast.
+    Allows for full customization of any of the callable blast flags.
     """
 
     def __init__(self, database_file : str, input_file : str, out_file : str):

@@ -213,7 +213,6 @@ def screen_proteins(
             "-t",
             str(threads),
         ]
-        run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
         command = [
@@ -229,14 +228,16 @@ def screen_proteins(
         ]
         if jobs is not None:
             command.extend(['-j', str(jobs)])
-        run_as_subprocess(command, tmp_log)
+
+    run_as_subprocess(command, tmp_log)
 
     if not os.path.isfile(search_output):
         raise RuntimeError(f"Protein search failed and {search_output} was not created. Aborting.")
 
     logging.debug("\t...checking %s results", search_tool)
-    # Delete any previous check_reg_path results
     reg_path_coords = f"{out_prefix}.reg_path_coords.csv"
+
+    # Delete any previous check_reg_path results for this search
     if os.path.isfile(reg_path_coords):
         os.remove(reg_path_coords)
 
@@ -261,7 +262,7 @@ def screen_nucleotides(
     screen regulated pathogen nucleotides in noncoding regions (i.e. that would not be found with
     protein search).
     """
-    nr_out = out_prefix + ".nr.blastx" if search_tool == "blastx" else "nr.dmnd"
+    nr_out = out_prefix + (".nr.blastx" if search_tool == "blastx" else ".nr.dmnd")
     command = ["python", f"{scripts_dir}/fetch_nc_bits.py", nr_out, input_file]
     run_as_subprocess(command, screen_file)
 

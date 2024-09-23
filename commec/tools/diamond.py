@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Defines the `Input and Output Screen Parameters` class, and associated dataclasses.
+Module for a handlers, specifically for calling diamond command line interface.
+Instantiate a DiamondHnadler, with input local database, input fasta, and output file.
+Alter member variables after instantiation to change behaviour, before calling search().
+Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
 import os
 import glob
@@ -9,7 +12,7 @@ import subprocess
 from typing import Optional
 
 from commec.tools.blast_tools import BlastHandler
-from commec.tools.database_handler import DatabaseVersion
+from commec.tools.search_handler import SearchToolVersion
 
 class DiamondHandler(BlastHandler):
     """ A Database handler specifically for use with Diamond files for commec screening. """
@@ -25,7 +28,7 @@ class DiamondHandler(BlastHandler):
             "evalue", "bitscore", "pident", "qlen",
             "qstart", "qend",     "slen",   "sstart",  "send"]
 
-    def screen(self):
+    def search(self):
         # Find all files matching the pattern nr*.dmnd in DB_PATH
         db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
 
@@ -90,7 +93,7 @@ class DiamondHandler(BlastHandler):
                         outlog.write(infile.read())
                     os.remove(log_f)
 
-    def get_version_information(self) -> DatabaseVersion:
+    def get_version_information(self) -> SearchToolVersion:
         try:
             result = subprocess.run(['diamond', 'version'], capture_output=True, text=True, check=True)
             version_info = result.stdout.strip()

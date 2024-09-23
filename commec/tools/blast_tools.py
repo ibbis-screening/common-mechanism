@@ -2,43 +2,52 @@
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Module for Blast related tools, a library for dealing with general blast file parsing tasks.
-Useful for reading any blast outputs, for example from Blastx or Blastn.
+Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
+(split_taxa, taxdist, readblast, trimblast, tophits)
 Also contains the abstract base class for blastX/N/Diamond database handlers.
 """
 import os
 import logging
 import glob
+from abc import abstractmethod
 import pytaxonkit
 import pandas as pd
 import numpy as np
 
-from commec.tools.database_handler import DatabaseHandler
+from commec.tools.search_handler import (
+    SearchHandler,
+    DatabaseValidationError
+)
 
-class BlastHandler(DatabaseHandler):
+class BlastHandler(SearchHandler):
     """ 
     A Database handler specifically for use with Blast files. 
     Inherit from this, and implement screen()
     """
     # Start Database Handler API
-    def screen(self):
-        """ Virtual function to be called by any child database implementation"""
-        raise NotImplementedError(
-            "This class must override the .screen() to use Blast Handler."
-        )
+    @abstractmethod
+    def search(self):
+        """
+        Use a tool to search the input query against a database.
+        Should be implemented by all subclasses to perform the actual search against the database.
+        """
 
-    def validate_directory(self):
+    def _validate_db(self):
         """ 
         Blast expects a set of files with shared prefix, rather than a single file.
+        Here we validate such directory structures for Blast related search handlers.
         """
         if not os.path.isdir(self.db_directory):
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_directory} not found.")
+            raise DatabaseValidationError(
+                f"Mandatory screening directory {self.db_directory} not found."
+            )
 
         # Search for files of provided prefix.
         filename, extension = os.path.splitext(self.db_file)
         search_file = os.path.join(self.db_directory, "*" + os.path.basename(filename) + "*" + extension)
         files = glob.glob(search_file)
         if len(files) == 0:
-            raise FileNotFoundError(f"Mandatory screening directory {self.db_file} not found.")
+            raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
 
 def split_taxa(blast):
     """

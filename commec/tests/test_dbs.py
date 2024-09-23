@@ -4,11 +4,12 @@ Will fail if databases have not been installed as expected, with correct version
 """
 import os
 import pytest
-from commec.tools.blastdmnd_handler import DiamondHandler
-from commec.tools.blastn_handler import BlastNHandler
-from commec.tools.blastx_handler import BlastXHandler
-from commec.tools.hmm_handler import HMMHandler
-from commec.tools.cmscan_handler import CmscanHandler
+from commec.tools.diamond import DiamondHandler
+from commec.tools.blastn import BlastNHandler
+from commec.tools.blastx import BlastXHandler
+from commec.tools.hmmer import HmmerHandler
+from commec.tools.cmscan import CmscanHandler
+from commec.tools.search_handler import DatabaseValidationError
 
 INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fasta")
 DATABASE_DIRECTORY = os.path.join(os.path.dirname(__file__),"test_dbs")
@@ -18,7 +19,7 @@ databases_to_implement = [
     [DiamondHandler,   "nr_dmnd",     "nr.dmnd"],
     [BlastNHandler,    "nt_blast",    "nt"],
     [BlastXHandler,    "nr_blast",    "nr"],
-    [HMMHandler,       "benign_db",   "benign.hmm"],
+    [HmmerHandler,       "benign_db",   "benign.hmm"],
     [CmscanHandler,    "benign_db",   "benign.cmscan"],
 ]
 
@@ -45,7 +46,7 @@ def test_database_can_run(input_db, request):
         assert db.check_output()
 
     new_db = input_db[0](db_file, INPUT_QUERY, output_file)
-    new_db.screen()
+    new_db.search()
     assert new_db.check_output()
 
     version : str = new_db.get_version_information()
@@ -71,3 +72,30 @@ def test_database_can_run(input_db, request):
     
     if os.path.isfile(output_file):
         os.remove(output_file)
+
+bad_databases = [
+    [DiamondHandler,   "nr_dmnd",     "bad.dmnd"],
+    [BlastNHandler,    "nt_blast",    "bad"],
+    [BlastXHandler,    "nr_blast",    "bad"],
+    [HmmerHandler,     "benign_db",   "bad.hmm"],
+    [CmscanHandler,    "benign_db",   "bad.cmscan"],
+    [DiamondHandler,   "bad",       "bad.dmnd"],
+    [BlastNHandler,    "bad",       "bad"],
+    [BlastXHandler,    "bad",       "bad"],
+    [HmmerHandler,     "bad",       "bad.hmm"],
+    [CmscanHandler,    "bad",       "bad.cmscan"]
+]
+@pytest.mark.parametrize("input_db", bad_databases)
+def test_database_no_file(input_db):
+    """
+    Simply ensures that the input databases are failing there validation.
+    """
+    db_dir = os.path.join(DATABASE_DIRECTORY, input_db[1])
+    db_file = os.path.join(db_dir, input_db[2])
+    output_file = "db.out"
+
+    try:
+        input_db[0](db_file, INPUT_QUERY, output_file)
+        assert False
+    except(DatabaseValidationError):
+        assert True

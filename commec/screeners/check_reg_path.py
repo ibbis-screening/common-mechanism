@@ -17,7 +17,7 @@ import textwrap
 import pandas as pd
 
 from commec.tools.blast_tools import readblast, trimblast, taxdist, tophits
-from commec.tools.blastn_handler import BlastNHandler
+from commec.tools.blastn import BlastNHandler
 
 pd.set_option("display.max_colwidth", 10000)
 

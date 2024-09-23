@@ -66,9 +66,9 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "-t", 
         "--threads", 
-        dest="threads", 
-        type=int, 
-        default=default_params.threads, 
+        dest="threads",
+        type=int,
+        default=default_params.threads,
         help="Threads available"
     )
     parser.add_argument(
@@ -129,7 +129,11 @@ class Screen:
         logging.basicConfig(
             level=logging.INFO,
             format="%(message)s",
-            handlers=[logging.StreamHandler(), logging.FileHandler(self.params.output_screen_file, "a"), logging.FileHandler(self.params.tmp_log, "a")],
+            handlers = [
+                        logging.StreamHandler(),
+                        logging.FileHandler(self.params.output_screen_file, "a"),
+                        logging.FileHandler(self.params.tmp_log, "a")
+                    ],
         )
 
         logging.basicConfig(
@@ -216,7 +220,11 @@ class Screen:
         logging.debug("\t...running %s", self.params.config.search_tool)
         self.database_tools.regulated_protein.search()
         if not self.database_tools.regulated_protein.check_output(): #os.path.exists(search_output):
-            raise RuntimeError(f"Protein search failed and {self.database_tools.regulated_protein.out_file} was not created. Aborting.")
+            raise RuntimeError(
+                "Protein search failed and "
+                f"{self.database_tools.regulated_protein.out_file}"
+                " was not created. Aborting."
+                )
 
         logging.debug("\t...checking %s results", self.params.config.search_tool)
         # Delete any previous check_reg_path results
@@ -231,15 +239,14 @@ class Screen:
 
     def screen_nucleotides(self):
         """
-        Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and then `check_reg_path.py` to
-        screen regulated pathogen nucleotides in noncoding regions (i.e. that would not be found with
-        protein search).
+        Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and 
+        then `check_reg_path.py` to screen regulated pathogen nucleotides in 
+        noncoding regions (i.e. that would not be found with protein search).
         """
         # Only screen nucleotides in noncoding regions
         fetch_noncoding_regions(self.database_tools.regulated_protein.out_file,
                                 self.params.query.nt_path)
-        
-        noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta" # TODO: This should be passed into fetch_noncoding_regions.
+        noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta"
 
         if not os.path.isfile(noncoding_fasta):
             logging.debug("\t...skipping nucleotide search since no noncoding regions fetched")
@@ -250,7 +257,11 @@ class Screen:
             self.database_tools.regulated_nt.search()
 
         if not self.database_tools.regulated_nt.check_output():
-            raise RuntimeError(f"Nucleotide search failed and {self.database_tools.regulated_nt.out_file} was not created. Aborting.")
+            raise RuntimeError(
+                "Nucleotide search failed and "
+                f"{self.database_tools.regulated_nt.out_file}"
+                " was not created. Aborting."
+                )
 
         logging.debug("\t...checking blastn results")
         check_for_regulated_pathogens(self.database_tools.regulated_nt.out_file,
@@ -259,8 +270,8 @@ class Screen:
 
     def screen_benign(self):
         """
-        Call `hmmscan`, `blastn`, and `cmscan` and then pass results to `check_benign.py` to identify
-        regions that can be cleared.
+        Call `hmmscan`, `blastn`, and `cmscan` and then pass results 
+        to `check_benign.py` to identify regions that can be cleared.
         """
         sample_name = self.params.output_prefix
         if not os.path.exists(sample_name + ".reg_path_coords.csv"):
@@ -275,10 +286,15 @@ class Screen:
         self.database_tools.benign_cmscan.search()
 
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
-        benign_desc =  pd.read_csv(self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv", sep="\t")
-        
+        benign_desc =  pd.read_csv(
+            self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv", 
+            sep="\t"
+            )
+
         logging.debug("\t...checking benign scan results")
-        # Note currently check_for_benign hard codes .benign.hmmscan, and should grab from handler instead.
+
+        # Note currently check_for_benign hard codes .benign.hmmscan,
+        # in future parse, and grab from search handler instead.
         check_for_benign(sample_name, coords, benign_desc)
 
 def run(args : argparse.ArgumentParser):

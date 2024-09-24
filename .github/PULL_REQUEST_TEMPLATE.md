@@ -1,11 +1,12 @@
-# Description
+## Background
 <!--
 Leave a gift for your future self about what this PR was.
 
-Please include a summary of the changes, as well as relevant motivation and context.
+Please include relevant motivation and context for this PR.
 
 List any dependencies that are required for this change.
 -->
+
 
 <!--
 Does this relate to any open issues? Please include them, or delete the line below.
@@ -18,15 +19,21 @@ You can use the Github keywords [fix/es, resolve/s], but this will automatically
 close the issue, so only do so if the PR fully resolves them!
 -->
 
-## Type of change
+## Changes
 <!--
-Please delete options that are not relevant.
+Please delete sections that are not relevant.
 -->
+### Bug fixes
+* <!-- Describe any non-breaking changes which fix an identified bug -->
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Refactor (non-breaking change to code or documentation which should not change functionality)
+### New features
+* <!-- Describe non-breaking change which adds functionality -->
+
+### Breaking changes 
+* <!-- Describe any fixes or features that will cause existing functionality to no longer work as currently expected -->
+
+### Refactoring
+* <!-- Describe any non-breaking changes to code or documentation which should not change functionality -->
 
 ## Relevant logs, error messages, etc.
 <!--

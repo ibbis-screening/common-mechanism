@@ -93,8 +93,7 @@ def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str,
             for _, region in unique_target_data.iterrows():
                 match_range = MatchRange(
                     int(region['hmm from']), int(region['hmm to']),
-                    int(region['ali from']), int(region['ali to']),
-                    0
+                    int(region['ali from']), int(region['ali to'])
                 )
                 match_ranges.append(match_range)
 

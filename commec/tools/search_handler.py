@@ -19,8 +19,10 @@ class SearchToolVersion:
     version_date: str = "Null"
     additional_comment: str = ""
 
+
 class DatabaseValidationError(Exception):
     """Custom exception for database validation errors."""
+
 
 class SearchHandler(ABC):
     """
@@ -75,9 +77,7 @@ class SearchHandler(ABC):
             )
 
         if not os.path.isfile(self.db_file):
-            raise DatabaseValidationError(
-                f"Provided database file not found: {self.db_file}."
-            )
+            raise DatabaseValidationError(f"Provided database file not found: {self.db_file}.")
 
     @staticmethod
     def is_empty(filepath: str) -> bool:
@@ -97,23 +97,18 @@ class SearchHandler(ABC):
         except FileNotFoundError:
             return False
 
-    def get_arguments(self) -> list:
+    def format_args_for_cli(self) -> list:
         """
-        convert the arguments dictionary into a list,
-        structurally ready for appending to a command list of strs.
+        Format `self.arguments_dictionary` into a list of strings for use in the command line.
         """
-        my_list = []
+        formatted_args = []
         for key, value in self.arguments_dictionary.items():
-            my_list.append(str(key))
+            formatted_args.append(str(key))
             if isinstance(value, list):
-                my_list.append(
-                    " ".join(value)
-                )  # Extend the list with all elements in the array
-            else:
-                my_list.append(
-                    str(value)
-                )  # Append the value directly if it's not a list
-        return my_list
+                formatted_args.append(" ".join(map(str, value)))
+            elif value is not None:
+                formatted_args.append(str(value))
+        return formatted_args
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """
@@ -122,9 +117,7 @@ class SearchHandler(ABC):
         logging.debug("SUBPROCESS: %s", " ".join(command))
 
         with open(out_file, "a", encoding="utf-8") as f:
-            result = subprocess.run(
-                command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
-            )
+            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors)
 
             if result.returncode != 0:
                 command_str = " ".join(command)

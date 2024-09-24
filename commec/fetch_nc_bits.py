@@ -24,29 +24,30 @@ def get_ranges_with_no_hits(blast_df):
     """
     Get indices not covered by the query start / end ranges in the BLAST results.
     """
-    hits = blast_df[["q. start", "q. end"]].values.tolist()
-    print(hits)
+    unique_hits = blast_df.drop_duplicates(subset=["q. start", "q. end"])
+    hit_ranges = unique_hits[["q. start", "q. end"]].values.tolist()
+
     # Sort each pair to ensure that start < end, then sort entire list of ranges
-    hits = sorted([sorted(pair) for pair in hits])
+    hit_ranges = sorted([sorted(pair) for pair in hit_ranges])
 
     nc_ranges = []
 
     # Include the start if the first hit begins more than 50 bp after the start
-    if hits[0][0] > 50:
-        nc_ranges.append([1, hits[0][0] - 1])
+    if hit_ranges[0][0] > 50:
+        nc_ranges.append([1, hit_ranges[0][0] - 1])
 
     # Add ranges if there is a noncoding region of >=50 between hits
-    for i in range(len(hits) - 1):
-        nc_start = hits[i][1] + 1      # starts after this hit
-        nc_end = hits[i + 1][0] - 1    # ends before next hit
+    for i in range(len(hit_ranges) - 1):
+        nc_start = hit_ranges[i][1] + 1      # starts after this hit
+        nc_end = hit_ranges[i + 1][0] - 1    # ends before next hit
 
         if nc_end - nc_start + 1 >= 50:
             nc_ranges.append([nc_start, nc_end])
 
     # Include the end if the last hit ends more than 50 bp before the end
     query_length = blast_df['query length'][0]
-    if query_length - hits[-1][1] >= 50:
-        nc_ranges.append([hits[-1][1] + 1, int(query_length)])
+    if query_length - hit_ranges[-1][1] >= 50:
+        nc_ranges.append([hit_ranges[-1][1] + 1, int(query_length)])
 
     return nc_ranges
 
@@ -111,9 +112,9 @@ def main(protein_results, query_fasta):
         )
 
     sys.stdout.write(
-        "\t\t Fetching the following noncoding regions: "
+        "\t...writing noncoding regions ["
         + ", ".join(f"{start}-{end}" for start, end in ranges_to_screen)
-        + f", writing to {outfile}\n"
+        + f"] to: {outfile}\n"
     )
     write_nc_sequences(ranges_to_screen, records[0], outfile)
 

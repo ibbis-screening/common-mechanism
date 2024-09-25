@@ -14,9 +14,7 @@ import logging
 from multiprocessing import Pool
 
 from commec.tools.blast_tools import BlastHandler
-from commec.tools.search_handler import SearchToolVersion, SearchHandler
-
-
+from commec.tools.search_handler import SearchToolVersion
 
 class DiamondHandler(BlastHandler):
     """ 
@@ -24,7 +22,8 @@ class DiamondHandler(BlastHandler):
     alter arguments as desired, and call search() to run Diamond blastx via CLI.
     Concatenates all diamond outputs into a single output file.
     """
-    DEFAULT_DIAMOND_JOB_RATIO : int = 3
+
+    DEFAULT_DIAMOND_JOB_THREAD_DIVISOR : int = 3
 
     """ A Database handler specifically for use with Diamond files for commec screening. """
     def __init__(self, database_file : str, input_file : str, out_file : str):
@@ -48,26 +47,26 @@ class DiamondHandler(BlastHandler):
         # Find all files matching the pattern nr*.dmnd in DB_PATH
         db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
 
+        # Logic for determining jobs, i.e. how many multithreaded diamond instances to run at once.
+        # Update depending on whether want to use threads * jobs logic, or thread / jobs logic.
+        max_concurrent_jobs : int
+        if self.jobs is None:
+            max_concurrent_jobs = max(
+                self.threads / DiamondHandler.DEFAULT_DIAMOND_JOB_THREAD_DIVISOR,
+                1
+                )
+        else:
+            max_concurrent_jobs = self.jobs
+        max_threads : int = self.threads
+        # max_threads = self.threads * max_concurrent_jobs # Alternative definition.
+        threads_per_job : int = max_threads / max_concurrent_jobs
+
+        # Sanity checks on job and thread settings.
         if len(db_files) == 0:
             raise FileNotFoundError(
                 f"Mandatory Diamond database directory {self.db_directory} "
                 "contains no databases!"
                 )
-
-        # Logic for determining jobs, i.e. how many multithreaded diamond instances to run at once.
-        # Update depending on whether want to use threads * jobs logic, or thread / jobs logic.
-        max_concurrent_jobs : int
-        if self.jobs is None:
-            max_concurrent_jobs = max(self.threads / DiamondHandler.DEFAULT_DIAMOND_JOB_RATIO, 1)
-        else:
-            max_concurrent_jobs = self.jobs
-
-        max_threads : int = self.threads
-        # max_threads = self.threads * max_concurrent_jobs # Alternative legacy way to define max threads.
-
-        threads_per_job : int = max_threads / max_concurrent_jobs
-
-        # Sanity checks on job and thread settings.
         if max_concurrent_jobs < 1:
             max_concurrent_jobs = 1
             logging.info(
@@ -158,7 +157,10 @@ class DiamondHandler(BlastHandler):
 
     def get_version_information(self) -> SearchToolVersion:
         try:
-            result = subprocess.run(['diamond', 'version'], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ['diamond', 'version'], 
+                capture_output=True, text=True, check=True
+                )
             version_info = result.stdout.strip()
             return version_info
         except subprocess.CalledProcessError:

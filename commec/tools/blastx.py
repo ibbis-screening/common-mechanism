@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Module for BLASTX handler, with input database, fasta to screen, and output file.
+Handler for BLASTX search of protein databases using nucleotide queries.
+Initialise with local input database, fasta to screen, and output file.
 Throws error if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
 
@@ -12,7 +13,7 @@ from commec.tools.search_handler import SearchToolVersion
 class BlastXHandler(BlastHandler):
     """
     A search handler specifically for BLASTX command-line during commec screening.
-    Modify `arguments_dictionary` to change passed to the command line call.
+    Modify `arguments_dictionary` to change arguments passed to the CLI.
     """
 
     def __init__(self, database_file: str, input_file: str, out_file: str):

@@ -4,7 +4,7 @@
 Module for Blast related tools, a library for dealing with general blast file parsing tasks.
 Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
 (split_taxa, taxdist, readblast, trimblast, tophits)
-Also contains the abstract base class for blastX/N/Diamond database handlers.
+Also contains the abstract base class for blastX/N/Diamond database search handlers.
 """
 import os
 import logging
@@ -21,7 +21,7 @@ from commec.tools.search_handler import (
 
 class BlastHandler(SearchHandler):
     """ 
-    A Database handler specifically for use with Blast files. 
+    A Database handler specifically for use with Blast. 
     Inherit from this, and implement screen()
     """
     # Start Database Handler API

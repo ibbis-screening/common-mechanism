@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+
 """
-Container class to hold information pertaining to query from an input fasta file,
- as well as derived information, such as translated sequences, whether or not
- the query was derived from AA or NT.
+Container class to hold information pertaining to queries from an input fasta file,
+as well as derived information, such as translated sequences, whether or not
+the query was derived from AA or NT.
 """
 
 import os

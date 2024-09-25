@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Defines the `ScreenIOParameters` class and associated dataclasses.
+Defines the `ScreenIOParameters` class and associated dataclasses. 
+Objects responsible for parsing and interpreting user input for 
+the screen workflow of commec.
 """
 import os
 import glob

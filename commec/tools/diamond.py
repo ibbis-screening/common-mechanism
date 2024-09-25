@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Module for a handlers, specifically for calling diamond command line interface.
+Handler for Diamond blastx search of protein databases using nucleotide query.
 Instantiate a DiamondHnadler, with input local database, input fasta, and output file.
 Alter member variables after instantiation to change behaviour, before calling search().
 Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.

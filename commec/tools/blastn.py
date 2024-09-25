@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Module for BLASTN handler, with input database, fasta to screen, and output file.
+Handler for BLASTN search of nucleotide databases using nucleotide queries.
+Initialise with local input database, fasta to screen, and output file.
 Throws error if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
 

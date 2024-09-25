@@ -32,22 +32,6 @@ class ScreenIOParameters:
     Container for input settings constructed from arguments to `screen`.
     """
     def __init__(self, args: argparse.ArgumentParser):
-        # Ensure required arguments are present
-        required_args = [
-            "fasta_file",
-            "threads",
-            "protein_search_tool",
-            "fast_mode",
-            "skip_nt_search",
-            "cleanup",
-            "output_prefix",
-            "database_dir",
-            "jobs",
-        ]
-        for arg in required_args:
-            if not hasattr(args, arg):
-                raise ValueError(f"Missing required argument: {arg}")
-
         # Inputs
         self.config: ScreenConfiguration = ScreenConfiguration(
             args.threads,
@@ -58,8 +42,6 @@ class ScreenIOParameters:
             args.jobs,
         )
 
-        #TODO: Think about whether logs belong in here, or externally.
-
         # Outputs
         self.output_prefix = self.get_output_prefix(args.fasta_file, args.output_prefix)
         self.output_screen_file = f"{self.output_prefix}.screen"
@@ -68,7 +50,7 @@ class ScreenIOParameters:
         # Query
         self.query: Query = Query(args.fasta_file)
 
-        #TODO: Should this be stored in `screen_tools`?
+        # Storage of user input, used by screen_tools.
         self.db_dir = args.database_dir
 
     def setup(self) -> bool:

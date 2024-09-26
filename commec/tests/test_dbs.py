@@ -15,7 +15,7 @@ INPUT_QUERY = os.path.join(os.path.dirname(__file__),"test_data/single_record.fa
 DATABASE_DIRECTORY = os.path.join(os.path.dirname(__file__),"test_dbs")
 
 databases_to_implement = [
-    [DiamondHandler,   "nr_dmnd",     "nr.dmnd"],
+    [DiamondHandler,   "nr_dmnd",     "nr"],
     [BlastNHandler,    "nt_blast",    "nt"],
     [BlastXHandler,    "nr_blast",    "nr"],
     [HmmerHandler,       "benign_db",   "benign.hmm"],
@@ -49,12 +49,12 @@ def test_database_can_run(input_db):
         os.remove(output_file)
 
 bad_databases = [
-    [DiamondHandler,   "nr_dmnd",     "bad.dmnd"],
+    [DiamondHandler,   "nr_dmnd",     "bad"],
     [BlastNHandler,    "nt_blast",    "bad"],
     [BlastXHandler,    "nr_blast",    "bad"],
     [HmmerHandler,     "benign_db",   "bad.hmm"],
     [CmscanHandler,    "benign_db",   "bad.cmscan"],
-    [DiamondHandler,   "bad",       "bad.dmnd"],
+    [DiamondHandler,   "bad",       "bad"],
     [BlastNHandler,    "bad",       "bad"],
     [BlastXHandler,    "bad",       "bad"],
     [HmmerHandler,     "bad",       "bad.hmm"],

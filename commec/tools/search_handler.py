@@ -13,12 +13,8 @@ import logging
 @dataclass
 class SearchToolVersion:
     """Container class for outputting version related information from a database."""
-
-    tool_version: str = "x.x.x"
-    database_version: str = "x.x.x"
-    version_date: str = "Null"
-    additional_comment: str = ""
-
+    tool_info: str = "x.x.x"
+    database_info: str = "x.x.x"
 
 class DatabaseValidationError(Exception):
     """Custom exception for database validation errors."""
@@ -45,6 +41,7 @@ class SearchHandler(ABC):
         self.arguments_dictionary = {}
 
         self._validate_db()
+        self.version_info = self.get_version_information()
 
     @abstractmethod
     def search(self):

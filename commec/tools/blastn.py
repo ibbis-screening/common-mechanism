@@ -62,7 +62,14 @@ class BlastNHandler(BlastHandler):
             result = subprocess.run(
                 ["blastn", "-version"], capture_output=True, text=True, check=True
             )
-            version_info = result.stdout.strip()
-            return version_info
-        except subprocess.CalledProcessError:
+            tool_info = result.stdout.strip()
+
+            result = subprocess.run(
+                ["blastdbcmd", "-info", "-db", self.db_file, "-dbtype", "nucl"], capture_output=True, text=True, check=True
+            )
+            lines = result.stdout.splitlines()
+            database_info : str = lines[5] + lines[3]
+            
+            return SearchToolVersion(tool_info, database_info)
+        except subprocess.CalledProcessError as e:
             return None

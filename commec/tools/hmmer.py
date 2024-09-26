@@ -8,6 +8,7 @@ Throws if inputs are invalid. Creates a temporary log file, which is deleted on 
 """
 import re
 import pandas as pd
+import subprocess
 from commec.tools.search_handler import SearchHandler, SearchToolVersion
 
 class HmmerHandler(SearchHandler):
@@ -29,28 +30,25 @@ class HmmerHandler(SearchHandler):
         But better than nothing at the moment. There may be some way to return
         some version information from hmmcan itself, look into that.
         """
-        version : str = None
-        date : str = None
-        comment : str = None
+        database_info : str = None
         try:
             with open(self.db_file, 'r', encoding = "utf-8") as file:
                 for line in file:
-                    if line.startswith("NAME"):
-                        comment = line.split(maxsplit=1)[1].strip()
-                        continue
-                    if line.startswith("DATE"):
-                        date = line.split(maxsplit=1)[1].strip()
-                        continue
                     if line.startswith("HMMER3/f"):
-                        version = line.split("[",maxsplit=1)[1].split("|")[0].strip()
+                        database_info = line.split("[",maxsplit=1)
                         continue
                     # Early exit if data has been found
-                    if version and date and comment:
+                    if database_info:
                         break
-            return SearchToolVersion(version, date, comment)
 
-        except RuntimeError:
-            return super().get_version_information()
+            tool_version_result = subprocess.run(
+                ["hmmscan", "-h"], capture_output=True, text=True, check=True
+            )
+            tool_info : str = tool_version_result.stdout.splitlines()[1]
+            return SearchToolVersion(tool_info, database_info)
+
+        except subprocess.CalledProcessError:
+            return None
 
 
 def readhmmer(fileh):

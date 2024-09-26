@@ -9,7 +9,7 @@ Also contains the abstract base class for blastX/N/Diamond database search handl
 import os
 import logging
 import glob
-from abc import abstractmethod
+#from abc import abstractmethod
 import pytaxonkit
 import pandas as pd
 import numpy as np
@@ -25,12 +25,12 @@ class BlastHandler(SearchHandler):
     Inherit from this, and implement screen()
     """
     # Start Database Handler API
-    @abstractmethod
-    def search(self):
-        """
-        Use a tool to search the input query against a database.
-        Should be implemented by all subclasses to perform the actual search against the database.
-        """
+    #@abstractmethod
+    #def search(self):
+    #    """
+    #    Use a tool to search the input query against a database.
+    #    Should be implemented by all subclasses to perform the actual search against the database.
+    #    """
 
     def _validate_db(self):
         """ 

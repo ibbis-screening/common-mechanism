@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Module for a handlers, specifically for calling cmscan command line interface.
+Cmscan search handler, and calling cmscan command line interface.
 Additional methods for reading handler output, readcmscan, which returns a pandas database.
 Instantiate a CmscanHandler, with input local database, input fasta, and output file.
 Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.
@@ -25,9 +25,20 @@ class CmscanHandler(SearchHandler):
 
     def get_version_information(self) -> SearchToolVersion:
         try:
+            with open(self.db_file, 'r', encoding = "utf-8") as file:
+                for line in file:
+                    if line.startswith("INFERNAL1/a"):
+                        database_info = line.split("[",maxsplit=1)
+                        continue
+                    # Early exit if data has been found
+                    if database_info:
+                        break
+
             result = subprocess.run(['cmscan', '-h'], capture_output=True, text=True, check=True)
-            version_info = result.stdout.splitlines()[1].strip()[2:]
-            return version_info
+            tool_info = result.stdout.splitlines()[1].strip()[2:]
+
+            return SearchToolVersion(tool_info, database_info)
+
         except subprocess.CalledProcessError:
             return None
 

@@ -68,7 +68,15 @@ class BlastXHandler(BlastHandler):
             result = subprocess.run(
                 ["blastx", "-version"], capture_output=True, text=True, check=True
             )
-            version_info = result.stdout.splitlines()[0].strip()
-            return version_info
+            tool_info = result.stdout.strip()
+
+            result = subprocess.run(
+                ["blastdbcmd", "-info", "-db", self.db_file, "-dbtype", "prot"], capture_output=True, text=True, check=True
+            )
+            lines = result.stdout.splitlines()
+            database_info : str = lines[5] + lines[3]
+            
+            return SearchToolVersion(tool_info, database_info)
+
         except subprocess.CalledProcessError:
             return None

@@ -24,13 +24,6 @@ class BlastHandler(SearchHandler):
     A Database handler specifically for use with Blast. 
     Inherit from this, and implement screen()
     """
-    # Start Database Handler API
-    #@abstractmethod
-    #def search(self):
-    #    """
-    #    Use a tool to search the input query against a database.
-    #    Should be implemented by all subclasses to perform the actual search against the database.
-    #    """
 
     def _validate_db(self):
         """ 
@@ -94,6 +87,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
 
+    # Checks that the Lineage information is present by attempting to parse it.
     try:
         a = t["FullLineage"].str.split(";")[0]
         b = t["FullLineageTaxIDs"].str.split(";")[0]

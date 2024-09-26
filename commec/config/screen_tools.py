@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
+
+"""
+Container for search handlers used throughout the Commec screen workflow.
+Sets and alters defaults based on input parameters.
+"""
+
 import os
 import logging
 from commec.config.io_parameters import ScreenIOParameters
@@ -30,20 +36,20 @@ class ScreenTools:
             )
 
         if params.should_do_protein_screening:
-            if params.config.search_tool == "blastx":
+            if params.config.protein_search_tool == "blastx":
                 self.regulated_protein = BlastXHandler(
                     os.path.join(params.db_dir, "nr_blast/nr"),
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.blastx",
                 )
-            elif params.config.search_tool in ("nr.dmnd", "diamond"):
+            elif params.config.protein_search_tool in ("nr.dmnd", "diamond"):
                 self.regulated_protein = DiamondHandler(
                     os.path.join(params.db_dir, "nr_dmnd/nr.dmnd"),
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.dmnd",
                 )
                 self.regulated_protein.jobs = params.config.diamond_jobs
-                if params.config.search_tool == "nr.dmnd":
+                if params.config.protein_search_tool == "nr.dmnd":
                     logging.info(
                         """Using old \"nr.dmnd\" keyword for search tool used
                                   will not be supported in future releases, 

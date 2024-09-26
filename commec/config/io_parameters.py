@@ -22,7 +22,7 @@ class ScreenConfiguration:
     """
 
     threads: int = 1
-    search_tool: str = "blastx"
+    protein_search_tool: str = "blastx"
     in_fast_mode: bool = False
     skip_nt_search: bool = False
     do_cleanup: bool = False

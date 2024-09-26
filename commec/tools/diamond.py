@@ -47,8 +47,7 @@ class DiamondHandler(BlastHandler):
         # Find all files matching the pattern nr*.dmnd in DB_PATH
         db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
 
-        # Logic for determining jobs, i.e. how many multithreaded diamond instances to run at once.
-        # Update depending on whether want to use threads * jobs logic, or thread / jobs logic.
+        # The default number of jobs is a ratio of the total thread count. Else use user input.
         max_concurrent_jobs : int
         if self.jobs is None:
             max_concurrent_jobs = max(
@@ -58,7 +57,6 @@ class DiamondHandler(BlastHandler):
         else:
             max_concurrent_jobs = self.jobs
         max_threads : int = self.threads
-        # max_threads = self.threads * max_concurrent_jobs # Alternative definition.
         threads_per_job : int = max_threads / max_concurrent_jobs
 
         # Sanity checks on job and thread settings.
@@ -158,7 +156,6 @@ class DiamondHandler(BlastHandler):
     def get_version_information(self) -> SearchToolVersion:
         try:
             db_files = glob.glob(f"{self.db_file}*dmnd")
-            print(db_files)
             result = subprocess.run(
                 ['diamond', 'dbinfo', '--db', db_files[0]],
                 capture_output=True, text=True, check=True

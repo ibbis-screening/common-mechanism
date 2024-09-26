@@ -8,8 +8,10 @@ the screen workflow of commec.
 import os
 import glob
 import argparse
+import logging
 from dataclasses import dataclass
 from typing import Optional
+import multiprocessing
 
 from commec.config.query import Query
 
@@ -55,14 +57,25 @@ class ScreenIOParameters:
         # Storage of user input, used by screen_tools.
         self.db_dir = args.database_dir
 
-    def setup(self) -> bool:
-        """
-        Post-instantiation additonal setup. Or setup which requires logging.
-        """
-        #TODO: add -force flag to enable overwriting?
+        # Check whether a .screen output file already exists.
         if os.path.exists(self.output_screen_file):
             raise RuntimeError(
                 f"Screen output {self.output_screen_file} already exists. Aborting."
+            )
+
+    def setup(self) -> bool:
+        """
+        Post-instantiation additonal setup. i.e. setup require output logs.
+        """
+        # Sanity checks on thread input.
+        if self.config.threads > multiprocessing.cpu_count():
+            logging.info("Requested allocated threads [%i] is greater"
+                         " than the detected CPU count of the hardware[%i].",
+                         self.config.threads,
+                         multiprocessing.cpu_count())
+        if self.config.threads < 1:
+            raise RuntimeError(
+                "Number of allocated threads must be at least 1!"
             )
 
         self.query.setup(self.output_prefix)

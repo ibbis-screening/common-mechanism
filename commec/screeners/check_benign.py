@@ -34,7 +34,6 @@ def check_for_benign(query, coords, benign_desc):
     else:
         hmmer = readhmmer(hmmscan)
         hmmer = hmmer[hmmer["E-value"] < 1e-20]
-        # print(hmmer)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             # look at only the hmmer hits that overlap with it
             htrim = hmmer[
@@ -70,7 +69,6 @@ def check_for_benign(query, coords, benign_desc):
                     logging.info("\t\t   " + annot_string)
                     cleared[region] = 1
                 else:
-                    # print(htrim)
                     logging.info(
                         "\t\t -->Housekeeping proteins - not enough coverage = FAIL\n"
                     )
@@ -82,7 +80,6 @@ def check_for_benign(query, coords, benign_desc):
         logging.info("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
-        # print(cmscan)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             # look at only the cmscan hits that overlap with it
             qlen = abs(coords["q. start"][region] - coords["q. end"][region])
@@ -97,7 +94,6 @@ def check_for_benign(query, coords, benign_desc):
                     & (cmscan["seq to"] > coords["q. end"][region])
                 )
             ]
-            # print(htrim)
             if htrim.shape[0] > 0:
                 # bases unaccounted for based method
                 htrim = htrim.assign(

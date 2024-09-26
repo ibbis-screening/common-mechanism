@@ -69,7 +69,7 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         dest="threads",
         type=int,
         default=default_params.threads,
-        help="Threads available"
+        help="Maximum number of threads allocated."
     )
     parser.add_argument(
         "-j",
@@ -123,7 +123,6 @@ class Screen:
     def setup(self, args : argparse.ArgumentParser):
         """ Instantiates and validates parameters, and databases, ready for a run."""
         self.params : ScreenIOParameters = ScreenIOParameters(args)
-        self.params.setup()
 
         # Set up logging
         logging.basicConfig(
@@ -135,14 +134,15 @@ class Screen:
                         logging.FileHandler(self.params.tmp_log, "a")
                     ],
         )
-
         logging.basicConfig(
             level=logging.DEBUG,
             format="%(message)s",
             handlers=[logging.FileHandler(self.params.tmp_log, "a")],
         )
 
+
         logging.info(" Validating Inputs...")
+        self.params.setup()
         self.database_tools : ScreenTools = ScreenTools(self.params)
         self.params.query.translate_query()
 

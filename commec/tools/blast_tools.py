@@ -94,6 +94,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
 
+    # Checks that the Lineage information is present by attempting to parse it.
     try:
         a = t["FullLineage"].str.split(";")[0]
         b = t["FullLineageTaxIDs"].str.split(";")[0]

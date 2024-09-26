@@ -83,7 +83,7 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--protein-search-tool",
         dest="protein_search_tool",
         choices=["blastx", "diamond"],
-        default=default_params.search_tool,
+        default=default_params.protein_search_tool,
         help="Tool for homology search to identify regulated pathogen proteins",
     )
     parser.add_argument(
@@ -217,7 +217,7 @@ class Screen:
         Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
         pathogen protein screening results to `screen_file`.
         """
-        logging.debug("\t...running %s", self.params.config.search_tool)
+        logging.debug("\t...running %s", self.params.config.protein_search_tool)
         self.database_tools.regulated_protein.search()
         if not self.database_tools.regulated_protein.check_output(): #os.path.exists(search_output):
             raise RuntimeError(
@@ -226,7 +226,7 @@ class Screen:
                 " was not created. Aborting."
                 )
 
-        logging.debug("\t...checking %s results", self.params.config.search_tool)
+        logging.debug("\t...checking %s results", self.params.config.protein_search_tool)
         # Delete any previous check_reg_path results
         reg_path_coords = f"{self.params.output_prefix}.reg_path_coords.csv"
         if os.path.isfile(reg_path_coords):

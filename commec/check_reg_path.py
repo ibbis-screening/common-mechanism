@@ -6,7 +6,7 @@ synthetic constructs.
 
 Usage:
   python check_reg_path.py -i INPUT -d database_folder -t threads
-      -i, --input 
+
 """
 import os, sys, argparse
 import textwrap
@@ -48,10 +48,11 @@ def main():
         hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
     if is_empty(args.in_file):
-        sys.stdout.write("\tERROR: Homology search has failed\n")
+        sys.stdout.write("\tERROR: Cannot check for regulated pathogens in empty or "
+                         + f"non-existent file: {args.in_file}\n")
         sys.exit(1)
     if not has_hits(args.in_file):
-        sys.stdout.write("\t...no hits\n")
+        sys.stdout.write(f"\t... Skipping regulated pathogens check, no hits in: {args.in_file}\n")
         sys.exit(0)
     blast = readblast(args.in_file)
     blast = taxdist(blast, reg_ids, vax_ids, args.db + "/taxonomy/", args.threads)

@@ -116,11 +116,10 @@ def get_output_prefix(input_file, prefix_arg=""):
         return os.path.splitext(input_file)[0]
     if prefix_arg.endswith("/") or prefix_arg in {".", ".."} or prefix_arg.endswith("\\"):
         # Make the directory if it doesn't exist
-        if not os.path.isdir(prefix_arg):
-            os.makedirs(prefix_arg)
+        os.makedirs(prefix_arg, exist_ok=True)
         # Use the input filename as a prefix within that directory (stripping out the path)
         input_name = os.path.splitext(os.path.basename(input_file))[0]
-        return prefix_arg + input_name
+        return os.path.join(prefix_arg, input_name)
     # Existing, non-path prefixes can be used as-is
     return prefix_arg
 
@@ -214,7 +213,6 @@ def screen_proteins(
             "-t",
             str(threads),
         ]
-        run_as_subprocess(command, tmp_log)
     else:  # search_tool == 'diamond':
         search_output = f"{out_prefix}.nr.dmnd"
         command = [
@@ -230,14 +228,16 @@ def screen_proteins(
         ]
         if jobs is not None:
             command.extend(['-j', str(jobs)])
-        run_as_subprocess(command, tmp_log)
 
-    if not os.path.exists(search_output):
-        raise RuntimeError(f"Protein search failed and {search_output} was not created. Aborting.")
+    run_as_subprocess(command, tmp_log)
+
+    if not os.path.isfile(search_output):
+        raise RuntimeError(f"ERROR: Expected protein search output not created: {search_output}")
 
     logging.debug("\t...checking %s results", search_tool)
-    # Delete any previous check_reg_path results
     reg_path_coords = f"{out_prefix}.reg_path_coords.csv"
+
+    # Delete any previous check_reg_path results for this search
     if os.path.isfile(reg_path_coords):
         os.remove(reg_path_coords)
 
@@ -262,7 +262,7 @@ def screen_nucleotides(
     screen regulated pathogen nucleotides in noncoding regions (i.e. that would not be found with
     protein search).
     """
-    nr_out = out_prefix + ".nr.blastx" if search_tool == "blastx" else "nr.dmnd"
+    nr_out = out_prefix + (".nr.blastx" if search_tool == "blastx" else ".nr.dmnd")
     command = ["python", f"{scripts_dir}/fetch_nc_bits.py", nr_out, input_file]
     run_as_subprocess(command, screen_file)
 
@@ -298,8 +298,8 @@ def screen_nucleotides(
         ]
         run_as_subprocess(command, screen_file)
 
-    if not os.path.exists(nt_output):
-        raise RuntimeError(f"Nucleotide search failed and {nt_output} was not created. Aborting.")
+    if not os.path.isfile(nt_output):
+        raise RuntimeError(f"ERROR: Expected nucleotide search output not created: {nt_output}")
 
     logging.debug("\t...checking blastn results")
     command = [

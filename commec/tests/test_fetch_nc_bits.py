@@ -1,9 +1,10 @@
 from unittest.mock import call, patch, mock_open
 import pytest
+import os
 import pandas as pd
 from io import StringIO
 from Bio import SeqIO
-from commec.fetch_nc_bits import get_ranges_with_no_hits, write_nc_sequences
+from commec.fetch_nc_bits import get_ranges_with_no_hits, write_nc_sequences, main
 
 
 # Mock sequence using digits 0-9
@@ -11,11 +12,9 @@ MOCK_SEQ_LENGTH = 300
 MOCK_SEQ = "".join([str(i % 10) for i in range(MOCK_SEQ_LENGTH)])
 MOCK_FASTA = f">test_sequence\n{MOCK_SEQ}\n"
 
-
 @pytest.fixture
 def mock_fasta_file():
     return StringIO(MOCK_FASTA)
-
 
 def create_mock_blast_df(hits):
     data = {
@@ -25,7 +24,6 @@ def create_mock_blast_df(hits):
     }
     df = pd.DataFrame(data)
     return df.reset_index(drop=True)  # This adds a numeric index
-
 
 @pytest.mark.parametrize(
     "hits, nc_ranges",
@@ -39,6 +37,7 @@ def create_mock_blast_df(hits):
         ),  # Three protein hits, one gap >50bp
     ],
 )
+
 def test_get_ranges_with_no_hits(hits, nc_ranges):
     blast_df = create_mock_blast_df(hits)
     assert get_ranges_with_no_hits(blast_df) == nc_ranges
@@ -65,3 +64,20 @@ def test_write_nc_sequences_partial_sequence(mock_fasta_file):
         ]
 
         assert expected_sequences == sequences_written
+
+
+INPUT_FASTA = os.path.join(os.path.dirname(__file__), "test_data/fetch_nc_input.fasta")
+INPUT_BLAST = os.path.join(os.path.dirname(__file__), "test_data/fetch_nc_input.blastx")
+OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "test_data/fetch_nc_input.blastx.noncoding.fasta")
+EXPECTED_FILE = os.path.join(os.path.dirname(__file__), "test_data/fetch_nc_expected.fasta")
+
+def test_functional():
+    """
+    Functional run of entire fetch_nc, on a mock blast, and mock input fasta.
+    """
+    main(INPUT_BLAST, INPUT_FASTA)
+
+    with open(OUTPUT_FILE, 'r', encoding = "utf-8") as file1, open(EXPECTED_FILE, 'r', encoding = "utf-8") as file2:
+        for line1, line2 in zip(file1, file2):
+            # Strip the lines to ignore trailing spaces or newlines
+            assert line1.strip() == line2.strip()

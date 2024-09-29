@@ -219,7 +219,9 @@ class CommecRunInformation:
     biorisk_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
     protein_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
     nucleotide_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
-    benign_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
+    benign_protein_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
+    benign_rna_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
+    benign_synbio_database_info : SearchToolVersion = field(default_factory=SearchToolVersion)
     time_taken : str = ""
     date_run : str = ""
     # add other settings / run parameters.

@@ -1,6 +1,6 @@
 import pytest
-import os
 from commec.config.json_io import *
+from commec.tools.search_handler import SearchToolVersion
 from dataclasses import asdict
 
 @pytest.fixture
@@ -11,9 +11,12 @@ def test_screendata():
         commec_info = CommecRunInformation(
             commec_version="0.1.2",
             json_output_version=JSON_COMMEC_FORMAT_VERSION,
-            biorisk_database_info="0.0.0",
-            protein_database_info="0.0.0",
-            nucleotide_database_info="0.0.0",
+            biorisk_database_info=SearchToolVersion("HMM 0.0.0","DB 0.0.0"),
+            protein_database_info=SearchToolVersion("Blast 0.0.0","DB 0.0.0"),
+            nucleotide_database_info=SearchToolVersion("Blast 0.0.0","DB 0.0.0"),
+            benign_protein_database_info=SearchToolVersion("Blast 0.0.0","DB 0.0.0"),
+            benign_rna_database_info=SearchToolVersion("Blast 0.0.0","DB 0.0.0"),
+            benign_synbio_database_info=SearchToolVersion("Blast 0.0.0","DB 0.0.0"),
             time_taken="00:00:00:00",
             date_run="1.1.2024",
         ),
@@ -22,14 +25,25 @@ def test_screendata():
                 name="Query1",
                 length=10,
                 sequence="ABCDEFGHIJ",
-                biorisks = BioRiskData(
-                    [BioRisk("regulated_gene_01", range = [MatchRange(10,50), MatchRange(60,80)])],
-                    [BioRisk("virulance_factor_01", range = [MatchRange(50,60)])],
-                    ),
-                taxonomies = [
-
-                ],
-            ),
+                #recomendation = CommecRecomendationContainer(),
+                #summary_info = CommecSummaryStatistics(),
+                hits = [
+                    HitDescription(
+                        recommendation=CommecScreenStepRecommendation(CommecRecomendation.PASS, CommecScreenStep.BIORISK),
+                        description="ImportantProtein01",
+                        domain = LifeDomainFlag.BACTERIA,
+                        ranges = [
+                            MatchRange(
+                                e_value = 0.0,
+                                match_start = 0,
+                                match_end = 10,
+                                query_start = 0,
+                                query_end = 10
+                            )
+                        ]
+                    )
+                ]
+            )
         ],
     )
 
@@ -76,8 +90,8 @@ def test_erroneous_info(tmp_path, test_screendata):
     test_data_dict = asdict(test_data_retrieved)
     test_data_dict["ExtraStuff1"] = "ExtraBitStuff1"
     test_data_dict["queries"][0]["ExtraStuff2"] = "ExtraBitStuff2"
-    test_data_dict["queries"][0]["biorisks"]["regulated_genes"].append("ExtraStuff3")
-    test_data_dict["queries"][0]["biorisks"]["regulated_genes"].append({"ExtraDictStuff4" : 9999})
+    test_data_dict["queries"][0]["hits"][0]["ranges"].append("ExtraStuff3")
+    test_data_dict["queries"][0]["hits"][0]["ranges"].append({"ExtraDictStuff4" : 9999})
     test_data_dict2 = encode_dict_to_screen_data(test_data_dict)
     encode_screen_data_to_json(test_data_dict2, json_filename4)
     test_data_retrieved = get_screen_data_from_json(json_filename4)

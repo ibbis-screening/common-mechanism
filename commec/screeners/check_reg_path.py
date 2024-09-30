@@ -38,6 +38,7 @@ def update_nt_taxonomic_data_from_database(
         search_handle : SearchHandler,
         benign_handler : SearchHandler,
         biorisk_handler : SearchHandler,
+        taxonomy_directory : str,
         data : ScreenData,
         step : CommecScreenStep,
         n_threads : int
@@ -64,18 +65,21 @@ def update_nt_taxonomic_data_from_database(
         logging.info("\tERROR: Homology search has failed\n")
         return 1
 
+    if step == CommecScreenStep.TAXONOMY_AA:
+        for query in data.queries:
+            query.recommendation.protein_taxonomy_screen = CommecRecomendation.PASS
+    if step == CommecScreenStep.TAXONOMY_NT:
+        for query in data.queries:
+            query.recommendation.nucleotide_taxonomy_screen = CommecRecomendation.PASS
+
     if not search_handle.has_hits(search_handle.out_file):
         logging.info("\t...no hits\n")
-        if step == CommecScreenStep.TAXONOMY_AA:
-            for query in data.queries:
-                query.recommendation.nucleotide_taxonomy_screen = CommecRecomendation.PASS
-        if step == CommecScreenStep.TAXONOMY_NT:
-            for query in data.queries:
-                query.recommendation.nucleotide_taxonomy_screen = CommecRecomendation.PASS
         return 0
 
     blast = readblast(search_handle.out_file)
-    blast = taxdist(blast, reg_ids, vax_ids, biorisk_handler.db_directory + "/taxonomy/", n_threads)
+    blast = taxdist(blast, reg_ids, vax_ids, taxonomy_directory, n_threads)
+    #blast = taxdist(blast, reg_ids, vax_ids, input_database_dir + "/taxonomy/", n_threads)
+
     blast = blast[blast['species'] != ""] # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
@@ -90,12 +94,7 @@ def update_nt_taxonomic_data_from_database(
 
     # We don't care if no regulated hits appear.
     if blast2['regulated'].sum() == 0: 
-        if step == CommecScreenStep.TAXONOMY_AA:
-            for query in data.queries:
-                query.recommendation.nucleotide_taxonomy_screen = CommecRecomendation.PASS
-        if step == CommecScreenStep.TAXONOMY_NT:
-            for query in data.queries:
-                query.recommendation.nucleotide_taxonomy_screen = CommecRecomendation.PASS
+        logging.info("\t...no regulated hits\n")
         return
             
     # if ANY of the trimmed hits are regulated
@@ -112,11 +111,11 @@ def update_nt_taxonomic_data_from_database(
                 logging.error("Query during %s could not be found! [%s]", str(step), query)
 
             unique_query_data : pd.DataFrame = blast2[blast2['query acc.'] == query]
-            unique_hits = unique_query_data['subject acc.']['regulated'].unique()
-            unique_hits.dropna(subset = ['species'])
+            unique_query_data.dropna(subset = ['species'])
+            unique_hits = unique_query_data['subject acc.'][unique_query_data['regulated']].unique()
 
             for hit in unique_hits:
-                unique_hit_data : pd.DataFrame = unique_query_data[unique_query_data['target name'] == hit]
+                unique_hit_data : pd.DataFrame = unique_query_data[unique_query_data['subject acc.'] == hit]
                 hit_description = unique_hit_data['subject title'].values[0]
                 n_reg = 0
                 n_total = 0
@@ -133,14 +132,14 @@ def update_nt_taxonomic_data_from_database(
                     n_reg += (blast2['regulated'][blast2['q. start'] == region['q. start']] != False).sum()
                     n_total += len(blast2['regulated'][blast2['q. start'] == region['q. start']])
 
-                percent_regulated : float = float(n_reg)/float(n_total)
+                percent_regulated : int = round(float(n_reg)/float(n_total)*100)
 
                 domain = LifeDomainFlag.SKIP
-                if unique_hit_data['superkingdom'][0] == "Viruses":
+                if unique_hit_data['superkingdom'].iloc[0] == "Viruses":
                     domain = LifeDomainFlag.VIRUS
-                if unique_hit_data['superkingdom'][0] == "Bacteria":
+                if unique_hit_data['superkingdom'].iloc[0] == "Bacteria":
                     domain = LifeDomainFlag.BACTERIA
-                if unique_hit_data['superkingdom'][0] == "Eukaryota":
+                if unique_hit_data['superkingdom'].iloc[0] == "Eukaryota":
                     domain = LifeDomainFlag.EUKARYOTE
 
                 recommendation : CommecRecomendation = CommecRecomendation.FLAG
@@ -149,6 +148,19 @@ def update_nt_taxonomic_data_from_database(
                 if percent_regulated < 50:
                     recommendation = CommecRecomendation.WARN
 
+                # Update the query level recommendation of this step.
+                if step == CommecScreenStep.TAXONOMY_AA:
+                    for query in data.queries:
+                        query.recommendation.protein_taxonomy_screen = compare(
+                            query.recommendation.protein_taxonomy_screen,
+                            recommendation)
+                if step == CommecScreenStep.TAXONOMY_NT:
+                    for query in data.queries:
+                        query.recommendation.nucleotide_taxonomy_screen = compare(
+                            query.recommendation.nucleotide_taxonomy_screen,
+                            recommendation)
+
+                # Append our hit information to Screen data.
                 write_hit = query_write.get_hit(hit)
                 if write_hit:
                     # Grab some ranges.
@@ -176,25 +188,6 @@ def update_nt_taxonomic_data_from_database(
                         match_ranges
                     )
                 )
-        
-    # for each hit (subject acc) linked with at least one regulated taxid
-        for site in set(blast2['q. start'][blast2['regulated'] != False]):
-            subset = blast2[(blast2['q. start'] == site)]
-            subset = subset.sort_values(by=['regulated'], ascending=False)
-            subset = subset.reset_index(drop=True)
-            blast2 = blast2.dropna(subset = ['species'])
-            n_reg = (blast2['regulated'][blast2['q. start'] == site] != False).sum()
-            n_total = len(blast2['regulated'][blast2['q. start'] == site])
-            gene_names = ", ".join(set(subset['subject acc.']))
-            end = blast2['q. end'][blast2['q. start'] == site].max()
-            coordinates = str(int(site)) + " - " + str(int(end))
-
-            species_list = textwrap.fill(", ".join(set(blast2['species'][blast2['q. start'] == site])), 100).replace("\n", "\n\t\t     ")
-            desc = blast2['subject title'][blast2['q. start'] == site].values[0]
-            taxid_list = textwrap.fill(", ".join(map(str, set(blast2['subject tax ids'][blast2['q. start'] == site]))), 100).replace("\n", "\n\t\t     ")
-            percent_ids = (" ".join(map(str, set(blast2['% identity'][blast2['q. start'] == site]))))
-            reg_ids = (" ".join(map(str, set(blast2['regulated'][(blast2['q. start'] == site) & (blast2['regulated'] != False)]))))
-
 
 def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_threads : int):
     """ Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""

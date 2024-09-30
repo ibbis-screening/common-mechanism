@@ -124,6 +124,7 @@ def update_biorisk_data_from_database(search_handle : HmmerHandler, data : Scree
                 affected_target,
                 target_description,
                 regulation,
+                100,
                 domain,
                 match_ranges
             )

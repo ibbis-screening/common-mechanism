@@ -144,6 +144,7 @@ class HitDescription:
     name : str = ""
     description : str = ""
     regulation : RegulationFlag = RegulationFlag.SKIP
+    regulated_percent : int =  0 # The Percentage of non-regulated hits, sharing this hits start site(s).
     domain : LifeDomainFlag = LifeDomainFlag.SKIP
     ranges : list[MatchRange] = field(default_factory = list)
 
@@ -163,9 +164,9 @@ class CommecRecomendationContainer:
     biorisk_screen : CommecRecomendation = CommecRecomendation.NULL
     protein_taxonomy_screen : CommecRecomendation = CommecRecomendation.NULL
     nucleotide_taxonomy_screen : CommecRecomendation = CommecRecomendation.NULL
-    virus_flag : CommecRecomendation = CommecRecomendation.NULL
-    bacteria_flag : CommecRecomendation = CommecRecomendation.NULL
-    eukaryote_flag : CommecRecomendation = CommecRecomendation.NULL
+    virus_hits : int = 0
+    bacteria_hits : int = 0
+    eukaryote_hits : int = 0
     benign_screen : CommecRecomendation = CommecRecomendation.NULL
 
     def update_commec_recommendation(self, list_of_hits : list[HitDescription]):
@@ -174,7 +175,7 @@ class CommecRecomendationContainer:
         and updates the global commec recommendation.
         """
 
-        #TODO: Go through the hit descriptions, and update each step recommendation.
+        #TODO: Go through the hit descriptions, and update each step recommendation?
 
         if self.biorisk_screen == CommecRecomendation.FLAG:
             self.commec_recommendation = CommecRecomendation.FLAG

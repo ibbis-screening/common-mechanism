@@ -144,7 +144,7 @@ class HitDescription:
     name : str = ""
     description : str = ""
     regulation : RegulationFlag = RegulationFlag.SKIP
-    regulated_percent : int =  0 # The Percentage of non-regulated hits, sharing this hits start site(s).
+    non_regulated_overlap_percent : int =  0 # The Percentage of non-regulated hits, sharing this hits start site(s).
     domain : LifeDomainFlag = LifeDomainFlag.SKIP
     ranges : list[MatchRange] = field(default_factory = list)
 
@@ -200,37 +200,6 @@ class CommecRecomendationContainer:
         # We will need earlier checks to maintian the error status of future steps however.
         if self.commec_recommendation == CommecRecomendation.NULL:
             self.commec_recommendation = self.biorisk_screen
-
-@dataclass
-class BenignData:
-    '''Container to hold data related to the benign status of a taxonomy search'''
-    benign : bool = False
-    benign_match_type : str = "" # CMscan, Blast, HMM
-    percent_identity_e_value : float = 0.0
-
-@dataclass
-class MatchFields:
-    '''Container to hold information for a match to the query identified in a commec screen. 
-    molecule_alphabet is expected to contain either 'aa' for aminoacids, or 'nt' for nucelotides.
-    range contains information pertaining to over what range the match occured.'''
-    description : str = ""
-    molecule_alphabet : str = ""
-    id : int = 0
-    taxon : str = ""
-    kingdom : str = ""
-    ranges : list[MatchRange] = field(default_factory = list)
-    is_benign : BenignData = field(default_factory = BenignData)
-    # etc etc
-
-@dataclass
-class BioRisk:
-    '''Container to hold information for a match to the query identified as a potential biorisk'''
-    target_name : str = ""
-    description : str = ""
-    regulated : bool = True # This may already be encoded in the list that the instance exists in.
-    regulated_info : str = ""
-    range : list[MatchRange] = field(default_factory = list)
-    # etc etc
 
 @dataclass
 class QueryData:

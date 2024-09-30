@@ -34,7 +34,7 @@ from commec.config.json_io import (
 
 pd.set_option("display.max_colwidth", 10000)
 
-def update_nt_taxonomic_data_from_database(
+def update_taxonomic_data_from_database(
         search_handle : SearchHandler,
         benign_handler : SearchHandler,
         biorisk_handler : SearchHandler,
@@ -88,10 +88,6 @@ def update_nt_taxonomic_data_from_database(
     blast2 = trimblast(blast)
     blast2 = tophits(blast2) # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
 
-    reg_bac = 0
-    reg_vir = 0
-    reg_fung = 0
-
     # We don't care if no regulated hits appear.
     if blast2['regulated'].sum() == 0: 
         logging.info("\t...no regulated hits\n")
@@ -109,6 +105,11 @@ def update_nt_taxonomic_data_from_database(
             query_write = data.get_query(query)
             if not query_write:
                 logging.error("Query during %s could not be found! [%s]", str(step), query)
+                continue
+
+            n_regulated_bacteria = 0
+            n_regulated_virus = 0
+            n_regulated_eukaryote = 0
 
             unique_query_data : pd.DataFrame = blast2[blast2['query acc.'] == query]
             unique_query_data.dropna(subset = ['species'])
@@ -132,20 +133,23 @@ def update_nt_taxonomic_data_from_database(
                     n_reg += (blast2['regulated'][blast2['q. start'] == region['q. start']] != False).sum()
                     n_total += len(blast2['regulated'][blast2['q. start'] == region['q. start']])
 
-                percent_regulated : int = round(float(n_reg)/float(n_total)*100)
+                non_regulated_percent : int = 100 - round(float(n_reg)/float(n_total)*100)
 
                 domain = LifeDomainFlag.SKIP
                 if unique_hit_data['superkingdom'].iloc[0] == "Viruses":
                     domain = LifeDomainFlag.VIRUS
+                    n_regulated_virus += 1
                 if unique_hit_data['superkingdom'].iloc[0] == "Bacteria":
                     domain = LifeDomainFlag.BACTERIA
+                    n_regulated_bacteria +=1
                 if unique_hit_data['superkingdom'].iloc[0] == "Eukaryota":
                     domain = LifeDomainFlag.EUKARYOTE
+                    n_regulated_eukaryote+=1
 
                 recommendation : CommecRecomendation = CommecRecomendation.FLAG
 
                 # Example of how we might make decisions regarding the percent regulation from this step...
-                if percent_regulated < 50:
+                if non_regulated_percent > 50:
                     recommendation = CommecRecomendation.WARN
 
                 # Update the query level recommendation of this step.
@@ -169,7 +173,7 @@ def update_nt_taxonomic_data_from_database(
                     write_hit.description += " " + hit_description
                     if (write_hit.regulation == RegulationFlag.SKIP):
                         write_hit.regulation = RegulationFlag.REGULATED
-                    write_hit.regulated_percent = percent_regulated
+                    write_hit.non_regulated_overlap_percent = non_regulated_percent
                     write_hit.recommendation = compare(write_hit.recommendation, recommendation)
                     continue
                     
@@ -183,11 +187,15 @@ def update_nt_taxonomic_data_from_database(
                         hit,
                         hit_description,
                         RegulationFlag.REGULATED,
-                        percent_regulated,
+                        non_regulated_percent,
                         domain,
                         match_ranges
                     )
                 )
+
+            query_write.recommendation.bacteria_hits += n_regulated_bacteria
+            query_write.recommendation.virus_hits += n_regulated_virus
+            query_write.recommendation.eukaryote_hits += n_regulated_eukaryote
 
 def check_for_regulated_pathogens(input_file : str, input_database_dir : str, n_threads : int):
     """ Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""

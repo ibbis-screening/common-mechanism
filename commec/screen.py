@@ -42,7 +42,7 @@ from commec.config.json_io import (
 
 from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_from_database
 from commec.screeners.check_benign import check_for_benign
-from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_nt_taxonomic_data_from_database
+from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_taxonomic_data_from_database
 
 from commec.tools.fetch_nc_bits import fetch_noncoding_regions
 
@@ -288,7 +288,7 @@ class Screen:
                                        self.params.db_dir,
                                        str(self.params.config.threads))
         
-        update_nt_taxonomic_data_from_database(self.database_tools.regulated_protein,
+        update_taxonomic_data_from_database(self.database_tools.regulated_protein,
                                                self.database_tools.benign_hmm,
                                                self.database_tools.biorisk_hmm,
                                                self.params.db_dir + "/taxonomy/",
@@ -326,6 +326,14 @@ class Screen:
         check_for_regulated_pathogens(self.database_tools.regulated_nt.out_file,
                                        self.params.db_dir,
                                        str(self.params.config.threads))
+
+        update_taxonomic_data_from_database(self.database_tools.regulated_nt,
+                                               self.database_tools.benign_hmm,
+                                               self.database_tools.biorisk_hmm,
+                                               self.params.db_dir + "/taxonomy/",
+                                               self.screen_data,
+                                               CommecScreenStep.TAXONOMY_NT,
+                                               self.params.config.threads)
 
     def screen_benign(self):
         """

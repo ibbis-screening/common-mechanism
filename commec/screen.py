@@ -39,7 +39,7 @@ from commec.config.json_io import (
     encode_screen_data_to_json
 )
 
-from commec.screeners.check_biorisk import check_biorisk
+from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_from_database
 from commec.screeners.check_benign import check_for_benign
 from commec.screeners.check_reg_path import check_for_regulated_pathogens
 
@@ -165,8 +165,7 @@ class Screen:
             self.screen_data.queries.append(QueryData(
                 query.name,
                 len(str(query.seq)),
-                str(query.seq),
-                CommecRecomendation.NULL)
+                str(query.seq))
                 )
             
         if self.params.should_do_biorisk_screening:
@@ -179,12 +178,14 @@ class Screen:
             self.screen_data.commec_info.nucleotide_database_info = self.database_tools.regulated_nt.get_version_information()
 
         if self.params.should_do_benign_screening:
-            self.screen_data.commec_info.benign_database_info = self.database_tools.benign_hmm.get_version_information()
+            self.screen_data.commec_info.benign_protein_database_info = self.database_tools.benign_hmm.get_version_information()
+            self.screen_data.commec_info.benign_rna_database_info = self.database_tools.benign_blastn.get_version_information()
+            self.screen_data.commec_info.benign_synbio_database_info = self.database_tools.benign_cmscan.get_version_information()
 
         self.screen_data.commec_info.date_run = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Less of this, and more just passing the object in future - this might take too long in larger queries.
-        encode_screen_data_to_json(self.screen_data, self.params.output_json)
+        #encode_screen_data_to_json(self.screen_data, self.params.output_json)
         
 
     def run(self, args : argparse.ArgumentParser):
@@ -239,12 +240,13 @@ class Screen:
             ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
 
-        self.screen_data = get_screen_data_from_json(self.params.output_json)
+        #self.screen_data = get_screen_data_from_json(self.params.output_json)
         time_taken = (time.time() - self.start_time)
         # Convert the elapsed time to hours, minutes, and seconds
         hours, rem = divmod(time_taken, 3600)
         minutes, seconds = divmod(rem, 60)
         self.screen_data.commec_info.time_taken = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+        self.screen_data.update()
         encode_screen_data_to_json(self.screen_data, self.params.output_json)
 
         self.params.clean()
@@ -259,6 +261,7 @@ class Screen:
         check_biorisk(self.database_tools.biorisk_hmm.out_file,
                       self.database_tools.biorisk_hmm.db_directory,
                       self.params.output_json)
+        update_biorisk_data_from_database(self.database_tools.biorisk_hmm, self.screen_data)
 
     def screen_proteins(self):
         """

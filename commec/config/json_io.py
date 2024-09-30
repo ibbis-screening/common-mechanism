@@ -41,6 +41,35 @@ class LifeDomainFlag(StrEnum):
     BACTERIA = "Bacteria"
     VIRUS = "Virus"
 
+class RegulationFlag(StrEnum):
+    """ Domains of life. """
+    REGULATED = "Regulated"
+    REGULATED_GENE = "Regulated gene"
+    VIRULANCE_FACTOR = "Virulance Factor"
+    SKIP = "Not assigned"
+
+def guess_domain(search_string : str) -> LifeDomainFlag:
+    """ 
+    Given a string description, try to determine 
+    which domain of life this has come from.
+    """
+    def contains(search_string : str, search_terms):
+        for token in search_terms:
+            if search_string.find(token) == -1:
+                continue
+            return True
+        return False
+    
+    search_token = search_string.lower()
+    if contains(search_token, ["vir", "capsid", "RNA Polymerase"]):
+        return LifeDomainFlag.VIRUS
+    if contains(search_token, ["cillus","bact","coccus","phila","ella","cocci","coli"]):
+        return LifeDomainFlag.BACTERIA
+    if contains(search_token, ["eukary","nucleus","sona","odium","myces"]):
+        return LifeDomainFlag.EUKARYOTE
+    return LifeDomainFlag.SKIP
+
+
 class CommecScreenStep(StrEnum):
     """ 
     Enumeration of possible stages of Commec screening
@@ -62,11 +91,30 @@ class CommecRecomendation(StrEnum):
     FLAG = 'Flag' # Commec has flagged this query.
     ERROR = 'Error' # An error occured, such that this step failed to run.
 
+    @property
+    def importance(self):
+        """ Encode the importance of each Recommendations value. """
+        order = {
+            CommecRecomendation.NULL: 0,
+            CommecRecomendation.SKIP: 1,
+            CommecRecomendation.PASS: 2,
+            CommecRecomendation.WARN: 3,
+            CommecRecomendation.FLAG: 4,
+            CommecRecomendation.ERROR: 5,
+        }
+        return order[self]
+    
+def compare(a : CommecRecomendation, b : CommecRecomendation):
+    """ Compare two recommendations, return the most important one. """
+    if a.importance > b.importance:
+        return a
+    return b
+
 @dataclass
 class CommecScreenStepRecommendation:
     """ Pairs a recomendation with a Screening step."""
-    recommendation : CommecRecomendation = CommecRecomendation.NULL
-    screen_step : CommecScreenStep = field(default_factory=CommecScreenStep)
+    outcome : CommecRecomendation = CommecRecomendation.NULL
+    from_step : CommecScreenStep = field(default_factory=CommecScreenStep)
 
 @dataclass
 class CommecSummaryStatistics:
@@ -93,7 +141,9 @@ class MatchRange:
 class HitDescription:
     """ Container for all information regarding a single hit with a range(s), to a single query."""
     recommendation : CommecScreenStepRecommendation = field(default_factory=CommecScreenStepRecommendation)
+    name : str = ""
     description : str = ""
+    regulation : RegulationFlag = RegulationFlag.SKIP
     domain : LifeDomainFlag = LifeDomainFlag.SKIP
     ranges : list[MatchRange] = field(default_factory = list)
 
@@ -185,19 +235,19 @@ class BioRisk:
 class QueryData:
     '''Container to hold data related to the Query
       used in a commec database screen'''
-    name : str = ""
+    query : str = ""
     length : int = 0
     sequence : str = ""
     recommendation : CommecRecomendationContainer = field(default_factory=CommecRecomendationContainer)
     summary_info : CommecSummaryStatistics = field(default_factory=CommecSummaryStatistics)
     hits : list[HitDescription] = field(default_factory=list)
 
-    def get_hit(self, match_description : str) -> HitDescription:
+    def get_hit(self, match_name : str) -> HitDescription:
         """
         Searches to see if a match already exists, and returns it, so that it can be modified.
         """
         for hit in self.hits:
-            if hit.description == match_description:
+            if hit.name == match_name:
                 return hit
         return None
 
@@ -248,9 +298,13 @@ class ScreenData:
             search_term = query_name[:-2]
 
         for data in self.queries:
-            if data.name == search_term:
+            if data.query == search_term:
                 return data
         return None
+    
+    def update(self):
+        for query in self.queries:
+            query.update()
 
 # The above could be moved to a custom .py script for variable importing under version control.
 # The below is generic commands for input and output of a dataclass hierarchy.

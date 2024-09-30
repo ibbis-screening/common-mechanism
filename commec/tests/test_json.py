@@ -22,7 +22,7 @@ def test_screendata():
         ),
         queries= [
             QueryData(
-                name="Query1",
+                query="Query1",
                 length=10,
                 sequence="ABCDEFGHIJ",
                 #recomendation = CommecRecomendationContainer(),
@@ -30,7 +30,9 @@ def test_screendata():
                 hits = [
                     HitDescription(
                         recommendation=CommecScreenStepRecommendation(CommecRecomendation.PASS, CommecScreenStep.BIORISK),
-                        description="ImportantProtein01",
+                        name="ImportantProtein1",
+                        description="The 1st of the most important proteins, its a bacteria",
+                        regulation = RegulationFlag.REGULATED_GENE,
                         domain = LifeDomainFlag.BACTERIA,
                         ranges = [
                             MatchRange(
@@ -103,7 +105,9 @@ def test_erroneous_info(tmp_path, test_screendata):
         f"Test JSON output data: \n{asdict(test_data_retrieved)}"
     )
 
-
+def test_recommendation_ordering():
+    assert CommecRecomendation.PASS.importance < CommecRecomendation.FLAG.importance
+    assert compare(CommecRecomendation.PASS, CommecRecomendation.FLAG) == CommecRecomendation.FLAG
 
 def test_adding_data_to_existing():
     """

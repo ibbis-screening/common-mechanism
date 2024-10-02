@@ -35,3 +35,6 @@ Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [tool.setuptools]
 packages = {find = {"include" = ["commec"]}}
+
+[tool.black]
+line-length = 100

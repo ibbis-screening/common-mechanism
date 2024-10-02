@@ -80,7 +80,7 @@ def main():
         for filename in os.listdir(args.input_dir):
             if filename.endswith(".nr.blastx"):
                 input_file = os.path.join(args.input_dir, filename)
-                print("Processing input file {input_file}...")
+                print(f"Processing input file {input_file}...")
                 tsv_line = process_file(input_file, args.script, args.db)
                 outfile.write(tsv_line + '\n')
 

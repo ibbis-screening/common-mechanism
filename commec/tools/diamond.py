@@ -156,7 +156,6 @@ class DiamondHandler(BlastHandler):
     def get_version_information(self) -> SearchToolVersion:
         try:
             db_files = glob.glob(f"{self.db_file}*dmnd")
-            print(db_files)
             result = subprocess.run(
                 ['diamond', 'dbinfo', '--db', db_files[0]],
                 capture_output=True, text=True, check=True

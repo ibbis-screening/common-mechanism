@@ -85,7 +85,5 @@ def readcmscan(fileh):
     cmscan["score"] = pd.to_numeric(cmscan["score"])
     cmscan["seq from"] = pd.to_numeric(cmscan["seq from"])
     cmscan["seq to"] = pd.to_numeric(cmscan["seq to"])
-
-    #    print(cmscan)
+    
     return cmscan
-

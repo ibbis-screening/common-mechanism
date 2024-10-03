@@ -22,10 +22,6 @@ class DiamondHandler(BlastHandler):
     alter arguments as desired, and call search() to run Diamond blastx via CLI.
     Concatenates all diamond outputs into a single output file.
     """
-
-    DEFAULT_DIAMOND_JOB_THREAD_DIVISOR : int = 3
-
-    """ A Database handler specifically for use with Diamond files for commec screening. """
     def __init__(self, database_file : str, input_file : str, out_file : str):
         super().__init__(database_file, input_file, out_file)
         self.frameshift : int = 15
@@ -43,21 +39,28 @@ class DiamondHandler(BlastHandler):
         command, out_file = args
         self.run_as_subprocess(command, out_file, True)
 
+    def determine_runs_threads_and_cycles(self, max_threads : int, n_database_files : int):
+        """ 
+        Determine how many diamonds runs, and how many processors per run, need to occur 
+        for best CPU use and efficiency. 
+        """
+        number_of_databases : int = n_database_files
+        highest_common_denominator : int = max(number_of_databases, 1)
+        while(highest_common_denominator > 1):
+            if (number_of_databases%highest_common_denominator == 0  and
+                max_threads%highest_common_denominator == 0):
+                break
+            highest_common_denominator -= 1
+
+        n_concurrent_diamond_runs : int = highest_common_denominator if self.jobs is None else self.jobs
+        n_threads_per_diamond_run : int = int(max_threads) / int(n_concurrent_diamond_runs)
+        n_cycles : int = int(number_of_databases) / int(n_concurrent_diamond_runs)
+        return n_concurrent_diamond_runs, n_threads_per_diamond_run, n_cycles
+
     def search(self):
         # Find all files matching the pattern nr*.dmnd in DB_PATH
         db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
-
-        # The default number of jobs is a ratio of the total thread count. Else use user input.
-        max_concurrent_jobs : int
-        if self.jobs is None:
-            max_concurrent_jobs = max(
-                self.threads / DiamondHandler.DEFAULT_DIAMOND_JOB_THREAD_DIVISOR,
-                1
-                )
-        else:
-            max_concurrent_jobs = self.jobs
         max_threads : int = self.threads
-        threads_per_job : int = max_threads / max_concurrent_jobs
 
         # Sanity checks on job and thread settings.
         if len(db_files) == 0:
@@ -65,42 +68,54 @@ class DiamondHandler(BlastHandler):
                 f"Mandatory Diamond database directory {self.db_directory} "
                 "contains no databases!"
                 )
-        if max_concurrent_jobs < 1:
-            max_concurrent_jobs = 1
+
+        print(self.threads)
+        print(len(db_files))
+        print(self.jobs)
+        n_concurrent_diamond_runs, n_threads_per_diamond_run, n_cycles = self.determine_runs_threads_and_cycles(self.threads, len(db_files))
+
+        logging.info("Using %i concurrent diamond runs, with %i processes per run, across %i cycles.",
+                     n_concurrent_diamond_runs,
+                     n_threads_per_diamond_run,
+                     n_cycles)
+
+        # We keep the below checks, incase the user inputs a -j argument, that is a poor choice.
+        if n_concurrent_diamond_runs < 1:
+            n_concurrent_diamond_runs = 1
             logging.info(
                 "WARNING, numnber of Diamond job pools cannot be < 1. "
                 "Number of job pools as been reset to 1."
             )
-        if threads_per_job < 1:
-            threads_per_job = 1
+        if n_threads_per_diamond_run < 1:
+            n_threads_per_diamond_run = 1
             logging.info(
                 "WARNING, number of indiviudal Diamond job allocated threads cannot be < 1. "
                 "The number of threads per Diamond job as been reset to 1."
             )
-        if threads_per_job * max_concurrent_jobs < max_threads:
+        if n_threads_per_diamond_run * n_concurrent_diamond_runs < max_threads:
             logging.info(
                 "WARNING, total number of threads across concurrent Diamond job pools [%i*%i]"
                 " is less than number of allocated threads[%i]. CPU may be underutilised.",
-                threads_per_job, max_concurrent_jobs, max_threads
+                n_threads_per_diamond_run, n_concurrent_diamond_runs, max_threads
                 )
             
-        if threads_per_job * max_concurrent_jobs > max_threads:
+        if n_threads_per_diamond_run * n_concurrent_diamond_runs > max_threads:
             logging.info(
                 "WARNING, number of Diamond job pools [%i] are using [%i] threads"
                 " each. CPU may be bottlenecked.",
-                max_concurrent_jobs, threads_per_job
+                n_concurrent_diamond_runs, n_threads_per_diamond_run
                 )
-        if len(db_files) < max_concurrent_jobs:
+        if len(db_files) < n_concurrent_diamond_runs:
             logging.info(
                 "WARNING, The Diamond database has only been split into %i parts."
                 " Excessive number of requested concurrent Diamond jobs %i",
-                len(db_files), max_concurrent_jobs
+                len(db_files), n_concurrent_diamond_runs
                 )
-        if len(db_files) % max_concurrent_jobs > 0:
+        if len(db_files) % n_concurrent_diamond_runs > 0:
             logging.info(
                 "WARNING, The number of Diamond database files [%i] is not "
                 " divisible by concurrent jobs [%i]. CPU may be underutilised.",
-                len(db_files), max_concurrent_jobs
+                len(db_files), n_concurrent_diamond_runs
                 )
 
         # Lists to track each Diamond: command inputs, outputs, and file logs.
@@ -117,7 +132,7 @@ class DiamondHandler(BlastHandler):
                 "diamond", "blastx",
                 "--quiet",
                 "-d", db_file,
-                "--threads", str(threads_per_job),
+                "--threads", str(n_threads_per_diamond_run),
                 "-q", self.input_file,
                 "-o", output_file,
                 "--frameshift", str(self.frameshift),
@@ -134,7 +149,7 @@ class DiamondHandler(BlastHandler):
             pool_arguments.append((command, log_i_filename))
 
         # Run each input, with pooling.
-        with Pool(max_concurrent_jobs) as pool:
+        with Pool(n_concurrent_diamond_runs) as pool:
             pool.map(self.run_as_subprocess_args, pool_arguments)
 
         # Concatenate all output files, and remove the temporary ones.

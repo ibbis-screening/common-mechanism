@@ -74,3 +74,16 @@ def test_database_no_file(input_db):
         assert False
     except(DatabaseValidationError):
         assert True
+
+def test_diamond_job_and_threads_calculations():
+    """
+    Tests a range of threads, and diamond database sizes, 
+    for automatically calculating the optimum number of runs, 
+    and threads per run. Such that no CPU time is wasted.
+    """
+    my_diamond_handler = DiamondHandler("commec/tests/test_dbs/nr_dmnd/nr", "commec/tests/test_data/single_record.fasta", "output.test")
+    for max_threads in range(1,25):
+        for database_files in range(3,9):
+            runs, threads, cycles = my_diamond_handler.determine_runs_threads_and_cycles(max_threads, database_files)
+            assert(runs*threads == max_threads)
+            assert(cycles <= database_files)

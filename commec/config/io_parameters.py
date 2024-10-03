@@ -77,6 +77,12 @@ class ScreenIOParameters:
             raise RuntimeError(
                 "Number of allocated threads must be at least 1!"
             )
+        
+        if self.config.diamond_jobs is not None and self.config.protein_search_tool == "blastx":
+            logging.info("WARNING, --jobs is a diamond only parameter! "
+                         "Specifying -j (--jobs) without also specifying "
+                         "-p (--protein-search-tool), the protein search "
+                         "tool as \"diamond\" will have no effect!")
 
         self.query.setup(self.output_prefix)
         return True

@@ -9,24 +9,21 @@ Also contains the abstract base class for blastX/N/Diamond database search handl
 import os
 import logging
 import glob
-#from abc import abstractmethod
 import pytaxonkit
 import pandas as pd
 import numpy as np
 
-from commec.tools.search_handler import (
-    SearchHandler,
-    DatabaseValidationError
-)
+from commec.tools.search_handler import SearchHandler, DatabaseValidationError
+
 
 class BlastHandler(SearchHandler):
-    """ 
-    A Database handler specifically for use with Blast. 
+    """
+    A Database handler specifically for use with Blast.
     Inherit from this, and implement screen()
     """
 
     def _validate_db(self):
-        """ 
+        """
         Blast expects a set of files with shared prefix, rather than a single file.
         Here we validate such directory structures for Blast related search handlers.
         """
@@ -37,10 +34,15 @@ class BlastHandler(SearchHandler):
 
         # Search for files of provided prefix.
         filename, extension = os.path.splitext(self.db_file)
-        search_file = os.path.join(self.db_directory, "*" + os.path.basename(filename) + "*" + extension)
+        search_file = os.path.join(
+            self.db_directory, "*" + os.path.basename(filename) + "*" + extension
+        )
         files = glob.glob(search_file)
         if len(files) == 0:
-            raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
+            raise DatabaseValidationError(
+                f"Mandatory screening files with {filename}* not found."
+            )
+
 
 def split_taxa(blast):
     """
@@ -67,6 +69,7 @@ def split_taxa(blast):
     blast["phylum"] = ""
     return blast
 
+
 def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     """
     Go through each taxonomy level and check for regulated taxIDs
@@ -74,8 +77,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
-    # blast here is a dataframe of blast results
+    # create a new row for each taxon id in a semicolon-separated list, then delete the original row
+    # with the concatenated taxon ids - blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast["subject tax ids"] = blast["subject tax ids"].astype("int")
     blast = blast[blast["subject tax ids"] != 32630]  # synthetic constructs
@@ -93,7 +96,9 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         b = t["FullLineageTaxIDs"].str.split(";")[0]
         c = t["FullLineageRanks"].str.split(";")[0]
     except AttributeError:
-        logging.error("The Blast database used has not returned any Lineage information!")
+        logging.error(
+            "The Blast database used has not returned any Lineage information!"
+        )
         return blast
 
     for x in range(0, blast.shape[0]):  # for each hit taxID
@@ -147,6 +152,7 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
 
     return blast
 
+
 def readblast(fileh):
     """
     Read in BLAST/DIAMOND files and pre-format the data frame with essential info
@@ -182,6 +188,7 @@ def readblast(fileh):
     blast = blast.reset_index(drop=True)
 
     return blast
+
 
 def trimblast(blast):
     """
@@ -219,6 +226,7 @@ def trimblast(blast):
 
     return blast2
 
+
 def trim_to_top(df):
     keep_rows = []
     df = df.sort_values("% identity", ascending=False)
@@ -241,6 +249,7 @@ def trim_to_top(df):
             prev_hit = top_hit
     return df.iloc[keep_rows]
 
+
 def shift_hits_pos_strand(blast):
     for j in blast.index:
         if blast.loc[j, "q. start"] > blast.loc[j, "q. end"]:
@@ -249,6 +258,7 @@ def shift_hits_pos_strand(blast):
             blast.loc[j, "q. start"] = start
             blast.loc[j, "q. end"] = end
     return blast
+
 
 def trim_edges(df):
     for top in range(len(df.index)):  # run through each hit from the top
@@ -314,6 +324,7 @@ def trim_edges(df):
                 rerun = 1
                 mix_starts = mix_starts + 1
     return df, rerun
+
 
 def tophits(blast2):
     """

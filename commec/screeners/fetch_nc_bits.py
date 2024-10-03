@@ -17,9 +17,10 @@ from Bio import SeqIO
 from commec.tools.blast_tools import readblast, trimblast
 from commec.tools.search_handler import SearchHandler
 
-def fetch_noncoding_regions(nr_output_file : str, cleaned_fasta_file_path : str):
+
+def fetch_noncoding_regions(nr_output_file: str, cleaned_fasta_file_path: str):
     """
-    Takes the output of a blastx result from NR, and the query fasta file, and fetches a list of 
+    Takes the output of a blastx result from NR, and the query fasta file, and fetches a list of
     """
     nc_bits = 0
     query = nr_output_file
@@ -36,69 +37,89 @@ def fetch_noncoding_regions(nr_output_file : str, cleaned_fasta_file_path : str)
     else:
         blast = readblast(query)
         blast = trimblast(blast)
-        blast = blast[blast['% identity'] >= 90]
+        blast = blast[blast["% identity"] >= 90]
         if blast.shape[0] > 0:
-        # find noncoding bits
-            logging.info("\t...protein hits found, fetching nt regions not covered by a 90% ID hit or better\n")
+            # find noncoding bits
+            logging.info(
+                "\t...protein hits found, fetching nt regions not covered by a 90% ID hit or better\n"
+            )
             hits = []
             for i in range(blast.shape[0]):
-                pair = [blast['q. start'][i], blast['q. end'][i]]
+                pair = [blast["q. start"][i], blast["q. end"][i]]
                 pair.sort()
                 hits.append(pair)
             hits = sorted(hits, key=lambda x: x[0])
 
             nc_bits = []
-            if hits[0][0] >50:
-                nc_bits.append([1,hits[0][0]])
-            for i in range(len(hits)-1):
-                if hits[i][1] < (hits[i+1][0] - 49): # if there's a noncoding region of >=50 between hits
-                    nc_bits.append([hits[i][1], hits[i+1][0]])
+            if hits[0][0] > 50:
+                nc_bits.append([1, hits[0][0]])
+            for i in range(len(hits) - 1):
+                if hits[i][1] < (
+                    hits[i + 1][0] - 49
+                ):  # if there's a noncoding region of >=50 between hits
+                    nc_bits.append([hits[i][1], hits[i + 1][0]])
         else:
-            logging.info("\t...protein hits all low percent identity (<90%) - screening entire sequence\n")
+            logging.info(
+                "\t...protein hits all low percent identity (<90%) - screening entire sequence\n"
+            )
             nc_bits = "all"
 
     # fetch noncoding sequences
 
-    outfile = re.sub(".nr.*", "", query) + '.noncoding.fasta'
+    outfile = re.sub(".nr.*", "", query) + ".noncoding.fasta"
 
     def fetch_sequences(seqid, nc_bits, f_file, outfile):
         tofetch = []
-        for (start, stop) in nc_bits:
+        for start, stop in nc_bits:
             tofetch.append((seqid, start, stop))
 
         if tofetch:
             with open(f_file, "r") as fasta_file:
                 records = list(SeqIO.parse(fasta_file, "fasta"))
                 sequences = []
-                for (seqid, start, stop) in tofetch:
+                for seqid, start, stop in tofetch:
                     start = int(start)
                     stop = int(stop)
                     for record in records:
-                        sequence = record.seq[start - 1 : stop]  # Adjust start to 0-based index
+                        sequence = record.seq[
+                            start - 1 : stop
+                        ]  # Adjust start to 0-based index
                         sequences.append(f">{seqid} {start}-{stop}\n{sequence}\n")
                         break
-            with open(outfile, "w", encoding = "utf-8") as output_file:
+            with open(outfile, "w", encoding="utf-8") as output_file:
                 output_file.writelines(sequences)
 
     if nc_bits == "all":
         shutil.copyfile(f_file, outfile)
-    elif nc_bits == []: # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
-        logging.info("\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n")
+    elif (
+        nc_bits == []
+    ):  # if the entire sequence, save regions <50 bases, is covered with protein, skip nt scan
+        logging.info(
+            "\t\t --> no noncoding regions >= 50 bases found, skipping nt scan\n"
+        )
     else:
         seqid = blast.iloc[0, 0]
         fetch_sequences(seqid, nc_bits, f_file, outfile)
 
+
 def main():
-    '''
+    """
     Wrapper for parsing arguments direction to fetch_nc_bits if called as main.
-    '''
+    """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i","--input", dest="in_file",
-        required=True, help="Input query file path")
-    parser.add_argument("-f","--fasta", dest="fasta_file",
-        required=True, help="HMM folder (must contain biorisk_annotations.csv)")
+    parser.add_argument(
+        "-i", "--input", dest="in_file", required=True, help="Input query file path"
+    )
+    parser.add_argument(
+        "-f",
+        "--fasta",
+        dest="fasta_file",
+        required=True,
+        help="HMM folder (must contain biorisk_annotations.csv)",
+    )
     args = parser.parse_args()
     fetch_noncoding_regions(args.in_file, args.fasta_file_path)
+
 
 if __name__ == "__main__":
     main()

@@ -33,22 +33,18 @@ from commec.config.screen_tools import ScreenTools
 from commec.screeners.check_biorisk import check_biorisk
 from commec.screeners.check_benign import check_for_benign
 from commec.screeners.check_reg_path import check_for_regulated_pathogens
-
-from commec.tools.fetch_nc_bits import fetch_noncoding_regions
+from commec.screeners.fetch_nc_bits import fetch_noncoding_regions
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
 
-def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
+
+def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Add module arguments to an ArgumentParser object.
     """
-    default_params : ScreenConfiguration = ScreenConfiguration()
+    default_params: ScreenConfiguration = ScreenConfiguration()
 
-    parser.add_argument(
-        dest="fasta_file",
-        type=file_arg,
-        help="FASTA file to screen"
-    )
+    parser.add_argument(dest="fasta_file", type=file_arg, help="FASTA file to screen")
     parser.add_argument(
         "-d",
         "--databases",
@@ -64,19 +60,19 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="Output prefix (can be string or directory)",
     )
     parser.add_argument(
-        "-t", 
-        "--threads", 
+        "-t",
+        "--threads",
         dest="threads",
         type=int,
         default=default_params.threads,
-        help="Maximum number of threads allocated."
+        help="Maximum number of threads allocated.",
     )
     parser.add_argument(
         "-j",
         "--jobs",
         dest="jobs",
         type=int,
-        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)"
+        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)",
     )
     parser.add_argument(
         "-p",
@@ -109,30 +105,31 @@ def add_args(parser : argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     return parser
 
+
 class Screen:
-    """ 
-    Handles the parsing of input arguments, the control of databases, and 
+    """
+    Handles the parsing of input arguments, the control of databases, and
     the logical flow of the screening process for commec.
     """
 
     def __init__(self):
-        self.params : ScreenIOParameters = None
-        self.database_tools : ScreenTools = None
-        self.scripts_dir : str = os.path.dirname(__file__) # Legacy.
+        self.params: ScreenIOParameters = None
+        self.database_tools: ScreenTools = None
+        self.scripts_dir: str = os.path.dirname(__file__)  # Legacy.
 
-    def setup(self, args : argparse.ArgumentParser):
-        """ Instantiates and validates parameters, and databases, ready for a run."""
-        self.params : ScreenIOParameters = ScreenIOParameters(args)
+    def setup(self, args: argparse.ArgumentParser):
+        """Instantiates and validates parameters, and databases, ready for a run."""
+        self.params: ScreenIOParameters = ScreenIOParameters(args)
 
         # Set up logging
         logging.basicConfig(
             level=logging.INFO,
             format="%(message)s",
-            handlers = [
-                        logging.StreamHandler(),
-                        logging.FileHandler(self.params.output_screen_file, "a"),
-                        logging.FileHandler(self.params.tmp_log, "a")
-                    ],
+            handlers=[
+                logging.StreamHandler(),
+                logging.FileHandler(self.params.output_screen_file, "a"),
+                logging.FileHandler(self.params.tmp_log, "a"),
+            ],
         )
         logging.basicConfig(
             level=logging.DEBUG,
@@ -140,16 +137,15 @@ class Screen:
             handlers=[logging.FileHandler(self.params.tmp_log, "a")],
         )
 
-
         logging.info(" Validating Inputs...")
         self.params.setup()
-        self.database_tools : ScreenTools = ScreenTools(self.params)
+        self.database_tools: ScreenTools = ScreenTools(self.params)
         self.params.query.translate_query()
 
         # Add the input contents to the log
         shutil.copyfile(self.params.query.input_fasta_path, self.params.tmp_log)
 
-    def run(self, args : argparse.ArgumentParser):
+    def run(self, args: argparse.ArgumentParser):
         """
         Wrapper so that args be parsed in main() or commec.py interface.
         """
@@ -160,8 +156,10 @@ class Screen:
         if self.params.should_do_biorisk_screening:
             logging.info(">> STEP 1: Checking for biorisk genes...")
             self.screen_biorisks()
-            logging.info(" STEP 1 completed at %s",
-                        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            logging.info(
+                " STEP 1 completed at %s",
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
         else:
             logging.info(" SKIPPING STEP 1: Biorisk search")
 
@@ -189,10 +187,13 @@ class Screen:
 
         # Benign Screen
         if self.params.should_do_benign_screening:
-            logging.info(">> STEP 4: Checking any pathogen regions for benign components...")
+            logging.info(
+                ">> STEP 4: Checking any pathogen regions for benign components..."
+            )
             self.screen_benign()
             logging.info(
-                ">> STEP 4 completed at %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ">> STEP 4 completed at %s",
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
         else:
             logging.info(" SKIPPING STEP 4: Benign search")
@@ -209,8 +210,10 @@ class Screen:
         logging.debug("\t...running hmmscan")
         self.database_tools.biorisk_hmm.search()
         logging.debug("\t...checking hmmscan results")
-        check_biorisk(self.database_tools.biorisk_hmm.out_file,
-                      self.database_tools.biorisk_hmm.db_directory)
+        check_biorisk(
+            self.database_tools.biorisk_hmm.out_file,
+            self.database_tools.biorisk_hmm.db_directory,
+        )
 
     def screen_proteins(self):
         """
@@ -219,37 +222,45 @@ class Screen:
         """
         logging.debug("\t...running %s", self.params.config.protein_search_tool)
         self.database_tools.regulated_protein.search()
-        if not self.database_tools.regulated_protein.check_output(): #os.path.exists(search_output):
+        if (
+            not self.database_tools.regulated_protein.check_output()
+        ):  # os.path.exists(search_output):
             raise RuntimeError(
                 "Protein search failed and "
                 f"{self.database_tools.regulated_protein.out_file}"
                 " was not created. Aborting."
-                )
+            )
 
-        logging.debug("\t...checking %s results", self.params.config.protein_search_tool)
+        logging.debug(
+            "\t...checking %s results", self.params.config.protein_search_tool
+        )
         # Delete any previous check_reg_path results
         reg_path_coords = f"{self.params.output_prefix}.reg_path_coords.csv"
         if os.path.isfile(reg_path_coords):
             os.remove(reg_path_coords)
 
-        check_for_regulated_pathogens(self.database_tools.regulated_protein.out_file,
-                                       self.params.db_dir,
-                                       str(self.params.config.threads))
-
+        check_for_regulated_pathogens(
+            self.database_tools.regulated_protein.out_file,
+            self.params.db_dir,
+            str(self.params.config.threads),
+        )
 
     def screen_nucleotides(self):
         """
-        Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and 
-        then `check_reg_path.py` to screen regulated pathogen nucleotides in 
+        Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and
+        then `check_reg_path.py` to screen regulated pathogen nucleotides in
         noncoding regions (i.e. that would not be found with protein search).
         """
         # Only screen nucleotides in noncoding regions
-        fetch_noncoding_regions(self.database_tools.regulated_protein.out_file,
-                                self.params.query.nt_path)
+        fetch_noncoding_regions(
+            self.database_tools.regulated_protein.out_file, self.params.query.nt_path
+        )
         noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta"
 
         if not os.path.isfile(noncoding_fasta):
-            logging.debug("\t...skipping nucleotide search since no noncoding regions fetched")
+            logging.debug(
+                "\t...skipping nucleotide search since no noncoding regions fetched"
+            )
             return
 
         # Only run new blastn search if there are no previous results
@@ -261,16 +272,18 @@ class Screen:
                 "Nucleotide search failed and "
                 f"{self.database_tools.regulated_nt.out_file}"
                 " was not created. Aborting."
-                )
+            )
 
         logging.debug("\t...checking blastn results")
-        check_for_regulated_pathogens(self.database_tools.regulated_nt.out_file,
-                                       self.params.db_dir,
-                                       str(self.params.config.threads))
+        check_for_regulated_pathogens(
+            self.database_tools.regulated_nt.out_file,
+            self.params.db_dir,
+            str(self.params.config.threads),
+        )
 
     def screen_benign(self):
         """
-        Call `hmmscan`, `blastn`, and `cmscan` and then pass results 
+        Call `hmmscan`, `blastn`, and `cmscan` and then pass results
         to `check_benign.py` to identify regions that can be cleared.
         """
         sample_name = self.params.output_prefix
@@ -286,10 +299,10 @@ class Screen:
         self.database_tools.benign_cmscan.search()
 
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
-        benign_desc =  pd.read_csv(
-            self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv", 
-            sep="\t"
-            )
+        benign_desc = pd.read_csv(
+            self.database_tools.benign_hmm.db_directory + "/benign_annotations.tsv",
+            sep="\t",
+        )
 
         logging.debug("\t...checking benign scan results")
 
@@ -297,12 +310,14 @@ class Screen:
         # in future parse, and grab from search handler instead.
         check_for_benign(sample_name, coords, benign_desc)
 
-def run(args : argparse.ArgumentParser):
+
+def run(args: argparse.ArgumentParser):
     """
     Entry point from commec main. Passes args to Screen object, and runs.
     """
-    my_screen : Screen = Screen()
+    my_screen: Screen = Screen()
     my_screen.run(args)
+
 
 def main():
     """
@@ -312,6 +327,7 @@ def main():
     add_args(parser)
     args = parser.parse_args()
     run(args)
+
 
 if __name__ == "__main__":
     try:

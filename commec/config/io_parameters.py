@@ -35,6 +35,7 @@ class ScreenIOParameters:
     """
     Container for input settings constructed from arguments to `screen`.
     """
+
     def __init__(self, args: argparse.ArgumentParser):
         # Inputs
         self.config: ScreenConfiguration = ScreenConfiguration(
@@ -69,13 +70,24 @@ class ScreenIOParameters:
         """
         # Sanity checks on thread input.
         if self.config.threads > multiprocessing.cpu_count():
-            logging.info("Requested allocated threads [%i] is greater"
-                         " than the detected CPU count of the hardware[%i].",
-                         self.config.threads,
-                         multiprocessing.cpu_count())
+            logging.info(
+                "Requested allocated threads [%i] is greater"
+                " than the detected CPU count of the hardware[%i].",
+                self.config.threads,
+                multiprocessing.cpu_count(),
+            )
         if self.config.threads < 1:
-            raise RuntimeError(
-                "Number of allocated threads must be at least 1!"
+            raise RuntimeError("Number of allocated threads must be at least 1!")
+
+        if (
+            self.config.diamond_jobs is not None
+            and self.config.protein_search_tool == "blastx"
+        ):
+            logging.info(
+                "WARNING, --jobs is a diamond only parameter! "
+                "Specifying -j (--jobs) without also specifying "
+                "-p (--protein-search-tool), the protein search "
+                'tool as "diamond" will have no effect!'
             )
 
         self.query.setup(self.output_prefix)

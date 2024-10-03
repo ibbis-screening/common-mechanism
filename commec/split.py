@@ -13,14 +13,20 @@ from Bio import SeqIO
 from commec.utils.file_utils import file_arg
 
 VALID_FILENAME_CHARS = f"-._{string.ascii_letters}{string.digits}"
-DESCRIPTION = "Split a multi-record FASTA file into individual files, one for each record"
+DESCRIPTION = (
+    "Split a multi-record FASTA file into individual files, one for each record"
+)
+
 
 def add_args(parser):
     """
     Add module arguments to an ArgumentParser object.
     """
-    parser.add_argument(action='store', dest='fasta_file', type=file_arg, help='Input fasta file')
+    parser.add_argument(
+        action="store", dest="fasta_file", type=file_arg, help="Input fasta file"
+    )
     return parser
+
 
 def clean_description(description):
     """
@@ -31,6 +37,7 @@ def clean_description(description):
     if len(cleaned) > 150:
         cleaned = cleaned[:150]
     return cleaned
+
 
 def write_split_fasta(fasta_file):
     """
@@ -54,11 +61,13 @@ def write_split_fasta(fasta_file):
                 output_file.write(f">{desc}{os.linesep}")
                 output_file.write(str(record.seq))
 
+
 def run(parsed_args):
     """
     Wrapper so that args be parsed in main() or commec.py interface.
     """
     write_split_fasta(parsed_args.fasta_file)
+
 
 def main():
     """
@@ -71,6 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     add_args(parser)
     run(parser.parse_args())
+
 
 if __name__ == "__main__":
     main()

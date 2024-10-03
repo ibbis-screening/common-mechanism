@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
-
 """
 Container class to hold information pertaining to queries from an input fasta file,
 as well as derived information, such as translated sequences, whether or not
@@ -51,7 +50,8 @@ class Query:
             for line in fin:
                 line = line.strip()
                 modified_line = "".join(
-                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
+                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c
+                    for c in line
                 )
                 fout.write(f"{modified_line}{os.linesep}")
         return cleaned_file

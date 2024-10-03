@@ -13,8 +13,10 @@ import logging
 @dataclass
 class SearchToolVersion:
     """Container class for outputting version related information from a database."""
+
     tool_info: str = "x.x.x"
     database_info: str = "x.x.x"
+
 
 class DatabaseValidationError(Exception):
     """Custom exception for database validation errors."""
@@ -74,7 +76,9 @@ class SearchHandler(ABC):
             )
 
         if not os.path.isfile(self.db_file):
-            raise DatabaseValidationError(f"Provided database file not found: {self.db_file}.")
+            raise DatabaseValidationError(
+                f"Provided database file not found: {self.db_file}."
+            )
 
     @staticmethod
     def is_empty(filepath: str) -> bool:
@@ -114,7 +118,9 @@ class SearchHandler(ABC):
         logging.debug("SUBPROCESS: %s", " ".join(command))
 
         with open(out_file, "a", encoding="utf-8") as f:
-            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors)
+            result = subprocess.run(
+                command, stdout=f, stderr=subprocess.STDOUT, check=raise_errors
+            )
 
             if result.returncode != 0:
                 command_str = " ".join(command)

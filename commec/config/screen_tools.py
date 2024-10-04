@@ -8,13 +8,13 @@ Sets and alters defaults based on input parameters.
 
 import os
 import logging
+from typing import Union
 from commec.config.io_parameters import ScreenIOParameters
 from commec.tools.blastn import BlastNHandler
 from commec.tools.blastx import BlastXHandler
 from commec.tools.diamond import DiamondHandler
 from commec.tools.cmscan import CmscanHandler
 from commec.tools.hmmer import HmmerHandler
-
 
 class ScreenTools:
     """
@@ -23,7 +23,7 @@ class ScreenTools:
 
     def __init__(self, params: ScreenIOParameters):
         self.biorisk_hmm: HmmerHandler = None
-        self.regulated_protein = None
+        self.regulated_protein : Union[BlastXHandler, DiamondHandler] = None
         self.regulated_nt: BlastNHandler = None
         self.benign_hmm: HmmerHandler = None
         self.benign_blastn: BlastNHandler = None
@@ -52,9 +52,8 @@ class ScreenTools:
                 self.regulated_protein.jobs = params.config.diamond_jobs
                 if params.config.protein_search_tool == "nr.dmnd":
                     logging.info(
-                        """Using old \"nr.dmnd\" keyword for search tool used
-                                  will not be supported in future releases, 
-                                 consider using \"diamond\" instead."""
+                        "Using old \"nr.dmnd\" keyword for search tool will not be supported"
+                        " in future releases,consider using \"diamond\" instead."
                     )
             else:
                 raise RuntimeError('Search tool not defined as "blastx" or "diamond"')

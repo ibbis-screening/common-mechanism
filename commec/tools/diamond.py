@@ -11,6 +11,7 @@ import glob
 import subprocess
 from typing import Optional
 import logging
+from math import gcd
 from multiprocessing import Pool
 
 from commec.tools.blast_tools import BlastHandler
@@ -28,7 +29,7 @@ class DiamondHandler(BlastHandler):
         super().__init__(database_file, input_file, out_file)
         self.frameshift: int = 15
         self.do_range_culling = True
-        self.threads = 1
+        self.max_threads = 1
         self.jobs: Optional[int] = None
         self.output_format = "6"
         self.output_format_tokens = [
@@ -47,163 +48,154 @@ class DiamondHandler(BlastHandler):
             "send",
         ]
 
-    def run_as_subprocess_args(self, args):
-        """Wrapper for run_as_subprocess, for Diamond pooling processes."""
-        command, out_file = args
-        self.run_as_subprocess(command, out_file, True)
+        self.db_files = None
+        self.find_db_files()
 
-    def determine_runs_threads_and_cycles(
-        self, max_threads: int, n_database_files: int
-    ):
-        """
-        Determine how many diamonds runs, and how many processors per run, need to occur
-        for best CPU use and efficiency.
-        """
-        number_of_databases: int = n_database_files
-        highest_common_denominator: int = max(number_of_databases, 1)
-        while highest_common_denominator > 1:
-            if (
-                number_of_databases % highest_common_denominator == 0
-                and max_threads % highest_common_denominator == 0
-            ):
-                break
-            highest_common_denominator -= 1
+        # Set during `self.search`
+        self.concurrent_runs = None
+        self.threads_per_run = None
 
-        n_concurrent_diamond_runs: int = (
-            highest_common_denominator if self.jobs is None else self.jobs
-        )
-        n_threads_per_diamond_run: int = int(max_threads) / int(
-            n_concurrent_diamond_runs
-        )
-        n_cycles: int = int(number_of_databases) / int(n_concurrent_diamond_runs)
-        return n_concurrent_diamond_runs, n_threads_per_diamond_run, n_cycles
+    def find_db_files(self):
+        """
+        Find all files matching the pattern nr*.dmnd in DB_PATH -- we have found that it improves
+        speed to split the nr database into multiple parts and process the chunks in parallel.
+        """
+        self.db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
+
+    def run_diamond_search(self, args):
+        """Wrapper for run_as_subprocess, used for pooling processes."""
+        db_index, db_file = args
+        output_file = f"{self.out_file}.{db_index}.tsv"
+        log_file = f"{self.temp_log_file}_{db_index}"
+
+        command = [
+            "diamond", "blastx", "--quiet",
+            "-d", db_file,
+            "--threads", str(self.threads_per_run),
+            "-q", self.input_file,
+            "-o", output_file,
+            "--frameshift", str(self.frameshift),
+            "--outfmt", self.output_format,
+            *self.output_format_tokens
+        ]
+        if self.do_range_culling:
+            command.append("--range-culling")
+
+        self.run_as_subprocess(command, log_file, True)
+
+    def determine_runs_and_threads(
+        self, max_threads: int, number_of_databases: int
+    ) -> tuple[int, int]:
+        """
+        Determine the optimal number of Diamond runs and processors per run for best CPU utilization
+        and efficiency.
+        """
+        if self.jobs is not None:
+            n_concurrent_runs = self.jobs
+        else:
+            n_concurrent_runs = gcd(number_of_databases, max_threads)
+
+        n_threads_per_run = max_threads // n_concurrent_runs
+
+        if n_concurrent_runs < 1:
+            logging.info(
+                "WARNING: Number of concurrent Diamond runs cannot be < 1. Resetting to 1..."
+            )
+            n_concurrent_runs = 1
+
+        if n_threads_per_run < 1:
+            logging.info(
+                "WARNING: Number of threads per Diamond run cannot be < 1. Resetting to 1..."
+            )
+            n_threads_per_run = 1
+
+        if number_of_databases < n_concurrent_runs:
+            logging.info(
+                "WARNING: Excessive number of requested concurrent Diamond jobs %i."
+                " Resetting to number of Diamond databases %i...",
+                n_concurrent_runs,
+                number_of_databases,
+            )
+            n_concurrent_runs = number_of_databases
+
+        return n_concurrent_runs, n_threads_per_run
 
     def search(self):
-        # Find all files matching the pattern nr*.dmnd in DB_PATH
-        db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
-        max_threads: int = self.threads
+        """
+        Search the DIAMOND-formatted nr protein database for matches to the query file.
+        """
+        self.find_db_files()  # Make sure db files are up to date
+        n_diamond_dbs = len(self.db_files)
 
-        # Sanity checks on job and thread settings.
-        if len(db_files) == 0:
+        if n_diamond_dbs == 0:
             raise FileNotFoundError(
                 f"Mandatory Diamond database directory {self.db_directory} "
                 "contains no databases!"
             )
 
-        print(self.threads)
-        print(len(db_files))
-        print(self.jobs)
-        n_concurrent_diamond_runs, n_threads_per_diamond_run, n_cycles = (
-            self.determine_runs_threads_and_cycles(self.threads, len(db_files))
+        self.concurrent_runs, self.threads_per_run = self.determine_runs_and_threads(
+            self.max_threads, n_diamond_dbs
         )
 
         logging.info(
-            "Using %i concurrent diamond runs, with %i processes per run, across %i cycles.",
-            n_concurrent_diamond_runs,
-            n_threads_per_diamond_run,
-            n_cycles,
+            "Processing %i Diamond dbs using %i concurrent runs with %i threads per run.",
+            n_diamond_dbs,
+            self.concurrent_runs,
+            self.threads_per_run,
         )
 
-        # We keep the below checks, incase the user inputs a -j argument, that is a poor choice.
-        if n_concurrent_diamond_runs < 1:
-            n_concurrent_diamond_runs = 1
-            logging.info(
-                "WARNING, numnber of Diamond job pools cannot be < 1. "
-                "Number of job pools as been reset to 1."
-            )
-        if n_threads_per_diamond_run < 1:
-            n_threads_per_diamond_run = 1
-            logging.info(
-                "WARNING, number of indiviudal Diamond job allocated threads cannot be < 1. "
-                "The number of threads per Diamond job as been reset to 1."
-            )
-        if n_threads_per_diamond_run * n_concurrent_diamond_runs < max_threads:
-            logging.info(
-                "WARNING, total number of threads across concurrent Diamond job pools [%i*%i]"
-                " is less than number of allocated threads[%i]. CPU may be underutilised.",
-                n_threads_per_diamond_run,
-                n_concurrent_diamond_runs,
-                max_threads,
-            )
-
-        if n_threads_per_diamond_run * n_concurrent_diamond_runs > max_threads:
-            logging.info(
-                "WARNING, number of Diamond job pools [%i] are using [%i] threads"
-                " each. CPU may be bottlenecked.",
-                n_concurrent_diamond_runs,
-                n_threads_per_diamond_run,
-            )
-        if len(db_files) < n_concurrent_diamond_runs:
-            logging.info(
-                "WARNING, The Diamond database has only been split into %i parts."
-                " Excessive number of requested concurrent Diamond jobs %i",
-                len(db_files),
-                n_concurrent_diamond_runs,
-            )
-        if len(db_files) % n_concurrent_diamond_runs > 0:
-            logging.info(
-                "WARNING, The number of Diamond database files [%i] is not "
-                " divisible by concurrent jobs [%i]. CPU may be underutilised.",
-                len(db_files),
-                n_concurrent_diamond_runs,
-            )
-
-        # Lists to track each Diamond: command inputs, outputs, and file logs.
-        pool_arguments = []
-        output_files = []
-        output_lognames = []
-
-        # Generate an Array of tuple inputs for passing as arguments to Pool.
-        for i, db_file in enumerate(db_files, 1):
-            # Generate Diamond command string:
-            output_file = f"{self.out_file}.{i}.tsv"
-            output_files.append(output_file)
-            command = [
-                "diamond",
-                "blastx",
-                "--quiet",
-                "-d",
-                db_file,
-                "--threads",
-                str(n_threads_per_diamond_run),
-                "-q",
-                self.input_file,
-                "-o",
-                output_file,
-                "--frameshift",
-                str(self.frameshift),
-                "--outfmt",
-                self.output_format,
-            ]
-            command.extend(self.output_format_tokens)
-            if self.do_range_culling:
-                command.append("--range-culling")
-
-            # Generate log filenames:
-            log_i_filename: str = self.temp_log_file + "_" + str(i)
-            output_lognames.append(log_i_filename)
-
-            pool_arguments.append((command, log_i_filename))
+        self.warn_if_nonoptimal_cpu_utilization(n_diamond_dbs)
 
         # Run each input, with pooling.
-        with Pool(n_concurrent_diamond_runs) as pool:
-            pool.map(self.run_as_subprocess_args, pool_arguments)
+        with Pool(self.concurrent_runs) as pool:
+            pool.map(self.run_diamond_search, enumerate(self.db_files, 1))
 
         # Concatenate all output files, and remove the temporary ones.
-        with open(self.out_file, "w", encoding="utf-8") as outfile:
-            for o_file in output_files:
-                if os.path.exists(o_file):
-                    with open(o_file, "r", encoding="utf-8") as infile:
-                        outfile.write(infile.read())
-                    os.remove(o_file)
+        temp_outfiles = (f"{self.out_file}.{i}.tsv" for i in range(1, len(self.db_files) + 1))
+        self.concatenate_concurrent_outputs(self.out_file, temp_outfiles)
+        temp_logfiles = (f"{self.temp_log_file}_{i}" for i in range(1, len(self.db_files) + 1))
+        self.concatenate_concurrent_outputs(self.temp_log_file, temp_logfiles)
 
-        # Logs are concatenated into a global diamond log.
-        with open(self.temp_log_file, "w", encoding="utf-8") as outlog:
-            for log_f in output_lognames:
-                if os.path.exists(log_f):
-                    with open(log_f, "r", encoding="utf-8") as infile:
-                        outlog.write(infile.read())
-                    os.remove(log_f)
+    def warn_if_nonoptimal_cpu_utilization(self, n_diamond_dbs):
+        """
+        Let the user know if, based on the number of DIAMOND jobs and threads, the CPU appears
+        likely to be over- or under-utlized.
+        """
+        if self.threads_per_run * self.concurrent_runs < self.max_threads:
+            logging.info(
+                "WARNING: Total number of threads across concurrent Diamond job pools [%i*%i]"
+                " is less than number of allocated threads [%i]. CPU may be underutilised.",
+                self.threads_per_run,
+                self.concurrent_runs,
+                self.max_threads,
+            )
+        if self.threads_per_run * self.concurrent_runs > self.max_threads:
+            logging.info(
+                "WARNING: The number of Diamond job pools [%i], each using [%i] threads, may"
+                " exceed maximum threads [%i]. CPU may be bottlenecked.",
+                self.concurrent_runs,
+                self.threads_per_run,
+                self.max_threads,
+            )
+        if n_diamond_dbs % self.concurrent_runs > 0:
+            logging.info(
+                "WARNING: The number of Diamond database files [%i] is not "
+                " divisible by concurrent jobs [%i]. CPU may be underutilised.",
+                n_diamond_dbs,
+                self.concurrent_runs,
+            )
+
+    def concatenate_concurrent_outputs(self, base_filename, temp_files):
+        """
+        Parallel Diamond processing produces both logfiles and output files that should be
+        concatenated together.
+        """
+        with open(base_filename, "w", encoding="utf-8") as outfile:
+            for temp_file in temp_files:
+                if os.path.exists(temp_file):
+                    with open(temp_file, "r", encoding="utf-8") as infile:
+                        outfile.write(infile.read())
+                    os.remove(temp_file)
 
     def get_version_information(self) -> SearchToolVersion:
         try:

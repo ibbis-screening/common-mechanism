@@ -20,6 +20,7 @@ class ScreenTools:
     """
     Using a set of `ScreenIoParameters`, set up .
     """
+
     def __init__(self, params: ScreenIOParameters):
         self.biorisk_hmm: HmmerHandler = None
         self.regulated_protein = None

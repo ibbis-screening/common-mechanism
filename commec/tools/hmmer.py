@@ -7,35 +7,37 @@ Instantiate a HmmerHandler, with input local database, input fasta, and output f
 Throws if inputs are invalid. Creates a temporary log file, which is deleted on completion.
 """
 import re
-import pandas as pd
 import subprocess
+import pandas as pd
 from commec.tools.search_handler import SearchHandler, SearchToolVersion
 
+
 class HmmerHandler(SearchHandler):
-    """ A Database handler specifically for use with Hmmer files for commec screening. """
+    """A Database handler specifically for use with Hmmer files for commec screening."""
+
     def search(self):
         command = [
-            "hmmscan", 
+            "hmmscan",
             "--domtblout",
             self.out_file,
             self.db_file,
-            self.input_file
-            ]
+            self.input_file,
+        ]
         self.run_as_subprocess(command, self.temp_log_file)
 
     def get_version_information(self) -> SearchToolVersion:
-        """ 
-        At the moment this is just grabbing some basic header info of the 
+        """
+        At the moment this is just grabbing some basic header info of the
         first entrant of the hmm database. Not really a true version control.
         But better than nothing at the moment. There may be some way to return
         some version information from hmmcan itself, look into that.
         """
-        database_info : str = None
+        database_info: str = None
         try:
-            with open(self.db_file, 'r', encoding = "utf-8") as file:
+            with open(self.db_file, "r", encoding="utf-8") as file:
                 for line in file:
                     if line.startswith("HMMER3/f"):
-                        database_info = line.split("[",maxsplit=1)
+                        database_info = line.split("[", maxsplit=1)
                         continue
                     # Early exit if data has been found
                     if database_info:
@@ -44,7 +46,7 @@ class HmmerHandler(SearchHandler):
             tool_version_result = subprocess.run(
                 ["hmmscan", "-h"], capture_output=True, text=True, check=True
             )
-            tool_info : str = tool_version_result.stdout.splitlines()[1]
+            tool_info: str = tool_version_result.stdout.splitlines()[1]
             return SearchToolVersion(tool_info, database_info)
 
         except subprocess.CalledProcessError:
@@ -101,6 +103,7 @@ def readhmmer(fileh):
     hmmer["ali to"] = pd.to_numeric(hmmer["ali to"])
     hmmer["qlen"] = pd.to_numeric(hmmer["qlen"])
     return hmmer
+
 
 def trimhmmer(hmmer):
     """

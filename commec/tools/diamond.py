@@ -11,7 +11,7 @@ import glob
 import subprocess
 from typing import Optional
 import logging
-from math import gcd
+from math import gcd as greatest_common_denominator
 from multiprocessing import Pool
 
 from commec.tools.blast_tools import BlastHandler
@@ -98,7 +98,10 @@ class DiamondHandler(BlastHandler):
         if self.jobs is not None:
             n_concurrent_runs = self.jobs
         else:
-            n_concurrent_runs = gcd(number_of_databases, max_threads)
+            n_concurrent_runs = greatest_common_denominator(
+                number_of_databases, 
+                max_threads
+                )
 
         n_threads_per_run = max_threads // n_concurrent_runs
 

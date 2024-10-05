@@ -132,16 +132,9 @@ class DiamondHandler(BlastHandler):
         self.find_db_files()  # Make sure db files are up to date
         n_diamond_dbs = len(self.db_files)
 
-        print(f"max threads: {self.threads}")
-
         self.concurrent_runs, self.threads_per_run = self.determine_runs_and_threads(
             self.threads, n_diamond_dbs
         )
-
-        print(f"concurrent runs: {self.concurrent_runs}")
-        print(f"threads per run: {self.threads_per_run}")
-        print(f"max threads: {self.threads}")
-
         logging.info(
             "Processing %i Diamond dbs using %i concurrent runs with %i threads per run.",
             n_diamond_dbs,

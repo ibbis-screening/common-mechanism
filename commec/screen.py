@@ -27,7 +27,7 @@ import sys
 import pandas as pd
 
 from commec.utils.file_utils import file_arg, directory_arg
-from commec.config.io_parameters import ScreenIOParameters, ScreenConfiguration
+from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
 from commec.config.screen_tools import ScreenTools
 
 from commec.screeners.check_biorisk import check_biorisk
@@ -42,7 +42,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Add module arguments to an ArgumentParser object.
     """
-    default_params: ScreenConfiguration = ScreenConfiguration()
+    default_params: ScreenConfig = ScreenConfig()
 
     parser.add_argument(dest="fasta_file", type=file_arg, help="FASTA file to screen")
     parser.add_argument(
@@ -65,14 +65,15 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         dest="threads",
         type=int,
         default=default_params.threads,
-        help="Maximum number of threads allocated.",
+        help="Number of CPU threads to use. Passed to search tools.",
     )
     parser.add_argument(
         "-j",
-        "--jobs",
-        dest="jobs",
+        "--diamond-jobs",
+        dest="diamond_jobs",
         type=int,
-        help="number of diamond runs to do in parallel (optional, defaults to # CPUs / THREADS)",
+        default=default_params.diamond_jobs,
+        help="Number of diamond runs to do in parallel",
     )
     parser.add_argument(
         "-p",

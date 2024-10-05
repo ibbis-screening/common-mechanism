@@ -17,10 +17,10 @@ from commec.config.query import Query
 
 
 @dataclass
-class ScreenConfiguration:
+class ScreenConfig:
     """
-    Namespace for optional input parameters for screening; provided by parsing arguments.
-    All have default values, which are set here, and are reflected into argparse.
+    Namespace for optional input parameters for screening; provided by parsing command line
+    arguments. Default values, where applicable, are stored here.
     """
 
     threads: int = 1
@@ -38,13 +38,13 @@ class ScreenIOParameters:
 
     def __init__(self, args: argparse.ArgumentParser):
         # Inputs
-        self.config: ScreenConfiguration = ScreenConfiguration(
+        self.config: ScreenConfig = ScreenConfig(
             args.threads,
             args.protein_search_tool,
             args.fast_mode,
             args.skip_nt_search,
             args.cleanup,
-            args.jobs,
+            args.diamond_jobs,
         )
 
         # Outputs
@@ -84,7 +84,7 @@ class ScreenIOParameters:
             and self.config.protein_search_tool == "blastx"
         ):
             logging.info(
-                "WARNING, --jobs is a diamond only parameter! "
+                "WARNING: --jobs is a diamond only parameter! "
                 "Specifying -j (--jobs) without also specifying "
                 "-p (--protein-search-tool), the protein search "
                 'tool as "diamond" will have no effect!'

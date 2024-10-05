@@ -38,12 +38,20 @@ class SearchHandler(ABC):
         self.input_file = os.path.abspath(input_file)
         self.out_file = os.path.abspath(out_file)
 
-        self.db_directory = os.path.dirname(self.db_file)
-        self.temp_log_file = f"{self.out_file}.log.tmp"
         self.arguments_dictionary = {}
 
         self._validate_db()
         self.version_info = self.get_version_information()
+
+    @property
+    def db_directory(self):
+        """Directory where databases to be searched are located."""
+        return os.path.dirname(self.db_file)
+
+    @property
+    def temp_log_file(self):
+        """Temporary log file used for this search. Based on outfile name."""
+        return f"{self.out_file}.log.tmp"
 
     @abstractmethod
     def search(self):

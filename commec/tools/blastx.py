@@ -17,12 +17,14 @@ class BlastXHandler(BlastHandler):
     Modify `arguments_dictionary` to change arguments passed to the CLI.
     """
 
-    def __init__(self, database_file: str, input_file: str, out_file: str):
-        super().__init__(database_file, input_file, out_file)
+    def __init__(
+        self, database_file: str, input_file: str, out_file: str, threads: int = 8
+    ):
+        super().__init__(database_file, input_file, out_file, threads)
         # We fill this with defaults, however they can always be overridden before screening.
         self.arguments_dictionary = {
-            "-num_threads": 1,
-            "-evalue": "1e-10",
+            "-num_threads": self.threads,
+            "-evalue": 1e-10,
             "-word_size": 6,
             "-threshold": 21,
             "-max_target_seqs": 5000,

@@ -25,11 +25,10 @@ class DiamondHandler(BlastHandler):
     Concatenates all diamond outputs into a single output file.
     """
 
-    def __init__(self, database_file: str, input_file: str, out_file: str):
-        super().__init__(database_file, input_file, out_file)
+    def __init__(self, database_file: str, input_file: str, out_file: str, threads: int = 1):
+        super().__init__(database_file, input_file, out_file, threads)
         self.frameshift: int = 15
         self.do_range_culling = True
-        self.max_threads = 1
         self.jobs: Optional[int] = None
         self.output_format = "6"
         self.output_format_tokens = [
@@ -134,9 +133,8 @@ class DiamondHandler(BlastHandler):
         n_diamond_dbs = len(self.db_files)
 
         self.concurrent_runs, self.threads_per_run = self.determine_runs_and_threads(
-            self.max_threads, n_diamond_dbs
+            self.threads, n_diamond_dbs
         )
-
         logging.info(
             "Processing %i Diamond dbs using %i concurrent runs with %i threads per run.",
             n_diamond_dbs,
@@ -161,21 +159,21 @@ class DiamondHandler(BlastHandler):
         Let the user know if, based on the number of DIAMOND jobs and threads, the CPU appears
         likely to be over- or under-utlized.
         """
-        if self.threads_per_run * self.concurrent_runs < self.max_threads:
+        if self.threads_per_run * self.concurrent_runs < self.threads:
             logging.info(
                 "WARNING: Total number of threads across concurrent Diamond job pools [%i*%i]"
                 " is less than number of allocated threads [%i]. CPU may be underutilised.",
                 self.threads_per_run,
                 self.concurrent_runs,
-                self.max_threads,
+                self.threads,
             )
-        if self.threads_per_run * self.concurrent_runs > self.max_threads:
+        if self.threads_per_run * self.concurrent_runs > self.threads:
             logging.info(
                 "WARNING: The number of Diamond job pools [%i], each using [%i] threads, may"
                 " exceed maximum threads [%i]. CPU may be bottlenecked.",
                 self.concurrent_runs,
                 self.threads_per_run,
-                self.max_threads,
+                self.threads,
             )
         if n_diamond_dbs % self.concurrent_runs > 0:
             logging.info(

@@ -18,6 +18,8 @@ class HmmerHandler(SearchHandler):
     def search(self):
         command = [
             "hmmscan",
+            "--cpu",
+            str(self.threads),
             "--domtblout",
             self.out_file,
             self.db_file,

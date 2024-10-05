@@ -17,8 +17,10 @@ class BlastNHandler(BlastHandler):
     Modify `arguments_dictionary` to change passed to the command line call.
     """
 
-    def __init__(self, database_file: str, input_file: str, out_file: str):
-        super().__init__(database_file, input_file, out_file)
+    def __init__(
+        self, database_file: str, input_file: str, out_file: str, threads: int = 8
+    ):
+        super().__init__(database_file, input_file, out_file, threads)
         # We fill this with defaults, however they can always be overridden before screening.
         self.arguments_dictionary = {
             "-outfmt": [
@@ -37,8 +39,8 @@ class BlastNHandler(BlastHandler):
                 "sstart",
                 "send",
             ],
-            "-num_threads": 8,
-            "-evalue": "10",
+            "-num_threads": self.threads,
+            "-evalue": 10,
             "-max_target_seqs": 50,
             "-culling_limit": 5,
         }
@@ -74,5 +76,5 @@ class BlastNHandler(BlastHandler):
             database_info: str = lines[5] + lines[3]
 
             return SearchToolVersion(tool_info, database_info)
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             return None

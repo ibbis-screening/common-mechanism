@@ -16,7 +16,15 @@ class CmscanHandler(SearchHandler):
     """A Database handler specifically for use with Hmmer files for commec screening."""
 
     def search(self):
-        command = ["cmscan", "--tblout", self.out_file, self.db_file, self.input_file]
+        command = [
+            "cmscan",
+            "--cpu",
+            str(self.threads),
+            "--tblout",
+            self.out_file,
+            self.db_file,
+            self.input_file,
+        ]
         self.run_as_subprocess(command, self.temp_log_file)
 
     def get_version_information(self) -> SearchToolVersion:

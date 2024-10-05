@@ -41,15 +41,15 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     # Sub-command for "screen"
-    screen_parser = subparsers.add_parser("screen", help=screen_DESCRIPTION)
+    screen_parser = subparsers.add_parser("screen", description=screen_DESCRIPTION)
     screen_add_args(screen_parser)
 
     # Sub-command for "flag"
-    flag_parser = subparsers.add_parser("flag", help=flag_DESCRIPTION)
+    flag_parser = subparsers.add_parser("flag", description=flag_DESCRIPTION)
     flag_add_args(flag_parser)
 
     # Sub-command for "split"
-    split_parser = subparsers.add_parser("split", help=split_DESCRIPTION)
+    split_parser = subparsers.add_parser("split", description=split_DESCRIPTION)
     split_add_args(split_parser)
 
     args = parser.parse_args()

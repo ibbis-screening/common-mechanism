@@ -42,7 +42,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
     Add module arguments to an ArgumentParser object.
     """
-    default_params: ScreenConfig = ScreenConfig()
+    default_config: ScreenConfig = ScreenConfig()
 
     parser.add_argument(dest="fasta_file", type=file_arg, help="FASTA file to screen")
     parser.add_argument(
@@ -64,7 +64,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--threads",
         dest="threads",
         type=int,
-        default=default_params.threads,
+        default=default_config.threads,
         help="Number of CPU threads to use. Passed to search tools.",
     )
     parser.add_argument(
@@ -72,7 +72,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--diamond-jobs",
         dest="diamond_jobs",
         type=int,
-        default=default_params.diamond_jobs,
+        default=default_config.diamond_jobs,
         help="Number of diamond runs to do in parallel",
     )
     parser.add_argument(
@@ -80,7 +80,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--protein-search-tool",
         dest="protein_search_tool",
         choices=["blastx", "diamond"],
-        default=default_params.protein_search_tool,
+        default=default_config.protein_search_tool,
         help="Tool for homology search to identify regulated pathogen proteins",
     )
     parser.add_argument(

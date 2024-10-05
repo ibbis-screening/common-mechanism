@@ -33,10 +33,12 @@ class SearchHandler(ABC):
         database_file: str | os.PathLike,
         input_file: str | os.PathLike,
         out_file: str | os.PathLike,
+        threads: int = 1,
     ):
         self.db_file = os.path.abspath(database_file)
         self.input_file = os.path.abspath(input_file)
         self.out_file = os.path.abspath(out_file)
+        self.threads = threads
 
         self.arguments_dictionary = {}
 

@@ -60,7 +60,13 @@ class DiamondHandler(BlastHandler):
         Find all files matching the pattern nr*.dmnd in DB_PATH -- we have found that it improves
         speed to split the nr database into multiple parts and process the chunks in parallel.
         """
-        self.db_files = glob.glob(f"{self.db_directory}/nr*.dmnd")
+        db_suffix = "nr*.dmnd"
+        self.db_files = glob.glob(f"{self.db_directory}/{db_suffix}")
+        if len(self.db_files) == 0:
+            raise FileNotFoundError(
+                f"Mandatory Diamond database directory {self.db_directory} "
+                f"contains no databases matching the patter: {db_suffix}"
+            )
 
     def run_diamond_search(self, args):
         """Wrapper for run_as_subprocess, used for pooling processes."""
@@ -126,12 +132,6 @@ class DiamondHandler(BlastHandler):
         """
         self.find_db_files()  # Make sure db files are up to date
         n_diamond_dbs = len(self.db_files)
-
-        if n_diamond_dbs == 0:
-            raise FileNotFoundError(
-                f"Mandatory Diamond database directory {self.db_directory} "
-                "contains no databases!"
-            )
 
         self.concurrent_runs, self.threads_per_run = self.determine_runs_and_threads(
             self.max_threads, n_diamond_dbs
@@ -199,9 +199,9 @@ class DiamondHandler(BlastHandler):
 
     def get_version_information(self) -> SearchToolVersion:
         try:
-            db_files = glob.glob(f"{self.db_file}*dmnd")
+            self.find_db_files()
             result = subprocess.run(
-                ["diamond", "dbinfo", "--db", db_files[0]],
+                ["diamond", "dbinfo", "--db", self.db_files[0]],
                 capture_output=True,
                 text=True,
                 check=True,

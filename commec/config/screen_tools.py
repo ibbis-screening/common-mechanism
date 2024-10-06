@@ -18,7 +18,7 @@ from commec.tools.hmmer import HmmerHandler
 
 class ScreenTools:
     """
-    Using a set of `ScreenIoParameters`, set up .
+    Using a set of `ScreenIoParameters`, set up the tools needed to search datbases.
     """
 
     def __init__(self, params: ScreenIOParameters):
@@ -29,13 +29,12 @@ class ScreenTools:
         self.benign_blastn: BlastNHandler = None
         self.benign_cmscan: CmscanHandler = None
 
-        if params.should_do_biorisk_screening:
-            self.biorisk_hmm = HmmerHandler(
-                os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
-                params.query.aa_path,
-                f"{params.output_prefix}.biorisk.hmmscan",
-                threads=params.config.threads,
-            )
+        self.biorisk_hmm = HmmerHandler(
+            os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
+            params.query.aa_path,
+            f"{params.output_prefix}.biorisk.hmmscan",
+            threads=params.config.threads,
+        )
 
         if params.should_do_protein_screening:
             if params.config.protein_search_tool == "blastx":
@@ -72,7 +71,7 @@ class ScreenTools:
         if params.should_do_benign_screening:
             self.benign_hmm = HmmerHandler(
                 os.path.join(params.db_dir, "benign_db/benign.hmm"),
-                input_file=params.query.nt_path,
+                input_file=params.query.aa_path,
                 out_file=f"{params.output_prefix}.benign.hmmscan",
                 threads=params.config.threads,
             )

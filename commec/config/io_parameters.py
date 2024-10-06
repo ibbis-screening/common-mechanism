@@ -134,10 +134,6 @@ class ScreenIOParameters:
                         os.remove(file)
 
     @property
-    def should_do_biorisk_screening(self) -> bool:
-        return True
-
-    @property
     def should_do_protein_screening(self) -> bool:
         return not self.config.in_fast_mode
 

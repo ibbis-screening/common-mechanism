@@ -3,19 +3,41 @@
 """
 Run Common Mechanism screening on an input FASTA.
 
-screen.py
-        -d DATBASE_FOLDER
-        INPUT_FASTA
-    Optional parameters:
-        -t THREADS (default: 1)
-        -o OUTPUT (output prefix, default: input name)
-        -p SEARCH_TOOL (default: blastx) 
-        -f = use fast mode (default: false)
-        -n = skip nucleotide search if no protein hits are found in a region (default: false)
-        -c = clean up intermediate files (default: false)
+Screening involves (up to) four steps:
 
-Command-line usage:
-    screen.py -d /path/to/databases input.fasta -t 1 -o out_prefix 
+  1. Biorisk scan:      HMM-based scan for matches to a custom database of biorisk sequences.
+  2. Protein search:    protein homology search for best matches to regulated pathogens.
+  3. Nucleotide search: nucleotide homology search for best matches to regulated pathogens.
+  4. Benign scan:       three different scans (against conserved proteins, housekeeping RNAs, and
+                        synbio parts) to see if hits identified in homology search can be cleared. 
+
+In "fast" mode, only the biorisk scan is run. By default, all four steps are run, but the nucleotide
+search is only run for regions that do not have any protein hits with a high sequence identity. The
+benign search is not permitted to clear biorisk scan hits, only protein or nucleotide hits. Whether
+or not a homology scan hit is from a regulated pathogen is determined by referencing the taxonomy
+ids assoicated with each accession that returns a hit, then looking at their lineages.
+
+positional arguments:
+  fasta_file            FASTA file to screen
+
+options:
+  -h, --help            show this help message and exit
+  -d DATABASE_DIR, --databases DATABASE_DIR
+                        Path to directory containing reference databases (e.g. taxonomy, protein,
+                        HMM)
+  -o OUTPUT_PREFIX, --output OUTPUT_PREFIX
+                        Prefix for output files. Can be a string (interpreted as output basename) or
+                        a directory (in which case the output file names will be determined from the
+                        input FASTA)
+  -t THREADS, --threads THREADS
+                        Number of CPU threads to use. Passed to search tools.
+  -p {blastx,diamond}, --protein-search-tool {blastx,diamond}
+                        Tool for homology search to identify regulated pathogen proteins
+  -j DIAMOND_JOBS, --diamond-jobs DIAMOND_JOBS
+                        Diamond-only: number of runs to do in parallel
+  -f, --fast            Run in fast mode and skip homology search
+  -n, --skip-nt         Skip nucleotide search, even for regions where no protein hits were found
+  -c, --cleanup         Delete intermediate files
 
 """
 import argparse
@@ -51,13 +73,14 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         dest="database_dir",
         type=directory_arg,
         required=True,
-        help="Path to databases directory",
+        help="Path to directory containing reference databases (e.g. taxonomy, protein, HMM)",
     )
     parser.add_argument(
         "-o",
         "--output",
         dest="output_prefix",
-        help="Output prefix (can be string or directory)",
+        help="Prefix for output files. Can be a string (interpreted as output basename) or a" +
+         " directory (in which case the output file names will be determined from the input FASTA)",
     )
     parser.add_argument(
         "-t",
@@ -68,20 +91,20 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="Number of CPU threads to use. Passed to search tools.",
     )
     parser.add_argument(
-        "-j",
-        "--diamond-jobs",
-        dest="diamond_jobs",
-        type=int,
-        default=default_config.diamond_jobs,
-        help="Number of diamond runs to do in parallel",
-    )
-    parser.add_argument(
         "-p",
         "--protein-search-tool",
         dest="protein_search_tool",
         choices=["blastx", "diamond"],
         default=default_config.protein_search_tool,
         help="Tool for homology search to identify regulated pathogen proteins",
+    )
+    parser.add_argument(
+        "-j",
+        "--diamond-jobs",
+        dest="diamond_jobs",
+        type=int,
+        default=default_config.diamond_jobs,
+        help="Diamond-only: number of runs to do in parallel",
     )
     parser.add_argument(
         "-f",
@@ -95,7 +118,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--skip-nt",
         dest="skip_nt_search",
         action="store_true",
-        help="Skip nucleotide search if no protein hits are found in a region",
+        help="Skip nucleotide search, even for regions where no protein hits were found",
     )
     parser.add_argument(
         "-c",

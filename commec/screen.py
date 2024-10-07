@@ -177,15 +177,12 @@ class Screen:
         self.setup(args)
 
         # Biorisk screen
-        if self.params.should_do_biorisk_screening:
-            logging.info(">> STEP 1: Checking for biorisk genes...")
-            self.screen_biorisks()
-            logging.info(
-                " STEP 1 completed at %s",
-                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            )
-        else:
-            logging.info(" SKIPPING STEP 1: Biorisk search")
+        logging.info(">> STEP 1: Checking for biorisk genes...")
+        self.screen_biorisks()
+        logging.info(
+            " STEP 1 completed at %s",
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
 
         # Taxonomy screen (Protein)
         if self.params.should_do_protein_screening:

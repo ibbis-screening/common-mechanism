@@ -359,7 +359,7 @@ class Screen:
             )
 
         logging.debug("\t...checking benign scan results")
-        check_for_benign(sample_name, coords, benign_desc, self.params.output_json)
+        check_for_benign(sample_name, coords, benign_desc)
 
 def run(args : argparse.ArgumentParser):
     """

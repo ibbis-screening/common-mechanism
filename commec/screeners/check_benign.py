@@ -17,10 +17,34 @@ import pandas as pd
 
 from commec.tools.blastn import BlastNHandler # For has_hits.
 from commec.tools.blast_tools import tophits, readblast, trimblast
-from commec.tools.hmmer import readhmmer
+from commec.tools.hmmer import readhmmer, HmmerHandler
 from commec.tools.cmscan import readcmscan
 
-def check_for_benign(query, coords, benign_desc, output_json : str):
+from commec.config.json_io import (
+    ScreenData,
+    HitDescription,
+    CommecScreenStep,
+    CommecRecomendation,
+    CommecScreenStepRecommendation,
+    MatchRange,
+    LifeDomainFlag,
+    RegulationFlag,
+    guess_domain,
+    compare
+)
+
+def update_benign_data_from_database(search_handle : HmmerHandler, data : ScreenData):
+
+    if not search_handle.check_output():
+        logging.info("\t...no housekeeping protein data\n")
+    if not search_handle.has_hits(search_handle.out_file):
+        logging.info("\t...no housekeeping protein hits\n")
+    else:
+        hmmer = readhmmer(search_handle.out_file)
+        hmmer = hmmer[hmmer["E-value"] < 1e-20]
+        # print(hmmer)
+
+def check_for_benign(query, coords, benign_desc):
     '''
     Checks a query against taxonomy 
     '''

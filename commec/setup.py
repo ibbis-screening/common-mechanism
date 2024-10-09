@@ -5,10 +5,11 @@ Module for CLI setup of Commec, such that required
 databases are downloaded in a desired database directory.
 """
 import sys
-#import os
+import os
 import argparse
 import subprocess
 import urllib.request
+import zipfile
 
 DESCRIPTION = "Helper script for downloading the databases required for running the Common Mechanism Screen"
 
@@ -22,9 +23,16 @@ class CliSetup:
     def __init__(self, automate : bool = False):
         self.ask : bool = not automate
         self.database_directory : str = "./commec-dbs/"
+
         self.download_biorisk : bool = True
         self.biorisk_download_url : str = "https://f005.backblazeb2.com/file/common-mechanism-dbs/common-mechanism-dbs.zip"
+        
         self.download_blastnr : bool = False
+        self.download_blastnt : bool = False
+
+        self.download_taxonomy : bool = True
+        self.taxonomy_download_url : str = "https://f005.backblazeb2.com/file/common-mechanism-dbs/common-mechanism-dbs.zip"
+
         if automate:
             self.do_setup()
         else:
@@ -158,8 +166,10 @@ class CliSetup:
         call to perform the required actions. 
         """
 
+        subprocess.run(["mkdir","-p",self.database_directory], check = True)
+
         if self.download_biorisk:
-            command = ["wget", self.biorisk_download_url]
+            command = ["wget","-c","-P",self.database_directory, self.biorisk_download_url]
             print(
                 "Downloading Biorisk database from \n%s", 
                 self.biorisk_download_url
@@ -173,13 +183,26 @@ class CliSetup:
                     result.stderr,
                 )
 
+            # Parse the URL to extract the path
+            parsed_url = urllib.parse.urlparse(self.biorisk_download_url)
+            # Extract the filename and extension from the URL path
+            filename_zipped = os.path.join(self.database_directory,os.path.basename(parsed_url.path))
+
+            print("Extracting Biorisk databases...")
+            # Open the zip file and extract its contents
+            with zipfile.ZipFile(filename_zipped, 'r') as zip_ref:
+                zip_ref.extractall(self.database_directory)
+
+            subprocess.run(["rm","-rf", filename_zipped], check = True)
+    
+
         if self.download_blastnr:
             print(
                 "Downloading Biorisk database from \n%s", 
                 self.biorisk_download_url
             )
 
-        print("The common mechanism setup has completed!"
+        print("\n\nThe common mechanism setup has completed!"
               " You can find all downloaded databases in %s",
                 self.database_directory,
                 "\nHave a bio-safe and secure day!")

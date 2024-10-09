@@ -118,8 +118,9 @@ class CliSetup:
         
     def setup_overall_directory(self):
         """
-        Get user inputs to ensure the
+        Get user inputs for global directory to store databases.
         """
+        self.print_step(1)
         user_input : str = ""
         print("\nPlease provide the absolute or relative filepath",
               "to where you would like the Commec databases to be located...",
@@ -143,7 +144,7 @@ class CliSetup:
                 print(user_input, " is not a valid directory structure!")
                 continue
 
-            print("Using database directory: %s", self.database_directory)
+            print("Using database directory: ", self.database_directory)
             self.get_biorisk_url()
             return
 
@@ -151,9 +152,10 @@ class CliSetup:
         """
         Get the URL where the BIORISK database is located.
         """
+        self.print_step(2)
         user_input : str = ""
         print("Please provide the URL to download the BIORISK database.",
-              "\nPress <Enter> to use default: ",
+              "\nPress <Enter> to use existing: ",
               self.biorisk_download_url)
         while(True):
             user_input : str = self.user_input()
@@ -172,15 +174,15 @@ class CliSetup:
                 print(self.biorisk_download_url, " is not a valid URL! (or you are not connected to the internet)")
                 continue
             
-            print("Using Biorisk URL: %s", self.database_directory)
+            print("Using Biorisk URL:", self.biorisk_download_url)
             self.decide_blastnr()
             return
     
     def decide_blastnr(self):
         """ Decide whether a Nucleotide database needs to be downloaded. """
-        print("Do you want to download a databases for protein screening? ( ~)",
-              "\n\"y\" or \"n\", for yes or no.",
-              "\ntype \"options\" to fetch the list of options.")
+        self.print_step(3,1)
+        print("Do you want to download a databases for protein screening?",
+              "\n\"y\" or \"n\", for yes or no.")
         while(True):
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
@@ -188,9 +190,6 @@ class CliSetup:
             if user_input == "back":
                 self.get_biorisk_url()
                 return
-            if user_input == "options":
-                self.print_database_options()
-                continue
             if user_input == "y" or user_input == "yes":
                 self.download_blastnr = True
                 self.get_blastnr()
@@ -203,8 +202,11 @@ class CliSetup:
 
     def get_blastnr(self):
         """ Decide what Protein database needs to be downloaded. """
-        print("Which database should be used for Taxonomic Protein Screening?",
-              "\ntype \"options\" to fetch the list of options.")
+        self.print_step(3,2)
+        print("Which database should be used for taxonomy protein screening?",
+              "\ntype \"options\" to fetch the list of options.",
+              "\nPress <Enter> to use existing: ",
+              self.blastnr_database)
         while(True):
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
@@ -215,18 +217,22 @@ class CliSetup:
             if user_input == "options":
                 self.print_database_options()
                 continue
+            if len(user_input) == 0:
+                print("Using NR database:", self.blastnr_database)
+                self.decide_blastnt()
+                return
             if user_input in self.protein_database_names:
                 self.blastnr_database = user_input
+                print("Using NR database:", self.blastnr_database)
                 self.decide_blastnt()
                 return
             print("Unrecognised or invalid input (", user_input, ")")
 
     def decide_blastnt(self):
         """ Decide what Protein database needs to be downloaded. """
-        print("Do you want to download a databases? ( ~)",
-              "\n\"y\" or \"n\", for yes or no.",
-              "\ntype \"options\" to fetch the list of options.")
-
+        self.print_step(4,1)
+        print("Do you want to download a databases for nucleotide screening?",
+              "\n\"y\" or \"n\", for yes or no.")
         while(True):
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
@@ -234,23 +240,23 @@ class CliSetup:
             if user_input == "back":
                 self.get_biorisk_url()
                 return
-            if user_input == "options":
-                self.print_database_options()
-                continue
             if user_input == "y" or user_input == "yes":
-                self.download_blastnr = True
-                self.get_blastnt_url()
+                self.download_blastnt = True
+                self.get_blastnt()
                 return
             if user_input == "n" or user_input == "no":
-                self.download_blastnr = False
+                self.download_blastnt = False
                 self.decide_taxonomy()
                 return
             print("Unrecognised input (", user_input, ")")
 
     def get_blastnt(self):
         """ Decide what Nucleotide database needs to be downloaded. """
-        print("Which database should be used for Taxonomic Nucleotide Screening?",
-              "\ntype \"options\" to fetch the list of options.")
+        self.print_step(4,2)
+        print("Which database should be used for taxonomy nucleotide screening?",
+              "\ntype \"options\" to fetch the list of options.",
+              "\nPress <Enter> to use existing: ",
+              self.blastnt_database)
         while(True):
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
@@ -261,14 +267,20 @@ class CliSetup:
             if user_input == "options":
                 self.print_database_options()
                 continue
+            if len(user_input) == 0:
+                print("Using NT database:", self.blastnt_database)
+                self.decide_taxonomy()
+                return
             if user_input in self.nucleotide_database_names:
                 self.blastnt_database = user_input
+                print("Using NT database:", self.blastnt_database)
                 self.decide_taxonomy()
                 return
             print("Unrecognised or invalid input (", user_input, ")")
 
     def decide_taxonomy(self):
         """ Decide whether taxonomy dbs need to be downloaded. """
+        self.print_step(5,1)
         print("Do you want to download the Taxonomy databases? ( less than 1 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while(True):
@@ -280,7 +292,7 @@ class CliSetup:
                 return
             if user_input == "y" or user_input == "yes":
                 self.download_taxonomy = True
-                self.get_taxonomy_url()
+                self.confirm()
                 return
             if user_input == "n" or user_input == "no":
                 self.download_taxonomy = False
@@ -290,11 +302,13 @@ class CliSetup:
 
     def get_taxonomy_url(self):
         """
+        DEPRECATED
         Get the URL where the Taxonomy database is located.
         """
+        self.print_step(5,2)
         user_input : str = ""
         print("Please provide the URL to download the BIORISK database.",
-              "\nPress <Enter>, or type \"default\" to use default: ",
+              "\nPress <Enter>, to use existing: ",
               self.taxonomy_download_url)
         while(True):
             user_input : str = self.user_input()
@@ -319,6 +333,7 @@ class CliSetup:
         
     def confirm(self):
         """ Simply allows the user one last chance to confirm their settings."""
+        self.print_step(6)
         print("The following settings will be used to setup Commec:",
               "\n -> Database Directory: ", self.database_directory,
               "\n -> BIORISK db URL: ", self.biorisk_download_url)
@@ -327,7 +342,7 @@ class CliSetup:
         if (self.download_blastnt):
             print(" -> NUCLEOTIDE NR Database: ", self.blastnr_database)
         if(self.download_taxonomy):
-            print(" -> Taxonomy db URL: ", self.taxonomy_download_url)
+            print(" -> Taxonomy database will be downloaed ")
 
         print("\n\nPress <Enter> to confirm these settings, ",
               "\ntype \"back\" to alter previous settings, ",
@@ -352,6 +367,7 @@ class CliSetup:
         Once CliSetup state has been finalized,
         call to perform the required actions. 
         """
+        self.print_step(7)
 
         os.makedirs(self.database_directory, exist_ok=True)
 
@@ -379,7 +395,8 @@ class CliSetup:
             with zipfile.ZipFile(filename_zipped, 'r') as zip_ref:
                 zip_ref.extractall(self.database_directory)
 
-            subprocess.run(["rm","-rf", filename_zipped], check = True)
+            #subprocess.run(["rm","-rf", filename_zipped], check = True)
+            os.remove(filename_zipped)
 
         if self.download_blastnr:
             print(
@@ -387,8 +404,9 @@ class CliSetup:
                 self.blastnr_database,
                 "Blast database for Protein Screening from NCBI \n"
             )
-            nr_directory = os.path.join(self.database_directory,"/nr_blast/")
+            nr_directory = os.path.join(self.database_directory,"nr_blast")
             os.makedirs(nr_directory, exist_ok=True)
+            print(nr_directory)
             command = ["update_blastdb.pl", "--decompress", self.blastnr_database]
             subprocess.run(command, cwd=nr_directory, check=True)
 
@@ -398,33 +416,36 @@ class CliSetup:
                 self.blastnt_database,
                 "Blast database for Nucleotide Screening from NCBI \n"
             )
-            nr_directory = os.path.join(self.database_directory,"/nt_blast/")
-            os.makedirs(nr_directory, exist_ok=True)
+            nt_directory = os.path.join(self.database_directory,"nt_blast")
+            os.makedirs(nt_directory, exist_ok=True)
+            print(nr_directory)
             command = ["update_blastdb.pl", "--decompress", self.blastnt_database]
-            subprocess.run(command, cwd=nr_directory, check=True)
+            subprocess.run(command, cwd=nt_directory, check=True)
 
         if self.download_taxonomy:
-            print(
-                "Downloading Taxonomy databases from \n", 
-                self.taxonomy_download_url
-            )
-            tax_directory = os.path.join(self.database_directory,"/taxonomy/")
+            print("Downloading Taxonomy databases from NCBI \n")
+            tax_directory = os.path.join(self.database_directory,"taxonomy")
             os.makedirs(tax_directory, exist_ok=True)
-            command = ["wget","-c","-P",tax_directory, self.taxonomy_download_url]
-            result = subprocess.run(command, check = True)
-            if result.returncode != 0:
-                command_str = " ".join(command)
-                print(
-                    "\t ERROR: Command",
-                    command_str,
-                    "failed with error",
-                    result.stderr,
-                )
+            print(tax_directory)
+            command = ["update_blastdb.pl", "--decompress", "taxdb"]
+            subprocess.run(command, cwd=tax_directory, check=True)
+            #command = ["wget","-c","-P",tax_directory, self.taxonomy_download_url]
+            #result = subprocess.run(command, check = True)
+            #if result.returncode != 0:
+                #command_str = " ".join(command)
+                #print(
+                #    "\t ERROR: Command",
+                #    command_str,
+                #    "failed with error",
+                #    result.stderr,
+                #)
 
             # Parse the URL to extract the path
-            parsed_url = urllib.parse.urlparse(self.taxonomy_download_url)
-            taxonomy_filename_zipped = os.path.join(tax_directory,os.path.basename(parsed_url.path))
-            
+            #parsed_url = urllib.parse.urlparse(self.taxonomy_download_url)
+            #taxonomy_filename_zipped = os.path.join(tax_directory,os.path.basename(parsed_url.path))
+
+            #subprocess.run(["tar","-zxvf", taxonomy_filename_zipped], check=False)
+            #os.remove(taxonomy_filename_zipped)
 
         print("\n\nThe common mechanism setup has completed!"
                 "\nYou can find all downloaded databases in",
@@ -444,13 +465,23 @@ class CliSetup:
         except urllib.error.URLError as e:
             # Handle URL errors (like unreachable server, etc.)
             print(f"URL Error: {e.reason}")
+        except ValueError as e:
+            print("URL Value Error. It is likely the URL input is not a recognised URL format.")
         return False
+    
+    def print_step(self, i : int = 0, ii : int = -1):
+        """ helper for quick step delinearation. """
+        if ii > 0:
+            print( "\n*----------------* Step ", i, ".", ii, "*----------------*")
+            return
+        print( "\n*----------------* Step ", i, "   *----------------*")
     
     def print_database_options(self):
         print("Fetching list of possible databases...")
-        subprocess.run(["update_blastdb.pl --showall pretty"])
+        subprocess.run(["update_blastdb.pl", "--showall","pretty"], check=True)
 
-    def user_input(self, prompt : str ">>>"):
+    def user_input(self, prompt : str = ">>> "):
+        """ Get input from the user, and do some basic string sanitation. """
         return input(prompt).strip().lower()
 
     def stop(self):

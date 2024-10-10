@@ -14,7 +14,7 @@ dependencies:
   - bedtools
   - blast
   - emboss
-  - diamond
+  - diamond>=2.1
   - hmmer
   - infernal
   - parallel

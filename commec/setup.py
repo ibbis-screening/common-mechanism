@@ -169,6 +169,28 @@ class CliSetup:
             self.get_biorisk_url()
             return
 
+    def decide_commec_bioriskbenign(self):
+        """ Decide whether the Commec Benign/risks database needs to be downloaded. """
+        self.print_step(3,1)
+        print("Do you want to download the mandatory Commec Biorisk and Benign databases?",
+              "\n\"y\" or \"n\", for yes or no.")
+        while True:
+            user_input : str = input(">>>").strip().lower()
+            if user_input == "exit":
+                self.stop()
+            if user_input == "back":
+                self.setup_overall_directory()
+                return
+            if user_input == "y" or user_input == "yes":
+                self.download_biorisk = True
+                self.get_biorisk_url()
+                return
+            if user_input == "n" or user_input == "no":
+                self.download_biorisk = False
+                self.decide_blastnt()
+                return
+            print("Unrecognised input (", user_input, ")")
+
     def get_biorisk_url(self):
         """
         Get the URL where the Commec Biorisk and Benign databases are located.
@@ -183,7 +205,7 @@ class CliSetup:
             if user_input == "exit":
                 self.stop()
             if user_input == "back":
-                self.setup_overall_directory()
+                self.decide_commec_bioriskbenign()
                 return
             if len(user_input) > 0:
                 self.biorisk_download_url = user_input
@@ -203,7 +225,7 @@ class CliSetup:
     def decide_blastnr(self):
         """ Decide whether a Nucleotide database needs to be downloaded. """
         self.print_step(3,1)
-        print("Do you want to download a databases for protein screening?",
+        print("Do you want to download a database for protein screening?",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()

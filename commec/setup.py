@@ -11,7 +11,8 @@ import subprocess
 import urllib.request
 import zipfile
 
-DESCRIPTION = "Helper script for downloading the databases required for running the Common Mechanism Screen"
+DESCRIPTION = """Helper script for downloading the databases
+ required for running the Common Mechanism Screen"""
 
 class CliSetup:
     """
@@ -109,7 +110,7 @@ class CliSetup:
               "\nand Biosafety Initiative for Science",
               "\n\nThis script will help download the mandatory databases ",
               "\nrequired for using Commec Screen, and requires a stable",
-              "\ninternet connection, and wget.",
+              "\ninternet connection, wget, and update_blastdb.pl.",
               "\n -> You can exit this setup at any time with \"exit\"",
               "\n -> You can return to a previous step with \"back\"\n")
         
@@ -150,11 +151,11 @@ class CliSetup:
 
     def get_biorisk_url(self):
         """
-        Get the URL where the BIORISK database is located.
+        Get the URL where the Commec Biorisk and Benign databases are located.
         """
         self.print_step(2)
         user_input : str = ""
-        print("Please provide the URL to download the BIORISK database.",
+        print("Please provide the URL to download the Commec database.",
               "\nPress <Enter> to use existing: ",
               self.biorisk_download_url)
         while(True):
@@ -174,7 +175,7 @@ class CliSetup:
                 print(self.biorisk_download_url, " is not a valid URL! (or you are not connected to the internet)")
                 continue
             
-            print("Using Biorisk URL:", self.biorisk_download_url)
+            print("Using Commec Biorisk and Benign URL:", self.biorisk_download_url)
             self.decide_blastnr()
             return
     
@@ -279,7 +280,7 @@ class CliSetup:
             print("Unrecognised or invalid input (", user_input, ")")
 
     def decide_taxonomy(self):
-        """ Decide whether taxonomy dbs need to be downloaded. """
+        """ Decide whether taxonomy database need to be downloaded. """
         self.print_step(5,1)
         print("Do you want to download the Taxonomy databases? ( less than 1 GB)",
               "\n\"y\" or \"n\", for yes or no.")
@@ -302,7 +303,7 @@ class CliSetup:
 
     def get_taxonomy_url(self):
         """
-        DEPRECATED
+        DEPRECATED - Easier to get this with less bugs through update_blastdbs.pl
         Get the URL where the Taxonomy database is located.
         """
         self.print_step(5,2)
@@ -336,13 +337,13 @@ class CliSetup:
         self.print_step(6)
         print("The following settings will be used to setup Commec:",
               "\n -> Database Directory: ", self.database_directory,
-              "\n -> BIORISK db URL: ", self.biorisk_download_url)
+              "\n -> Commec Biorisk and Benign URL: ", self.biorisk_download_url)
         if (self.download_blastnr):
             print(" -> PROTEIN NR Database: ", self.blastnr_database)
         if (self.download_blastnt):
-            print(" -> NUCLEOTIDE NR Database: ", self.blastnr_database)
+            print(" -> NUCLEOTIDE NT Database: ", self.blastnr_database)
         if(self.download_taxonomy):
-            print(" -> Taxonomy database will be downloaed ")
+            print(" -> Taxonomy database will be downloaded.")
 
         print("\n\nPress <Enter> to confirm these settings, ",
               "\ntype \"back\" to alter previous settings, ",
@@ -503,8 +504,12 @@ def add_args(parser_obj: argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     return parser_obj
 
+def run(args):
+    """ Run CLI with an parsed argument parser input."""
+    CliSetup(args.automated)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     add_args(parser)
     args = parser.parse_args()
-    CliSetup(args.automated)
+    run(args)

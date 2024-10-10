@@ -126,11 +126,13 @@ class CliSetup:
         dont_proceed = False
         result = subprocess.run(["which", "wget"], check=False)
         if result.returncode != 0:
-            print("Dependency wget could not be found. Check wget is installed in this python environment.")
+            print("Dependency wget could not be found. "
+                  "Check wget is installed in this python environment.")
             dont_proceed = True
         result = subprocess.run(["which", "update_blastdb.pl"], check=False)
         if result.returncode != 0:
-            print("Dependency update_blastdb.pl could not be found. Blast is likely not installed in this python environment.")
+            print("Dependency update_blastdb.pl could not be found. "
+                  "Blast is likely not installed in this python environment.")
             dont_proceed = True
         if dont_proceed:
             print("Error: Required dependency missing!")
@@ -146,7 +148,7 @@ class CliSetup:
               "to where you would like the Commec databases to be located...",
               "\nPress <Enter> to use default: ",
               self.database_directory)
-        while(True):
+        while True:
             user_input : str = self.user_input()
             if user_input == "exit":
                 self.stop()
@@ -177,7 +179,7 @@ class CliSetup:
         print("Please provide the URL to download the Commec database.",
               "\nPress <Enter> to use existing: ",
               self.biorisk_download_url)
-        while(True):
+        while True:
             user_input : str = self.user_input()
             if user_input == "exit":
                 self.stop()
@@ -191,19 +193,20 @@ class CliSetup:
             # input is mkdir compatible.
             print("Checking URL is valid ... ")
             if not self.check_url_exists(self.biorisk_download_url):
-                print(self.biorisk_download_url, " is not a valid URL! (or you are not connected to the internet)")
+                print(self.biorisk_download_url, " is not a valid URL! "
+                      "(or you are not connected to the internet)")
                 continue
-            
+
             print("Using Commec Biorisk and Benign URL:", self.biorisk_download_url)
             self.decide_blastnr()
             return
-    
+
     def decide_blastnr(self):
         """ Decide whether a Nucleotide database needs to be downloaded. """
         self.print_step(3,1)
         print("Do you want to download a databases for protein screening?",
               "\n\"y\" or \"n\", for yes or no.")
-        while(True):
+        while True:
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
                 self.stop()
@@ -227,7 +230,7 @@ class CliSetup:
               "\ntype \"options\" to fetch the list of options.",
               "\nPress <Enter> to use existing: ",
               self.blastnr_database)
-        while(True):
+        while True:
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
                 self.stop()
@@ -277,7 +280,7 @@ class CliSetup:
               "\ntype \"options\" to fetch the list of options.",
               "\nPress <Enter> to use existing: ",
               self.blastnt_database)
-        while(True):
+        while True:
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
                 self.stop()
@@ -303,7 +306,7 @@ class CliSetup:
         self.print_step(5,1)
         print("Do you want to download the Taxonomy databases? ( less than 1 GB)",
               "\n\"y\" or \"n\", for yes or no.")
-        while(True):
+        while True:
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
                 self.stop()
@@ -320,55 +323,24 @@ class CliSetup:
                 return
             print("Unrecognised input (", user_input, ")")
 
-    def get_taxonomy_url(self):
-        """
-        DEPRECATED - Easier to get this with less bugs through update_blastdbs.pl
-        Get the URL where the Taxonomy database is located.
-        """
-        self.print_step(5,2)
-        user_input : str = ""
-        print("Please provide the URL to download the BIORISK database.",
-              "\nPress <Enter>, to use existing: ",
-              self.taxonomy_download_url)
-        while(True):
-            user_input : str = self.user_input()
-            if user_input == "exit":
-                self.stop()
-            if user_input == "back":
-                self.setup_overall_directory()
-                return
-            if len(user_input) > 0:
-                self.taxonomy_download_url = user_input
-
-            # Consider adding some sort of check here, that the user
-            # input is mkdir compatible.
-            print("Checking URL is valid ... ")
-            if not self.check_url_exists(self.taxonomy_download_url):
-                print(self.taxonomy_download_url, " is not a valid URL! (or you are not connected to the internet)")
-                continue
-            
-            print("Using Biorisk URL: %s", self.database_directory)
-            self.confirm()
-            return
-        
     def confirm(self):
         """ Simply allows the user one last chance to confirm their settings."""
         self.print_step(6)
         print("The following settings will be used to setup Commec:",
               "\n -> Database Directory: ", self.database_directory,
               "\n -> Commec Biorisk and Benign URL: ", self.biorisk_download_url)
-        if (self.download_blastnr):
+        if self.download_blastnr:
             print(" -> PROTEIN NR Database: ", self.blastnr_database)
-        if (self.download_blastnt):
+        if self.download_blastnt:
             print(" -> NUCLEOTIDE NT Database: ", self.blastnr_database)
-        if(self.download_taxonomy):
+        if self.download_taxonomy:
             print(" -> Taxonomy database will be downloaded.")
 
         print("\n\nPress <Enter> to confirm these settings, ",
               "\ntype \"back\" to alter previous settings, ",
               "\ntype \"exit\" to abort setup.",
               "\ntype \"restart\" to go back to the beginning.")
-        while(True):
+        while True:
             user_input : str = input("").strip().lower()
             if len(user_input) == 0:
                 return
@@ -392,7 +364,11 @@ class CliSetup:
         os.makedirs(self.database_directory, exist_ok=True)
 
         if self.download_biorisk:
-            command = ["wget","-c","-P",self.database_directory, self.biorisk_download_url]
+            command = [
+                "wget","-c","-P",
+                self.database_directory, 
+                self.biorisk_download_url
+            ]
             print(
                 "Downloading Biorisk database from\n", 
                 self.biorisk_download_url
@@ -408,7 +384,10 @@ class CliSetup:
                 )
             # Parse the URL to extract the path
             parsed_url = urllib.parse.urlparse(self.biorisk_download_url)
-            filename_zipped = os.path.join(self.database_directory,os.path.basename(parsed_url.path))
+            filename_zipped = os.path.join(
+                self.database_directory,
+                os.path.basename(parsed_url.path)
+            )
 
             print("Extracting Biorisk databases...")
             # Open the zip file and extract its contents
@@ -449,23 +428,6 @@ class CliSetup:
             print(tax_directory)
             command = ["update_blastdb.pl", "--decompress", "taxdb"]
             subprocess.run(command, cwd=tax_directory, check=True)
-            #command = ["wget","-c","-P",tax_directory, self.taxonomy_download_url]
-            #result = subprocess.run(command, check = True)
-            #if result.returncode != 0:
-                #command_str = " ".join(command)
-                #print(
-                #    "\t ERROR: Command",
-                #    command_str,
-                #    "failed with error",
-                #    result.stderr,
-                #)
-
-            # Parse the URL to extract the path
-            #parsed_url = urllib.parse.urlparse(self.taxonomy_download_url)
-            #taxonomy_filename_zipped = os.path.join(tax_directory,os.path.basename(parsed_url.path))
-
-            #subprocess.run(["tar","-zxvf", taxonomy_filename_zipped], check=False)
-            #os.remove(taxonomy_filename_zipped)
 
         print("\n\nThe common mechanism setup has completed!"
                 "\nYou can find all downloaded databases in",
@@ -486,7 +448,8 @@ class CliSetup:
             # Handle URL errors (like unreachable server, etc.)
             print(f"URL Error: {e.reason}")
         except ValueError as e:
-            print("URL Value Error. It is likely the URL input is not a recognised URL format.")
+            print("URL Value Error. It is likely the URL input"
+                  " is not a recognised URL format.")
         return False
     
     def print_step(self, i : int = 0, ii : int = -1):
@@ -497,6 +460,10 @@ class CliSetup:
         print( "\n*----------------* Step ", i, "   *----------------*")
     
     def print_database_options(self):
+        """ 
+        Fetches the databases from NCBI that can be downloaded,
+        as well as their sizes, and descriptions. 
+        """
         print("Fetching list of possible databases...")
         subprocess.run(["update_blastdb.pl", "--showall","pretty"], check=True)
 

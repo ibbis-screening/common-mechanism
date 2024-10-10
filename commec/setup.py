@@ -114,8 +114,27 @@ class CliSetup:
               "\n -> You can exit this setup at any time with \"exit\"",
               "\n -> You can return to a previous step with \"back\"\n")
         
+        self.check_requirements()
+
         self.setup_overall_directory()
         self.do_setup()
+
+    def check_requirements(self):
+        """ Checks for wget, and update_blastdb.pl, which should both be present
+        given the conda environment to install and use Commec. """
+        print("Checking for wget, and update_blastdb")
+        dont_proceed = False
+        result = subprocess.run(["which", "wget"], check=False)
+        if result.returncode != 0:
+            print("Dependency wget could not be found. Check wget is installed in this python environment.")
+            dont_proceed = True
+        result = subprocess.run(["which", "update_blastdb.pl"], check=False)
+        if result.returncode != 0:
+            print("Dependency update_blastdb.pl could not be found. Blast is likely not installed in this python environment.")
+            dont_proceed = True
+        if dont_proceed:
+            print("Error: Required dependency missing!")
+            self.stop()
         
     def setup_overall_directory(self):
         """

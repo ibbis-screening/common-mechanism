@@ -42,7 +42,7 @@ class CliSetup:
     """
 
     def __init__(self, automate : bool = False):
-        self.database_directory : str = "./commec-dbs/"
+        self.database_directory : str = "commec-dbs/"
 
         self.download_biorisk : bool = True
         self.default_biorisk_download_url : str = "https://f005.backblazeb2.com/file/common-mechanism-dbs/common-mechanism-dbs.zip"
@@ -126,7 +126,7 @@ class CliSetup:
         result = subprocess.run(["which", "wget"], check=False)
         if result.returncode != 0:
             print("Dependency wget could not be found. "
-                  "Check wget is installed in this python environment.")
+                  "Check wget is installed in this environment.")
             dont_proceed = True
         result = subprocess.run(["which", "update_blastdb.pl"], check=False)
         if result.returncode != 0:
@@ -336,9 +336,9 @@ class CliSetup:
             print(" -> Taxonomy database will be downloaded.")
 
         print("\n\nPress <Enter> to confirm these settings, ",
-              "\ntype \"back\" to alter previous settings, ",
+              "\ntype \"back\" to alter previous setting, ",
               "\ntype \"exit\" to abort setup.",
-              "\ntype \"restart\" to go back to the beginning.")
+              "\ntype \"start\" to alter from the beginning.")
         while True:
             user_input : str = input("").strip().lower()
             if len(user_input) == 0:
@@ -348,7 +348,7 @@ class CliSetup:
             if user_input == "back":
                 self.get_biorisk_url()
                 return
-            if user_input == "restart":
+            if user_input == "start":
                 self.setup_overall_directory()
                 return
             print("Unrecognised input (", user_input, ")")
@@ -389,11 +389,9 @@ class CliSetup:
             )
 
             print("Extracting Biorisk databases...")
-            # Open the zip file and extract its contents
+            # Open the zip file and extract its contents, remove zip file.
             with zipfile.ZipFile(filename_zipped, 'r') as zip_ref:
                 zip_ref.extractall(self.database_directory)
-
-            #subprocess.run(["rm","-rf", filename_zipped], check = True)
             os.remove(filename_zipped)
 
         if self.download_blastnr:

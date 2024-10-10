@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science 
+# Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
 Module for CLI setup of Commec, such that required 
 databases are downloaded in a desired database directory.
@@ -42,13 +42,12 @@ class CliSetup:
     """
 
     def __init__(self, automate : bool = False):
-        self.ask : bool = not automate
         self.database_directory : str = "./commec-dbs/"
 
         self.download_biorisk : bool = True
         self.default_biorisk_download_url : str = "https://f005.backblazeb2.com/file/common-mechanism-dbs/common-mechanism-dbs.zip"
         self.biorisk_download_url : str = self.default_biorisk_download_url
-        
+
         self.download_blastnr : bool = False
         self.blastnr_database : str = "nr"
         self.download_blastnt : bool = False
@@ -64,7 +63,7 @@ class CliSetup:
         # Hard coded, sure, but gives a list of valid dbs to check against.
         # A smarter implementation would take the time to call the --showall function without pretty,
         # and then populate this array with the outputs.
-        # At least this way we can slightly curate out the non-aa and non-nt ones.
+        # At least this way we could also curate out the non-aa and non-nt ones.
         self.protein_database_names = [
             "BLASTDB", "Betacoronavirus", "28S_fungal_sequences", "16S_ribosomal_RNA", 
             "18S_fungal_sequences", "ITS_RefSeq_Fungi", "ITS_eukaryote_sequences", 
@@ -113,7 +112,7 @@ class CliSetup:
               "\ninternet connection, wget, and update_blastdb.pl.",
               "\n -> You can exit this setup at any time with \"exit\"",
               "\n -> You can return to a previous step with \"back\"\n")
-        
+
         self.check_requirements()
 
         self.setup_overall_directory()
@@ -137,7 +136,7 @@ class CliSetup:
         if dont_proceed:
             print("Error: Required dependency missing!")
             self.stop()
-        
+
     def setup_overall_directory(self):
         """
         Get user inputs for global directory to store databases.
@@ -256,7 +255,7 @@ class CliSetup:
         self.print_step(4,1)
         print("Do you want to download a databases for nucleotide screening?",
               "\n\"y\" or \"n\", for yes or no.")
-        while(True):
+        while True:
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
                 self.stop()
@@ -366,7 +365,7 @@ class CliSetup:
         if self.download_biorisk:
             command = [
                 "wget","-c","-P",
-                self.database_directory, 
+                self.database_directory,
                 self.biorisk_download_url
             ]
             print(
@@ -451,14 +450,14 @@ class CliSetup:
             print("URL Value Error. It is likely the URL input"
                   " is not a recognised URL format.")
         return False
-    
+
     def print_step(self, i : int = 0, ii : int = -1):
         """ helper for quick step delinearation. """
         if ii > 0:
             print( "\n*----------------* Step ", i, ".", ii, "*----------------*")
             return
         print( "\n*----------------* Step ", i, "   *----------------*")
-    
+
     def print_database_options(self):
         """ 
         Fetches the databases from NCBI that can be downloaded,
@@ -490,9 +489,9 @@ def add_args(parser_obj: argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     return parser_obj
 
-def run(args):
+def run(arguments):
     """ Run CLI with an parsed argument parser input."""
-    CliSetup(args.automated)
+    CliSetup(arguments.automated)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=DESCRIPTION)

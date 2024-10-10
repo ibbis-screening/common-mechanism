@@ -90,14 +90,15 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
 
-    # Checks that the Lineage information is present by attempting to parse it.
+    # Checks that the Lineage information is present, by parsing it as a string as expected.
     try:
-        a = t["FullLineage"].str.split(";")[0]
-        b = t["FullLineageTaxIDs"].str.split(";")[0]
-        c = t["FullLineageRanks"].str.split(";")[0]
+        for required_lineage_column_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
+            assert t[required_lineage_column_name].str
     except AttributeError:
-        logging.error(
-            "The Blast database used has not returned any Lineage information!"
+        logging.info(
+            "ERROR: The Blast database used has not returned any Lineage information! "
+            "The returned Blast database is unchanged, and the following results "
+            "are invalid."
         )
         return blast
 

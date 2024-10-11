@@ -57,8 +57,8 @@ class CliSetup:
         self.download_example_blastnt : bool = False
 
         self.download_taxonomy : bool = False
-        self.default_taxonomy_download_url : str = "ftp\://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
-        self.taxonomy_download_url : str = self.default_taxonomy_download_url
+        #self.default_taxonomy_download_url : str = "ftp\://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
+        #self.taxonomy_download_url : str = self.default_taxonomy_download_url
 
         # Hard coded, sure, but gives a list of valid dbs to check against.
         # A smarter implementation would take the time to call the --showall function without pretty,
@@ -97,16 +97,23 @@ class CliSetup:
         """
         Starts the user interrogation process.
         """
-        print("""                       Welcome to
- ██████╗ ██████╗ ███╗   ███╗███╗   ███╗███████╗ ██████╗
-██╔════╝██╔═══██╗████╗ ████║████╗ ████║██╔════╝██╔════╝
-██║     ██║   ██║██╔████╔██║██╔████╔██║█████╗  ██║     
-██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██╔══╝  ██║     
-╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║███████╗╚██████╗
- ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝""")
+        print("""\n                       Welcome to\n
+ ██████╗ ██████╗ ███╗   ███╗███╗   ███╗███████╗ ██████╗ \033[38;5;202m         ▄▄               \033[0m
+██╔════╝██╔═══██╗████╗ ████║████╗ ████║██╔════╝██╔════╝ \033[38;5;202m       ▄███▌              \033[0m
+██║     ██║   ██║██╔████╔██║██╔████╔██║█████╗  ██║      \033[38;5;202m      ▐█████              \033[0m
+██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██╔══╝  ██║      \033[38;5;202m     ▐██████▌             \033[0m
+╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║███████╗╚██████╗ \033[38;5;202m     ███████▌             \033[0m
+ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝ \033[38;5;202m    ▐███████▌             \033[0m
+\033[48;5;17m█ █████▄ █████▄ █ ▄█▀█▄                                 \033[38;5;202m     ███████   ▄█▄      \033[0m
+\033[48;5;17m█ █    █ █    █ █ █   ▀                                 \033[38;5;202m      █████▌  ▄███▄▄     \033[0m  
+\033[48;5;17m█ █████▄ █████▄ █ ▀███▄                                 \033[38;5;202m      ▐█████▄██▀    ▀▄    \033[0m   
+\033[48;5;17m█ █    █ █    █ █ ▄   █                                 \033[38;5;202m      ▐████████       ▌  \033[0m
+\033[48;5;17m█ █████▀ █████▀ █ ▀█▄█▀                                 \033[38;5;202m      ████████▀         \033[0m
+                                                        \033[38;5;202m   ▄▄██████▀▀             \033[0m
+                                                        \033[38;5;202m ▀▀                       \033[0m""")
         print("                 The Common Mechanism!",
-              "\n\nCopyright © 2021-2024 International Biosecurity",
-              "\nand Biosafety Initiative for Science",
+              "\n\nInternational Biosecurity and Biosafety Initiative for Science",
+              "\nCopyright © 2021-2024 ",
               "\n\nThis script will help download the mandatory databases ",
               "\nrequired for using Commec Screen, and requires a stable",
               "\ninternet connection, wget, and update_blastdb.pl.",
@@ -166,13 +173,13 @@ class CliSetup:
                 continue
 
             print("Using database directory: ", self.database_directory)
-            self.get_biorisk_url()
+            self.decide_commec_bioriskbenign()
             return
 
     def decide_commec_bioriskbenign(self):
         """ Decide whether the Commec Benign/risks database needs to be downloaded. """
-        self.print_step(3,1)
-        print("Do you want to download the mandatory Commec Biorisk and Benign databases?",
+        self.print_step(2)
+        print("Do you want to download the mandatory Commec Biorisk and Benign databases? (~1.2 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
@@ -195,7 +202,7 @@ class CliSetup:
         """
         Get the URL where the Commec Biorisk and Benign databases are located.
         """
-        self.print_step(2)
+        self.print_step(2,1)
         user_input : str = ""
         print("Please provide the URL to download the Commec database.",
               "\nPress <Enter> to use existing: ",
@@ -223,9 +230,9 @@ class CliSetup:
             return
 
     def decide_blastnr(self):
-        """ Decide whether a Nucleotide database needs to be downloaded. """
-        self.print_step(3,1)
-        print("Do you want to download a database for protein screening?",
+        """ Decide whether a Protein database needs to be downloaded. """
+        self.print_step(3)
+        print("Do you want to download the protein NR database for protein screening? (~530 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
@@ -236,7 +243,7 @@ class CliSetup:
                 return
             if user_input == "y" or user_input == "yes":
                 self.download_blastnr = True
-                self.get_blastnr()
+                self.decide_blastnt()
                 return
             if user_input == "n" or user_input == "no":
                 self.download_blastnr = False
@@ -273,20 +280,20 @@ class CliSetup:
             print("Unrecognised or invalid input (", user_input, ")")
 
     def decide_blastnt(self):
-        """ Decide what Protein database needs to be downloaded. """
-        self.print_step(4,1)
-        print("Do you want to download a databases for nucleotide screening?",
+        """ Decide what Nucleotide database needs to be downloaded. """
+        self.print_step(4)
+        print("Do you want to download the Nucleotide NT databases for non-coding region nucleotide screening? (~580 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
             if user_input == "exit":
                 self.stop()
             if user_input == "back":
-                self.get_biorisk_url()
+                self.decide_blastnr()
                 return
             if user_input == "y" or user_input == "yes":
                 self.download_blastnt = True
-                self.get_blastnt()
+                self.decide_taxonomy()
                 return
             if user_input == "n" or user_input == "no":
                 self.download_blastnt = False
@@ -324,8 +331,8 @@ class CliSetup:
 
     def decide_taxonomy(self):
         """ Decide whether taxonomy database need to be downloaded. """
-        self.print_step(5,1)
-        print("Do you want to download the Taxonomy databases? ( less than 1 GB)",
+        self.print_step(5)
+        print("Do you want to download the Taxonomy databases? ( less than ~500 MB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
@@ -348,12 +355,13 @@ class CliSetup:
         """ Simply allows the user one last chance to confirm their settings."""
         self.print_step(6)
         print("The following settings will be used to setup Commec:",
-              "\n -> Database Directory: ", self.database_directory,
-              "\n -> Commec Biorisk and Benign URL: ", self.biorisk_download_url)
+              "\n -> Database Directory: ", self.database_directory)
+        if self.download_biorisk:
+            print(" -> Commec Biorisk and Benign databases will be downloaded,\n    from URL: ", self.biorisk_download_url)
         if self.download_blastnr:
-            print(" -> PROTEIN NR Database: ", self.blastnr_database)
+            print(" -> Protein NR database will be downloaded.")
         if self.download_blastnt:
-            print(" -> NUCLEOTIDE NT Database: ", self.blastnr_database)
+            print(" -> Nucleotide NT database will be downloaded.")
         if self.download_taxonomy:
             print(" -> Taxonomy database will be downloaded.")
 
@@ -368,7 +376,7 @@ class CliSetup:
             if user_input == "exit":
                 self.stop()
             if user_input == "back":
-                self.get_biorisk_url()
+                self.decide_taxonomy()
                 return
             if user_input == "start":
                 self.setup_overall_directory()

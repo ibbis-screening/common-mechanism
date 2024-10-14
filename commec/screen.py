@@ -60,10 +60,8 @@ from commec.tools.fetch_nc_bits import fetch_noncoding_regions
 
 from commec.config.json_io import (
     ScreenData,
-    CommecRecomendation,
     CommecScreenStep,
     QueryData,
-    get_screen_data_from_json,
     encode_screen_data_to_json
 )
 

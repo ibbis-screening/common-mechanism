@@ -53,6 +53,11 @@ from commec.utils.file_utils import file_arg, directory_arg
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
 from commec.config.screen_tools import ScreenTools
 
+from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_from_database
+from commec.screeners.check_benign import check_for_benign
+from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_taxonomic_data_from_database
+from commec.tools.fetch_nc_bits import fetch_noncoding_regions
+
 from commec.config.json_io import (
     ScreenData,
     CommecRecomendation,
@@ -61,15 +66,6 @@ from commec.config.json_io import (
     get_screen_data_from_json,
     encode_screen_data_to_json
 )
-
-from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_from_database
-from commec.screeners.check_benign import check_for_benign
-from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_taxonomic_data_from_database
-from commec.tools.fetch_nc_bits import fetch_noncoding_regions
-
-from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
-from commec.config.screen_tools import ScreenTools
-
 
 DESCRIPTION = "Run Common Mechanism screening on an input FASTA."
 

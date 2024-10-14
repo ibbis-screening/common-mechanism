@@ -25,14 +25,10 @@ import os
 import re
 import pandas as pd
 from commec.utils.file_utils import directory_arg
-<<<<<<< HEAD
-=======
 
 DESCRIPTION = (
     "Parse all .screen files in a directory and create two CSVs file of flags raised"
 )
->>>>>>> input-manager-refactor
-
 
 def add_args(parser):
     """

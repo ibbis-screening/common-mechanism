@@ -39,7 +39,7 @@ class ScreenTools:
         if params.should_do_protein_screening:
             if params.config.protein_search_tool == "blastx":
                 self.regulated_protein = BlastXHandler(
-                    os.path.join(params.db_dir, "nr_blast/nr"),
+                    os.path.join(params.db_dir, "nr_igem_examples/nr_igem_examples"),
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.blastx",
                     threads=params.config.threads,
@@ -62,7 +62,7 @@ class ScreenTools:
 
         if params.should_do_nucleotide_screening:
             self.regulated_nt = BlastNHandler(
-                os.path.join(params.db_dir, "nt_blast/nt"),
+                os.path.join(params.db_dir, "nt_igem_examples/nt_igem_examples"),
                 input_file=f"{params.output_prefix}.noncoding.fasta",
                 out_file=f"{params.output_prefix}.nt.blastn",
                 threads=params.config.threads,

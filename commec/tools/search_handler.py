@@ -14,10 +14,9 @@ import logging
 class SearchToolVersion:
     """Container class for outputting version related information from a database."""
 
-    tool_version: str = "x.x.x"
-    database_version: str = "x.x.x"
-    version_date: str = "Null"
-    additional_comment: str = ""
+    tool_info: str = "x.x.x"
+    database_info: str = "x.x.x"
+
 
 class DatabaseValidationError(Exception):
     """Custom exception for database validation errors."""
@@ -33,16 +32,27 @@ class SearchHandler(ABC):
         database_file: str | os.PathLike,
         input_file: str | os.PathLike,
         out_file: str | os.PathLike,
+        threads: int = 1,
     ):
         self.db_file = os.path.abspath(database_file)
         self.input_file = os.path.abspath(input_file)
         self.out_file = os.path.abspath(out_file)
+        self.threads = threads
 
-        self.db_directory = os.path.dirname(self.db_file)
-        self.temp_log_file = f"{self.out_file}.log.tmp"
         self.arguments_dictionary = {}
 
         self._validate_db()
+        self.version_info = self.get_version_information()
+
+    @property
+    def db_directory(self):
+        """Directory where databases to be searched are located."""
+        return os.path.dirname(self.db_file)
+
+    @property
+    def temp_log_file(self):
+        """Temporary log file used for this search. Based on outfile name."""
+        return f"{self.out_file}.log.tmp"
 
     @abstractmethod
     def search(self):
@@ -97,23 +107,18 @@ class SearchHandler(ABC):
         except FileNotFoundError:
             return False
 
-    def get_arguments(self) -> list:
+    def format_args_for_cli(self) -> list:
         """
-        convert the arguments dictionary into a list,
-        structurally ready for appending to a command list of strs.
+        Format `self.arguments_dictionary` into a list of strings for use in the command line.
         """
-        my_list = []
+        formatted_args = []
         for key, value in self.arguments_dictionary.items():
-            my_list.append(str(key))
+            formatted_args.append(str(key))
             if isinstance(value, list):
-                my_list.append(
-                    " ".join(value)
-                )  # Extend the list with all elements in the array
-            else:
-                my_list.append(
-                    str(value)
-                )  # Append the value directly if it's not a list
-        return my_list
+                formatted_args.append(" ".join(map(str, value)))
+            elif value is not None:
+                formatted_args.append(str(value))
+        return formatted_args
 
     def run_as_subprocess(self, command, out_file, raise_errors=False):
         """

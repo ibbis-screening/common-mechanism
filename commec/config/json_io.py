@@ -26,10 +26,10 @@
 import json
 import string
 import os
-from commec.tools.search_handler import SearchToolVersion
 from dataclasses import dataclass, asdict, fields, field, is_dataclass
 from typing import Dict, Type, get_origin, Any, get_args
 from enum import StrEnum
+from commec.tools.search_handler import SearchToolVersion
 
 # Seperate versioning for the output JSON.
 JSON_COMMEC_FORMAT_VERSION = "0.1"

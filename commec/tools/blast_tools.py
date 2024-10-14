@@ -4,42 +4,43 @@
 Module for Blast related tools, a library for dealing with general blast file parsing tasks.
 Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
 (split_taxa, taxdist, readblast, trimblast, tophits)
-Also contains the abstract base class for blastX/N/Diamond database handlers.
+Also contains the abstract base class for blastX/N/Diamond database search handlers.
 """
 import os
 import logging
 import glob
-from abc import abstractmethod
 import pytaxonkit
 import pandas as pd
 import numpy as np
 
-from commec.tools.search_handler import (
-    SearchHandler,
-    DatabaseValidationError
-)
+from commec.tools.search_handler import SearchHandler, DatabaseValidationError
+
 
 class BlastHandler(SearchHandler):
-    """ 
-    A Database handler specifically for use with Blast files. 
+    """
+    A Database handler specifically for use with Blast.
     Inherit from this, and implement screen()
     """
-    # Start Database Handler API
-    @abstractmethod
-    def search(self):
-        """
-        Use a tool to search the input query against a database.
-        Should be implemented by all subclasses to perform the actual search against the database.
-        """
 
     def _validate_db(self):
-        """ 
+        """
         Blast expects a set of files with shared prefix, rather than a single file.
         Here we validate such directory structures for Blast related search handlers.
         """
         if not os.path.isdir(self.db_directory):
             raise DatabaseValidationError(
                 f"Mandatory screening directory {self.db_directory} not found."
+            )
+
+        # Search for files of provided prefix.
+        filename, extension = os.path.splitext(self.db_file)
+        search_file = os.path.join(
+            self.db_directory, "*" + os.path.basename(filename) + "*" + extension
+        )
+        files = glob.glob(search_file)
+        if len(files) == 0:
+            raise DatabaseValidationError(
+                f"Mandatory screening files with {filename}* not found."
             )
 
         # Search for files of provided prefix.
@@ -81,8 +82,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
-    # blast here is a dataframe of blast results
+    # create a new row for each taxon id in a semicolon-separated list, then delete the original row
+    # with the concatenated taxon ids - blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast["subject tax ids"] = blast["subject tax ids"].astype("int")
     blast = blast[blast["subject tax ids"] != 32630]  # synthetic constructs
@@ -94,12 +95,16 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
 
+    # Checks that the Lineage information is present, by parsing it as a string as expected.
     try:
-        a = t["FullLineage"].str.split(";")[0]
-        b = t["FullLineageTaxIDs"].str.split(";")[0]
-        c = t["FullLineageRanks"].str.split(";")[0]
+        for required_lineage_column_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
+            assert t[required_lineage_column_name].str
     except AttributeError:
-        logging.error("The Blast database used has not returned any Lineage information!")
+        logging.info(
+            "ERROR: The Blast database used has not returned any Lineage information! "
+            "The returned Blast database is unchanged, and the following results "
+            "are invalid."
+        )
         return blast
 
     for x in range(0, blast.shape[0]):  # for each hit taxID

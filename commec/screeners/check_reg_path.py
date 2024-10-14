@@ -28,7 +28,6 @@ from commec.config.json_io import (
     MatchRange,
     LifeDomainFlag,
     RegulationFlag,
-    guess_domain,
     compare
 )
 
@@ -358,6 +357,7 @@ def main():
 
     rv = check_for_regulated_pathogens(args.in_file, args.db, args.threads)
     sys.exit(rv)
+
 
 if __name__ == "__main__":
     main()

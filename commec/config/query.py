@@ -41,7 +41,7 @@ class Query:
         with open(self.nt_path, "r", encoding = "utf-8") as fasta_file:
                 self.raw : list[SeqRecord] = list(SeqIO.parse(fasta_file, "fasta"))
         return
-        
+
     def get_cleaned_fasta(self, out_prefix):
         """
         Return a FASTA where whitespace (including non-breaking spaces) and 
@@ -55,7 +55,8 @@ class Query:
             for line in fin:
                 line = line.strip()
                 modified_line = "".join(
-                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c for c in line
+                    "_" if c.isspace() or c == "\xc2\xa0" or c == "#" else c
+                    for c in line
                 )
                 fout.write(f"{modified_line}{os.linesep}")
         return cleaned_file

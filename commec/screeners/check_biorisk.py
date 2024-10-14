@@ -133,16 +133,16 @@ def update_biorisk_data_from_database(search_handle : HmmerHandler, data : Scree
         # Update the recommendation for this query for biorisk.
         query_data.recommendation.biorisk_screen = biorisk_overall
 
-def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str, output_json : str):
-    '''
+def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str):
+    """
     Checks an HMM scan output, and parses it for biorisks, according to those found in the biorisk_annotations.csv.
     INPUTS:
         - hmmscan_input_file - the file output from hmmscan, containing information about potential hits.
         - hmm_folder - the directory containing biorisk_annotations.csv
-    '''
+    """
 
-    #check input files
-    hmm_folder_csv  = biorisk_annotations_directory + "/biorisk_annotations.csv"
+    # check input files
+    hmm_folder_csv = biorisk_annotations_directory + "/biorisk_annotations.csv"
     if not os.path.exists(hmmscan_input_file):
         logging.error("\t...input file does not exist\n")
         return 1
@@ -229,7 +229,7 @@ def main():
         handlers=[logging.StreamHandler(sys.stderr)],
     )
 
-    return_value = check_biorisk(args.in_file, args.db, args.output_json)
+    return_value = check_biorisk(args.in_file, args.db)
     return return_value
 
 if __name__ == "__main__":

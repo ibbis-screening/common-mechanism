@@ -1,67 +1,47 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Provides functions used across multiple python scripts in the commec package.
+Module for Blast related tools, a library for dealing with general blast file parsing tasks.
+Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
+(split_taxa, taxdist, readblast, trimblast, tophits)
+Also contains the abstract base class for blastX/N/Diamond database search handlers.
 """
-import argparse
 import os
-import re
+import logging
+import glob
 import pytaxonkit
 import pandas as pd
 import numpy as np
 
+from commec.tools.search_handler import SearchHandler, DatabaseValidationError
 
-def is_empty(filepath: str) -> bool:
+
+class BlastHandler(SearchHandler):
     """
-    is_empty
-
-    usage: check that a file is empty
-    input:
-    - name of file
+    A Database handler specifically for use with Blast.
+    Inherit from this, and implement screen()
     """
-    try:
-        abspath = os.path.abspath(os.path.expanduser(filepath))
-        return os.path.getsize(abspath) == 0
-    except OSError:
-        # If there is an error (including FileNotFoundError) consider it empty
-        return True
 
+    def _validate_db(self):
+        """
+        Blast expects a set of files with shared prefix, rather than a single file.
+        Here we validate such directory structures for Blast related search handlers.
+        """
+        if not os.path.isdir(self.db_directory):
+            raise DatabaseValidationError(
+                f"Mandatory screening directory {self.db_directory} not found."
+            )
 
-def has_hits(filepath: str) -> bool:
-    """
-    has_hits
-    usage: check to see if the file contains any hits (lines that don't start with #)
-    input:
-    - path to file
-    """
-    try:
-        with open(filepath, "r") as file:
-            for line in file:
-                # Strip leading and trailing whitespace and check the first character
-                if not line.strip().startswith("#"):
-                    # Found a hit!
-                    return True
-        return False
-    except FileNotFoundError:
-        # The file does not exist
-        return False
-
-
-def directory_arg(path):
-    """Raise ArgumentTypeError if `path` is not a directory."""
-    if not os.path.isdir(path):
-        raise argparse.ArgumentTypeError(f"{path} is not a valid directory path")
-    return path
-
-
-def file_arg(path):
-    """Raise ArgumentTypeError if `path` is not a file."""
-    if not os.path.isfile(path):
-        raise argparse.ArgumentTypeError(f"{path} is not a valid file")
-    if not os.path.getsize(path) > 0:
-        raise argparse.ArgumentTypeError(f"{path} is an empty file")
-
-    return path
+        # Search for files of provided prefix.
+        filename, extension = os.path.splitext(self.db_file)
+        search_file = os.path.join(
+            self.db_directory, "*" + os.path.basename(filename) + "*" + extension
+        )
+        files = glob.glob(search_file)
+        if len(files) == 0:
+            raise DatabaseValidationError(
+                f"Mandatory screening files with {filename}* not found."
+            )
 
 
 def split_taxa(blast):
@@ -97,8 +77,8 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row with the concatenated taxon ids
-    # blast here is a dataframe of blast results
+    # create a new row for each taxon id in a semicolon-separated list, then delete the original row
+    # with the concatenated taxon ids - blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast["subject tax ids"] = blast["subject tax ids"].astype("int")
     blast = blast[blast["subject tax ids"] != 32630]  # synthetic constructs
@@ -109,6 +89,18 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     t = pytaxonkit.lineage(blast["subject tax ids"], data_dir=db_path, threads=threads)
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
+
+    # Checks that the Lineage information is present, by parsing it as a string as expected.
+    try:
+        for required_lineage_column_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
+            assert t[required_lineage_column_name].str
+    except AttributeError:
+        logging.info(
+            "ERROR: The Blast database used has not returned any Lineage information! "
+            "The returned Blast database is unchanged, and the following results "
+            "are invalid."
+        )
+        return blast
 
     for x in range(0, blast.shape[0]):  # for each hit taxID
         # fetch the full lineage for that taxID
@@ -160,136 +152,6 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     blast = blast.reset_index(drop=True)
 
     return blast
-
-
-def readhmmer(fileh):
-    """
-    Read in HMMER output files
-    """
-    columns = [
-        "target name",
-        "accession",
-        "tlen",
-        "query name",
-        " accession",
-        "qlen",
-        "E-value",
-        "score",
-        "bias",
-        "hit #",
-        "of",
-        "c-Evalue",
-        "i-Evalue",
-        "score2",
-        "bias",
-        "hmm from",
-        "hmm to",
-        "ali from",
-        "ali to",
-        "env from",
-        "env to",
-        "acc",
-        "description of target",
-    ]
-
-    hmmer = []
-
-    with open(fileh, "r") as f:
-        for line in f:
-            if "# Program:         hmmscan" in line:
-                break
-            if "#" in line:
-                continue
-            bits = re.split(r"\s+", line)
-            description = " ".join(bits[22:])
-            bits = bits[:22]
-            bits.append(description)
-            hmmer.append(bits)
-    hmmer = pd.DataFrame(hmmer, columns=columns)
-    hmmer["E-value"] = pd.to_numeric(hmmer["E-value"])
-    hmmer["score"] = pd.to_numeric(hmmer["score"])
-    hmmer["ali from"] = pd.to_numeric(hmmer["ali from"])
-    hmmer["ali to"] = pd.to_numeric(hmmer["ali to"])
-    hmmer["qlen"] = pd.to_numeric(hmmer["qlen"])
-    return hmmer
-
-
-def readcmscan(fileh):
-    """
-    Read in cmscan output files
-    """
-    columns = [
-        "target name",
-        "accession",
-        "query name",
-        "accession",
-        "mdl",
-        "mdl from",
-        "mdl to",
-        "seq from",
-        "seq to",
-        "strand",
-        "trunc",
-        "pass",
-        "gc",
-        "bias",
-        "score",
-        "E-value",
-        "inc",
-        "description of target",
-    ]
-
-    cmscan = []
-
-    with open(fileh, "r") as f:
-        for line in f:
-            if "# Program:         cmscan" in line:
-                break
-            if "#" in line:
-                continue
-            bits = re.split(r"\s+", line)
-            description = " ".join(bits[17:])
-            bits = bits[:17]
-            bits.append(description)
-            cmscan.append(bits)
-    cmscan = pd.DataFrame(cmscan, columns=columns)
-    cmscan["E-value"] = pd.to_numeric(cmscan["E-value"])
-    cmscan["score"] = pd.to_numeric(cmscan["score"])
-    cmscan["seq from"] = pd.to_numeric(cmscan["seq from"])
-    cmscan["seq to"] = pd.to_numeric(cmscan["seq to"])
-
-    #    print(cmscan)
-    return cmscan
-
-
-def trimhmmer(hmmer):
-    """
-    Trim hmmer files.
-
-    Don't forget this is a report on 6-frame translations so coordinates will be complicated.
-    """
-    # rank hits by bitscore
-    hmmer = hmmer.sort_values(by=["score"], ascending=False)
-    #     hmmer = hmmer.drop_duplicates(subset=['query acc.', 'q. start', 'q. end'], keep='first', ignore_index=True)
-
-    drop = []
-    hmmer2 = hmmer
-    # only keep  top ranked hits that don't overlap
-    for query in hmmer["query name"].unique():
-        df = hmmer[hmmer["query name"] == query]
-        for i in df.index:
-            for j in df.index[(i + 1) :]:
-                if (
-                    df.loc[i, "ali from"] <= df.loc[j, "ali from"]
-                    and df.loc[i, "ali to"] >= df.loc[j, "ali to"]
-                ) | (
-                    df.loc[i, "ali from"] >= df.loc[j, "ali from"]
-                    and df.loc[i, "ali to"] <= df.loc[j, "ali to"]
-                ):
-                    if j in hmmer2.index:
-                        hmmer2 = hmmer2.drop([j])
-        hmmer2 = hmmer2.reset_index(drop=True)
-    return hmmer2
 
 
 def readblast(fileh):
@@ -488,7 +350,7 @@ def tophits(blast2):
             ) - min([df.loc[j, "q. start"], df.loc[j, "q. end"]])
             blast3.loc[j, "q. start"] = df.loc[j, "q. start"]
             blast3.loc[j, "q. end"] = df.loc[j, "q. end"]
- 
+
     blast3 = blast3.sort_values("q. start")
     blast3 = blast3[blast3["q. start"] != 0]
 

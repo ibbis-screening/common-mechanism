@@ -4,19 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "commec"
-version='0.1.0'
+version = '0.1.0'
 # This is not a pure python project; dependencies are managed through environment.yml
 authors = [
-  {name = "Nicole Wheeler"},
-  {name = "Jen Lu"},
-  {name = "Tessa Alexanian", email = "tessa@ibbis.bio"}
+  { name = "Nicole Wheeler" },
+  { name = "Jen Lu" },
+  { name = "Michael Barnett" },
+  { name = "Tessa Alexanian", email = "tessa@ibbis.bio" },
 ]
 maintainers = [
-  {name = "International Biosecurity and Biosafety Initiative for Science (IBBIS)", email = "info@ibbis.bio"}
+  { name = "International Biosecurity and Biosafety Initiative for Science (IBBIS)", email = "info@ibbis.bio" },
 ]
-description='Free, open-source, globally available tool for DNA sequence screening'
+description = 'Free, open-source, globally available tool for DNA sequence screening'
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 keywords = ["synthesis screening", "DNA synthesis"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -31,7 +32,7 @@ Homepage = "https://ibbis.bio/common-mechanism"
 Repository = "https://github.com/ibbis-screening/common-mechanism.git"
 
 [project.scripts]
-"commec" = "commec.main:main"
+"commec" = "commec.cli:main"
 
 [tool.setuptools]
-packages = {find = {"include" = ["commec"]}}
+packages = { find = { "include" = ["commec"] } }

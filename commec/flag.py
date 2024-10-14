@@ -24,21 +24,25 @@ import glob
 import os
 import re
 import pandas as pd
-from commec.utils import directory_arg
+from commec.utils.file_utils import directory_arg
 
-DESCRIPTION = "Parse all .screen files in a directory and create two CSVs file of flags raised"
+DESCRIPTION = (
+    "Parse all .screen files in a directory and create two CSVs file of flags raised"
+)
+
 
 def add_args(parser):
     """
     Add module arguments to an ArgumentParser object.
     """
     parser.add_argument(
-        action='store',
+        action="store",
         type=directory_arg,
-        dest='screen_dir',
-        help='Directory containing .screen files to summarize'
+        dest="screen_dir",
+        help="Directory containing .screen files to summarize",
     )
     return parser
+
 
 def add_flags(lines, flag_list, pattern, regex=False):
     """
@@ -53,6 +57,7 @@ def add_flags(lines, flag_list, pattern, regex=False):
         flag_list.append("F")
     else:
         flag_list.append("P")
+
 
 def get_flag_list(screen_dir):
     """
@@ -70,19 +75,39 @@ def get_flag_list(screen_dir):
     reg_nonreg_flags = []
     benign_flags = []
 
-    for screen_path in glob.glob(os.path.join(screen_dir, '*.screen')):
+    for screen_path in glob.glob(os.path.join(screen_dir, "*.screen")):
         filenames.append(os.path.basename(screen_path))
-        with open(screen_path, 'r', encoding="utf-8") as f:
+        with open(screen_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
             add_flags(
-                lines, biorisk_flags, r"Biorisks: Regulated gene in bases \d+ to \d+: FLAG", regex=True
+                lines,
+                biorisk_flags,
+                r"Biorisks: Regulated gene in bases \d+ to \d+: FLAG",
+                regex=True,
             )
-            add_flags(lines, vf_flags, r"Virulence factor found in bases \d+ to \d+", regex=True)
-            add_flags(lines, virus_flags, "found in only regulated organisms: FLAG (virus)")
-            add_flags(lines, bacteria_flags, "found in only regulated organisms: FLAG (bacteria)")
-            add_flags(lines, eukaryote_flags, "found in only regulated organisms: FLAG (eukaryote)")
             add_flags(
-                lines, reg_nonreg_flags, r"found in both regulated and non-regulated organisms"
+                lines,
+                vf_flags,
+                r"Virulence factor found in bases \d+ to \d+",
+                regex=True,
+            )
+            add_flags(
+                lines, virus_flags, "found in only regulated organisms: FLAG (virus)"
+            )
+            add_flags(
+                lines,
+                bacteria_flags,
+                "found in only regulated organisms: FLAG (bacteria)",
+            )
+            add_flags(
+                lines,
+                eukaryote_flags,
+                "found in only regulated organisms: FLAG (eukaryote)",
+            )
+            add_flags(
+                lines,
+                reg_nonreg_flags,
+                r"found in both regulated and non-regulated organisms",
             )
 
             # All homology-related flags should be replaced with "Err" if search failed
@@ -126,9 +151,10 @@ def get_flag_list(screen_dir):
             bacteria_flags,
             eukaryote_flags,
             reg_nonreg_flags,
-            benign_flags
+            benign_flags,
         )
     )
+
 
 def write_flag_files(screen_dir):
     """
@@ -149,9 +175,9 @@ def write_flag_files(screen_dir):
             if risk == "F":
                 summary.append((name, "F"))
             # Flag
-            elif (reg_vir == "F" and benign == "F"):
+            elif reg_vir == "F" and benign == "F":
                 summary.append((name, "F"))
-            elif (reg_vir == "F" and benign == "P"):
+            elif reg_vir == "F" and benign == "P":
                 summary.append((name, "P"))
             # if it's a regulated bacterial pathogen but a known benign gene, clear it
             elif (reg_bac == "F" and benign == "P" and vf == "P") == 1:
@@ -173,24 +199,30 @@ def write_flag_files(screen_dir):
     summary.to_csv(summary_file, index=False, header=None)
 
     flags = pd.DataFrame(flags)
-    flags.columns = ("filename",
-                    "biorisk",
-                    "virulence_factor",
-                    "regulated_virus",
-                    "regulated_bacteria",
-                    "regulated_eukaryote",
-                    "mixed_regulated_and_non_reg",
-                    "benign")
+    flags.columns = (
+        "filename",
+        "biorisk",
+        "virulence_factor",
+        "regulated_virus",
+        "regulated_bacteria",
+        "regulated_eukaryote",
+        "mixed_regulated_and_non_reg",
+        "benign",
+    )
     flags.to_csv(detail_file, index=False)
 
-    print("Flags: ", (summary["recommend_flag_or_pass"]=="F").sum(), "/", len(summary))
-    print("Errors: ", (summary["recommend_flag_or_pass"]=="Err").sum())
+    print(
+        "Flags: ", (summary["recommend_flag_or_pass"] == "F").sum(), "/", len(summary)
+    )
+    print("Errors: ", (summary["recommend_flag_or_pass"] == "Err").sum())
+
 
 def run(parsed_args):
     """
     Wrapper so that args be parsed in main() or commec.py interface.
     """
     write_flag_files(parsed_args.screen_dir)
+
 
 def main():
     """
@@ -199,6 +231,7 @@ def main():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     add_args(parser)
     run(parser.parse_args())
+
 
 if __name__ == "__main__":
     main()

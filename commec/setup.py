@@ -8,8 +8,10 @@ import sys
 import os
 import argparse
 import subprocess
-import urllib.request
+import ftplib
+from urllib import request, error, parse
 import zipfile
+import tarfile
 
 DESCRIPTION = """Helper script for downloading the databases
  required for running the Common Mechanism Screen"""
@@ -57,8 +59,8 @@ class CliSetup:
         self.download_example_blastnt : bool = False
 
         self.download_taxonomy : bool = False
-        #self.default_taxonomy_download_url : str = "ftp\://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
-        #self.taxonomy_download_url : str = self.default_taxonomy_download_url
+        self.default_taxonomy_download_url : str = "ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"#""ftp\://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
+        self.taxonomy_download_url : str = self.default_taxonomy_download_url
 
         # Hard coded, sure, but gives a list of valid dbs to check against.
         # A smarter implementation would take the time to call the --showall function without pretty,
@@ -349,13 +351,43 @@ class CliSetup:
                 return
             if user_input == "y" or user_input == "yes":
                 self.download_taxonomy = True
-                self.confirm()
+                self.get_taxonomy_url()
                 return
             if user_input == "n" or user_input == "no":
                 self.download_taxonomy = False
                 self.confirm()
                 return
             print("Unrecognised input (", user_input, ")")
+
+    def get_taxonomy_url(self):
+        """
+        Get the URL where the Commec Biorisk and Benign databases are located.
+        """
+        self.print_step(5,1)
+        user_input : str = ""
+        print("Please provide the URL to download the Taxonomy database.",
+              "\nPress <Enter> to use existing: ",
+              self.taxonomy_download_url)
+        while True:
+            user_input : str = self.user_input()
+            if user_input == "exit":
+                self.stop()
+            if user_input == "back":
+                self.decide_taxonomy()
+                return
+            if len(user_input) > 0:
+                self.taxonomy_download_url = user_input
+                continue
+            # Consider adding some sort of check here, that the user
+            print("Checking URL is valid ... ")
+            if not self.check_url_exists(self.taxonomy_download_url):
+                print(self.taxonomy_download_url, " is not a valid URL! "
+                      "(or you are not connected to the internet)")
+                continue
+
+            print("Using Commec Biorisk and Benign URL:", self.taxonomy_download_url)
+            self.confirm()
+            return
 
     def confirm(self):
         """ Simply allows the user one last chance to confirm their settings."""
@@ -370,11 +402,12 @@ class CliSetup:
         if self.download_blastnt:
             print(" -> Nucleotide NT database will be downloaded.")
         if self.download_taxonomy:
-            print(" -> Taxonomy database will be downloaded.")
+            print(" -> Taxonomy database will be downloaded,"
+                  "\n    from URL: ", self.taxonomy_download_url)
 
-        if not (self.download_biorisk or 
-                self.download_blastnr or 
-                self.download_blastnt or 
+        if not (self.download_biorisk or
+                self.download_blastnr or
+                self.download_blastnt or
                 self.download_taxonomy):
             print("You have opted to not download anything!"
                   "\nContinuing will simply exit this setup. "
@@ -391,6 +424,9 @@ class CliSetup:
             if user_input == "exit":
                 self.stop()
             if user_input == "back":
+                if self.download_taxonomy:
+                    self.get_taxonomy_url()
+                    return
                 self.decide_taxonomy()
                 return
             if user_input == "start":
@@ -427,7 +463,7 @@ class CliSetup:
                     result.stderr,
                 )
             # Parse the URL to extract the path
-            parsed_url = urllib.parse.urlparse(self.biorisk_download_url)
+            parsed_url = parse.urlparse(self.biorisk_download_url)
             filename_zipped = os.path.join(
                 self.database_directory,
                 os.path.basename(parsed_url.path)
@@ -468,8 +504,29 @@ class CliSetup:
             tax_directory = os.path.join(self.database_directory,"taxonomy")
             os.makedirs(tax_directory, exist_ok=True)
             print(tax_directory)
-            command = ["update_blastdb.pl", "--decompress", "taxdb"]
-            subprocess.run(command, cwd=tax_directory, check=True)
+
+            command = [
+                "wget", "-c", "-P", tax_directory, self.taxonomy_download_url
+            ]
+            print("Downloading taxonomy data from", self.taxonomy_download_url)
+            result = subprocess.run(command, check=True)
+
+            # Check if the download was successful
+            if result.returncode != 0:
+                command_str = " ".join(command)
+                print(f"\t ERROR: Command {command_str} failed with error {result.stderr}")
+
+            # Parse the URL to get the filename
+            parsed_url = parse.urlparse(self.taxonomy_download_url)
+            filename_zipped = os.path.join(tax_directory, 
+                                           os.path.basename(parsed_url.path))
+
+            # Extract the tar.gz file
+            print(f"Extracting {filename_zipped}")
+            with tarfile.open(filename_zipped, "r:gz") as tar:
+                tar.extractall(path=tax_directory)
+
+            os.remove(filename_zipped)
 
         print("\n\nThe common mechanism setup has completed!"
                 "\nYou can find all downloaded databases in",
@@ -478,21 +535,43 @@ class CliSetup:
 
     def check_url_exists(self, url : str) -> bool:
         """ Helper function to quickly check if a URL is valid."""
-        try:
-            with urllib.request.urlopen(url) as response:
-                # If the response status code is 200, the URL exists
-                if response.status == 200:
+        parsed_url = parse.urlparse(url)
+
+        if parsed_url.scheme in ['http', 'https']:
+            # Handle HTTP/HTTPS URLs using urllib
+            try:
+                with request.urlopen(url) as response:
+                    # If the response status code is 200, the URL exists
+                    if response.status == 200:
+                        return True
+            except error.HTTPError as e:
+                # Handle HTTP errors (like 404, 403, etc.)
+                print(f"HTTP Error: {e.code}")
+            except error.URLError as e:
+                # Handle URL errors (like unreachable server, etc.)
+                print(f"URL Error: {e.reason}")
+            except ValueError as e:
+                print("URL Value Error. It is likely the URL input"
+                    " is not a recognized URL format.")
+
+        elif parsed_url.scheme == 'ftp':
+            # Handle FTP URLs using ftplib
+            try:
+                with ftplib.FTP(parsed_url.hostname) as ftp:
+                    ftp.login()  # Anonymous login by default
+                    # Try to change to the directory and check the file
+                    ftp.cwd(os.path.dirname(parsed_url.path))
+                    ftp.size(os.path.basename(parsed_url.path))
                     return True
-        except urllib.error.HTTPError as e:
-            # Handle HTTP errors (like 404, 403, etc.)
-            print(f"HTTP Error: {e.code}")
-        except urllib.error.URLError as e:
-            # Handle URL errors (like unreachable server, etc.)
-            print(f"URL Error: {e.reason}")
-        except ValueError as e:
-            print("URL Value Error. It is likely the URL input"
-                  " is not a recognised URL format.")
+            except ftplib.error_perm as e:
+                print(f"FTP Permission Error: {e}")
+            except ftplib.error_temp as e:
+                print(f"FTP Temporary Error: {e}")
+            except ftplib.all_errors as e:
+                print(f"FTP Error: {str(e)}")
+
         return False
+
 
     def print_step(self, i : int = 0, ii : int = -1):
         """ helper for quick step delinearation. """

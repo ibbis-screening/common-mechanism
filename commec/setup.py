@@ -179,7 +179,8 @@ class CliSetup:
     def decide_commec_bioriskbenign(self):
         """ Decide whether the Commec Benign/risks database needs to be downloaded. """
         self.print_step(2)
-        print("Do you want to download the mandatory Commec Biorisk and Benign databases? (~1.2 GB)",
+        print("Do you want to download the "
+              "mandatory Commec databases? (~1.2 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
@@ -194,7 +195,7 @@ class CliSetup:
                 return
             if user_input == "n" or user_input == "no":
                 self.download_biorisk = False
-                self.decide_blastnt()
+                self.decide_blastnr()
                 return
             print("Unrecognised input (", user_input, ")")
 
@@ -232,7 +233,8 @@ class CliSetup:
     def decide_blastnr(self):
         """ Decide whether a Protein database needs to be downloaded. """
         self.print_step(3)
-        print("Do you want to download the protein NR database for protein screening? (~530 GB)",
+        print("Do you want to download the"
+              " protein NR database for protein screening? (~530 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
@@ -282,7 +284,8 @@ class CliSetup:
     def decide_blastnt(self):
         """ Decide what Nucleotide database needs to be downloaded. """
         self.print_step(4)
-        print("Do you want to download the Nucleotide NT databases for non-coding region nucleotide screening? (~580 GB)",
+        print("Do you want to download the Nucleotide NT databases for non-coding"
+              " region nucleotide screening? (~580 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = input(">>>").strip().lower()
@@ -357,13 +360,22 @@ class CliSetup:
         print("The following settings will be used to setup Commec:",
               "\n -> Database Directory: ", self.database_directory)
         if self.download_biorisk:
-            print(" -> Commec Biorisk and Benign databases will be downloaded,\n    from URL: ", self.biorisk_download_url)
+            print(" -> Commec Biorisk and Benign databases will be downloaded,"
+                  "\n    from URL: ", self.biorisk_download_url)
         if self.download_blastnr:
             print(" -> Protein NR database will be downloaded.")
         if self.download_blastnt:
             print(" -> Nucleotide NT database will be downloaded.")
         if self.download_taxonomy:
             print(" -> Taxonomy database will be downloaded.")
+
+        if not (self.download_biorisk or 
+                self.download_blastnr or 
+                self.download_blastnt or 
+                self.download_taxonomy):
+            print("You have opted to not download anything!"
+                  "\nContinuing will simply exit this setup. "
+                  "\nGo back to confirm a database to download.")
 
         print("\n\nPress <Enter> to confirm these settings, ",
               "\ntype \"back\" to alter previous setting, ",

@@ -241,7 +241,10 @@ class CliSetup:
             if user_input == "exit":
                 self.stop()
             if user_input == "back":
-                self.get_biorisk_url()
+                if self.download_biorisk:
+                    self.get_biorisk_url()
+                    return
+                self.decide_commec_bioriskbenign()
                 return
             if user_input == "y" or user_input == "yes":
                 self.download_blastnr = True

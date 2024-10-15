@@ -28,14 +28,11 @@ from commec.split import (
     DESCRIPTION as split_DESCRIPTION,
     add_args as split_add_args,
     run as split_run,
-<<<<<<< HEAD
 )
 from commec.setup import (
     DESCRIPTION as setup_DESCRIPTION,
     add_args as setup_add_args,
     run as setup_run,
-=======
->>>>>>> main
 )
 
 

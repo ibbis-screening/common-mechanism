@@ -79,8 +79,13 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "-o",
         "--output",
         dest="output_prefix",
+<<<<<<< HEAD
         help="Prefix for output files. Can be a string (interpreted as output basename) or a" +
          " directory (in which case the output file names will be determined from the input FASTA)",
+=======
+        help="Prefix for output files. Can be a string (interpreted as output basename) or a"
+        + " directory (in which case the output file names will be determined from the input FASTA)",
+>>>>>>> main
     )
     parser.add_argument(
         "-t",

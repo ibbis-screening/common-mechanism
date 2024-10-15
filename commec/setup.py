@@ -426,7 +426,7 @@ class CliSetup:
                                            os.path.basename(parsed_url.path))
 
             # Extract the tar.gz file
-            print(f"Extracting taxonomy databases...")
+            print("Extracting taxonomy databases...")
             with tarfile.open(filename_zipped, "r:gz") as tar:
                 tar.extractall(path=tax_directory)
 

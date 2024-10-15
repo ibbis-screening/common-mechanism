@@ -59,38 +59,14 @@ class CliSetup:
         self.download_example_blastnt : bool = False
 
         self.download_taxonomy : bool = False
-        self.default_taxonomy_download_url : str = "ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"#""ftp\://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
+        self.default_taxonomy_download_url : str = "ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
         self.taxonomy_download_url : str = self.default_taxonomy_download_url
 
-        # Hard coded, sure, but gives a list of valid dbs to check against.
-        # A smarter implementation would take the time to call the --showall function without pretty,
-        # and then populate this array with the outputs.
-        # At least this way we could also curate out the non-aa and non-nt ones.
-        self.protein_database_names = [
-            "BLASTDB", "Betacoronavirus", "28S_fungal_sequences", "16S_ribosomal_RNA", 
-            "18S_fungal_sequences", "ITS_RefSeq_Fungi", "ITS_eukaryote_sequences", 
-            "LSU_eukaryote_rRNA", "LSU_prokaryote_rRNA", "SSU_eukaryote_rRNA", 
-            "env_nt", "env_nr", "human_genome", "landmark", "mito", "mouse_genome", 
-            "nr", "nt_euk", "nt", "nt_others", "nt_prok", "nt_viruses", "pataa", 
-            "patnt", "pdbaa", "pdbnt", "ref_euk_rep_genomes", "ref_prok_rep_genomes", 
-            "ref_viroids_rep_genomes", "ref_viruses_rep_genomes", "refseq_select_rna", 
-            "refseq_select_prot", "refseq_protein", "refseq_rna", "swissprot", "tsa_nr", 
-            "tsa_nt", "taxdb", "core_nt"
-        ]
-
-        self.nucleotide_database_names = [
-            "BLASTDB", "Betacoronavirus", "28S_fungal_sequences", "16S_ribosomal_RNA", 
-            "18S_fungal_sequences", "ITS_RefSeq_Fungi", "ITS_eukaryote_sequences", 
-            "LSU_eukaryote_rRNA", "LSU_prokaryote_rRNA", "SSU_eukaryote_rRNA", 
-            "env_nt", "env_nr", "human_genome", "landmark", "mito", "mouse_genome", 
-            "nr", "nt_euk", "nt", "nt_others", "nt_prok", "nt_viruses", "pataa", 
-            "patnt", "pdbaa", "pdbnt", "ref_euk_rep_genomes", "ref_prok_rep_genomes", 
-            "ref_viroids_rep_genomes", "ref_viruses_rep_genomes", "refseq_select_rna", 
-            "refseq_select_prot", "refseq_protein", "refseq_rna", "swissprot", "tsa_nr", 
-            "tsa_nt", "taxdb", "core_nt"
-        ]
-
         if automate:
+            self.download_biorisk = True
+            self.download_blastnr = True
+            self.download_blastnt = True
+            self.download_taxonomy = True
             self.do_setup()
         else:
             self.start()
@@ -158,34 +134,33 @@ class CliSetup:
               self.database_directory)
         while True:
             user_input : str = self.user_input()
-            if user_input == "exit":
-                self.stop()
             if user_input == "back":
                 self.stop() # This is the first step, no point going back.
             if len(user_input) > 0:
                 self.database_directory = user_input
 
-            # Consider adding some sort of check here, that the user
-            # input is mkdir compatible.
             try:
-                subprocess.run(["mkdir","-p", self.database_directory], check = True)
-                subprocess.run(["rm","-rf",self.database_directory], check = True)
+                os.makedirs(self.database_directory, exist_ok=True)
+                try: # Removedirs can fail if it is a single leaf, containing other files.
+                    os.removedirs(self.database_directory)
+                except OSError:
+                    pass
             except subprocess.CalledProcessError:
                 print(user_input, " is not a valid directory structure!")
                 continue
 
             print("Using database directory: ", self.database_directory)
-            self.decide_commec_bioriskbenign()
+            self.decide_commec_dbs()
             return
 
-    def decide_commec_bioriskbenign(self):
+    def decide_commec_dbs(self):
         """ Decide whether the Commec Benign/risks database needs to be downloaded. """
         self.print_step(2)
         print("Do you want to download the "
               "mandatory Commec databases? (~1.2 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
-            user_input : str = input(">>>").strip().lower()
+            user_input : str = self.user_input()
             if user_input == "exit":
                 self.stop()
             if user_input == "back":
@@ -206,22 +181,17 @@ class CliSetup:
         Get the URL where the Commec Biorisk and Benign databases are located.
         """
         self.print_step(2,1)
-        user_input : str = ""
         print("Please provide the URL to download the Commec database.",
               "\nPress <Enter> to use existing: ",
               self.biorisk_download_url)
         while True:
             user_input : str = self.user_input()
-            if user_input == "exit":
-                self.stop()
             if user_input == "back":
-                self.decide_commec_bioriskbenign()
+                self.decide_commec_dbs()
                 return
             if len(user_input) > 0:
                 self.biorisk_download_url = user_input
 
-            # Consider adding some sort of check here, that the user
-            # input is mkdir compatible.
             print("Checking URL is valid ... ")
             if not self.check_url_exists(self.biorisk_download_url):
                 print(self.biorisk_download_url, " is not a valid URL! "
@@ -239,14 +209,12 @@ class CliSetup:
               " protein NR database for protein screening? (~530 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
-            user_input : str = input(">>>").strip().lower()
-            if user_input == "exit":
-                self.stop()
+            user_input : str = self.user_input()
             if user_input == "back":
                 if self.download_biorisk:
                     self.get_biorisk_url()
                     return
-                self.decide_commec_bioriskbenign()
+                self.decide_commec_dbs()
                 return
             if user_input == "y" or user_input == "yes":
                 self.download_blastnr = True
@@ -258,34 +226,6 @@ class CliSetup:
                 return
             print("Unrecognised input (", user_input, ")")
 
-    def get_blastnr(self):
-        """ Decide what Protein database needs to be downloaded. """
-        self.print_step(3,2)
-        print("Which database should be used for taxonomy protein screening?",
-              "\ntype \"options\" to fetch the list of options.",
-              "\nPress <Enter> to use existing: ",
-              self.blastnr_database)
-        while True:
-            user_input : str = input(">>>").strip().lower()
-            if user_input == "exit":
-                self.stop()
-            if user_input == "back":
-                self.decide_blastnr()
-                return
-            if user_input == "options":
-                self.print_database_options()
-                continue
-            if len(user_input) == 0:
-                print("Using NR database:", self.blastnr_database)
-                self.decide_blastnt()
-                return
-            if user_input in self.protein_database_names:
-                self.blastnr_database = user_input
-                print("Using NR database:", self.blastnr_database)
-                self.decide_blastnt()
-                return
-            print("Unrecognised or invalid input (", user_input, ")")
-
     def decide_blastnt(self):
         """ Decide what Nucleotide database needs to be downloaded. """
         self.print_step(4)
@@ -293,9 +233,7 @@ class CliSetup:
               " region nucleotide screening? (~580 GB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
-            user_input : str = input(">>>").strip().lower()
-            if user_input == "exit":
-                self.stop()
+            user_input : str = self.user_input()
             if user_input == "back":
                 self.decide_blastnr()
                 return
@@ -309,43 +247,13 @@ class CliSetup:
                 return
             print("Unrecognised input (", user_input, ")")
 
-    def get_blastnt(self):
-        """ Decide what Nucleotide database needs to be downloaded. """
-        self.print_step(4,2)
-        print("Which database should be used for taxonomy nucleotide screening?",
-              "\ntype \"options\" to fetch the list of options.",
-              "\nPress <Enter> to use existing: ",
-              self.blastnt_database)
-        while True:
-            user_input : str = input(">>>").strip().lower()
-            if user_input == "exit":
-                self.stop()
-            if user_input == "back":
-                self.decide_blastnr()
-                return
-            if user_input == "options":
-                self.print_database_options()
-                continue
-            if len(user_input) == 0:
-                print("Using NT database:", self.blastnt_database)
-                self.decide_taxonomy()
-                return
-            if user_input in self.nucleotide_database_names:
-                self.blastnt_database = user_input
-                print("Using NT database:", self.blastnt_database)
-                self.decide_taxonomy()
-                return
-            print("Unrecognised or invalid input (", user_input, ")")
-
     def decide_taxonomy(self):
         """ Decide whether taxonomy database need to be downloaded. """
         self.print_step(5)
         print("Do you want to download the Taxonomy databases? ( less than ~500 MB)",
               "\n\"y\" or \"n\", for yes or no.")
         while True:
-            user_input : str = input(">>>").strip().lower()
-            if user_input == "exit":
-                self.stop()
+            user_input : str = self.user_input()
             if user_input == "back":
                 self.decide_blastnt()
                 return
@@ -370,15 +278,13 @@ class CliSetup:
               self.taxonomy_download_url)
         while True:
             user_input : str = self.user_input()
-            if user_input == "exit":
-                self.stop()
             if user_input == "back":
                 self.decide_taxonomy()
                 return
             if len(user_input) > 0:
                 self.taxonomy_download_url = user_input
                 continue
-            # Consider adding some sort of check here, that the user
+
             print("Checking URL is valid ... ")
             if not self.check_url_exists(self.taxonomy_download_url):
                 print(self.taxonomy_download_url, " is not a valid URL! "
@@ -418,11 +324,9 @@ class CliSetup:
               "\ntype \"exit\" to abort setup.",
               "\ntype \"start\" to alter from the beginning.")
         while True:
-            user_input : str = input("").strip().lower()
+            user_input : str = self.user_input()
             if len(user_input) == 0:
                 return
-            if user_input == "exit":
-                self.stop()
             if user_input == "back":
                 if self.download_taxonomy:
                     self.get_taxonomy_url()
@@ -522,7 +426,7 @@ class CliSetup:
                                            os.path.basename(parsed_url.path))
 
             # Extract the tar.gz file
-            print(f"Extracting {filename_zipped}")
+            print(f"Extracting taxonomy databases...")
             with tarfile.open(filename_zipped, "r:gz") as tar:
                 tar.extractall(path=tax_directory)
 
@@ -558,7 +462,7 @@ class CliSetup:
             # Handle FTP URLs using ftplib
             try:
                 with ftplib.FTP(parsed_url.hostname) as ftp:
-                    ftp.login()  # Anonymous login by default
+                    ftp.login()
                     # Try to change to the directory and check the file
                     ftp.cwd(os.path.dirname(parsed_url.path))
                     ftp.size(os.path.basename(parsed_url.path))
@@ -590,7 +494,10 @@ class CliSetup:
 
     def user_input(self, prompt : str = ">>> "):
         """ Get input from the user, and do some basic string sanitation. """
-        return input(prompt).strip().lower()
+        user_input : str = input(prompt).strip().lower()
+        if user_input == "exit":
+            self.stop()
+        return user_input
 
     def stop(self):
         """ Gracefully exit with a message to the user."""

@@ -9,25 +9,31 @@ Usage:
       -s, --sequence = input sequence file
       -d, --database = database folder location/path (will check for benign_annotations.tsv)
 """
+import logging
 import argparse
 import os
 import sys
 import pandas as pd
-from commec.utils import *
 
+from commec.tools.blastn import BlastNHandler # For has_hits.
+from commec.tools.blast_tools import tophits, readblast, trimblast
+from commec.tools.hmmer import readhmmer
+from commec.tools.cmscan import readcmscan
 
 def check_for_benign(query, coords, benign_desc):
+    '''
+    Checks a query against taxonomy 
+    '''
     cleared = [0] * coords.shape[0]
 
     # PROTEIN HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     hmmscan = query + ".benign.hmmscan"
-    if not has_hits(hmmscan):
-        sys.stdout.write("\t...no housekeeping protein hits\n")
+    if not BlastNHandler.has_hits(hmmscan):
+        logging.info("\t...no housekeeping protein hits\n")
     else:
         hmmer = readhmmer(hmmscan)
         hmmer = hmmer[hmmer["E-value"] < 1e-20]
-        # print(hmmer)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             # look at only the hmmer hits that overlap with it
             htrim = hmmer[
@@ -53,29 +59,27 @@ def check_for_benign(query, coords, benign_desc):
                                    + f" (E-value: {htrim['E-value'][row]:.3g}")
                         descriptions.append(hit_msg + "\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
-                    sys.stdout.write(
+                    logging.info(
                         "\t\t -->Housekeeping proteins covering "
                         + str(coords["q. start"][region])
                         + " to "
                         + str(coords["q. end"][region])
                         + " = PASS\n"
                     )
-                    sys.stdout.write("\t\t   " + annot_string)
+                    logging.info("\t\t   " + annot_string)
                     cleared[region] = 1
                 else:
-                    # print(htrim)
-                    sys.stdout.write(
+                    logging.info(
                         "\t\t -->Housekeeping proteins - not enough coverage = FAIL\n"
                     )
 
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
     cmscan = query + ".benign.cmscan"
-    if not has_hits(cmscan):
-        sys.stdout.write("\t...no benign RNA hits\n")
+    if not BlastNHandler.has_hits(cmscan):
+        logging.info("\t...no benign RNA hits\n")
     else:
         cmscan = readcmscan(cmscan)
-        # print(cmscan)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             # look at only the cmscan hits that overlap with it
             qlen = abs(coords["q. start"][region] - coords["q. end"][region])
@@ -90,7 +94,6 @@ def check_for_benign(query, coords, benign_desc):
                     & (cmscan["seq to"] > coords["q. end"][region])
                 )
             ]
-            # print(htrim)
             if htrim.shape[0] > 0:
                 # bases unaccounted for based method
                 htrim = htrim.assign(
@@ -104,21 +107,21 @@ def check_for_benign(query, coords, benign_desc):
                         hit = htrim["target name"][row]
                         descriptions.append(hit)
                     annot_string = "\n\t...".join(str(v) for v in descriptions)
-                    sys.stdout.write(
+                    logging.info(
                         "\t\t -->Housekeeping RNAs - <50 bases unaccounted for: PASS\n"
                     )
-                    sys.stdout.write("\t\t   RNA family: " + annot_string + "\n")
+                    logging.info("\t\t   RNA family: " + annot_string + "\n")
                     cleared[region] = 1
                 else:
-                    sys.stdout.write(
+                    logging.info(
                         "\t\t -->Housekeeping RNAs - >50 bases unaccounted for = FAIL\n"
                     )
 
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
     blast = query + ".benign.blastn"
-    if not has_hits(blast):
-        sys.stdout.write("\t...no Synbio sequence hits\n")
+    if not BlastNHandler.has_hits(blast):
+        logging.info("\t...no Synbio sequence hits\n")
     else:
         blastn = readblast(blast)  # synbio parts
         blastn = trimblast(blastn)
@@ -142,19 +145,19 @@ def check_for_benign(query, coords, benign_desc):
                     hit = htrim["subject title"][row]
                     descriptions.append(hit)
                 annot_string = "\n\t\t   ".join(str(v) for v in descriptions)
-                sys.stdout.write(
+                logging.info(
                     "\t\t -->Synbio sequences - >80% coverage achieved = PASS\n"
                 )
-                sys.stdout.write("\t\t   Synbio parts: " + annot_string + "\n")
+                logging.info("\t\t   Synbio parts: " + annot_string + "\n")
                 cleared[region] = 1
             else:
-                sys.stdout.write(
+                logging.info(
                     "\t\t -->Synbio sequences - <80% coverage achieved = FAIL\n"
                 )
 
     for region in range(0, coords.shape[0]):
         if cleared[region] == 0:
-            sys.stdout.write(
+            logging.info(
                 "\t\t -->Regulated region at bases "
                 + str(int(coords.iloc[region, 0]))
                 + " to "
@@ -162,10 +165,28 @@ def check_for_benign(query, coords, benign_desc):
                 + " failed to clear: FLAG\n"
             )
     if sum(cleared) == len(cleared):
-        sys.stdout.write("\n\t\t -->all regulated regions cleared: PASS\n")
+        logging.info("\n\t\t -->all regulated regions cleared: PASS\n")
+
+    return 0
 
 
 def main():
+    '''
+    Alternative legacy entry point wrapper for calling check_benign as main, 
+    as isolated python script. No longer used in commec screen.
+    '''
+    # Set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(message)s",
+        handlers=[logging.StreamHandler(sys.stderr)],
+    )
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -178,28 +199,34 @@ def main():
         required=True,
         help="Benign HMM database folder (must contain benign_annotations.tsv)",
     )
+    parser.add_argument("-o","--out", dest="output_json",
+        required=True,help="output_json_filepath")
+    
     args = parser.parse_args()
 
     if not os.path.exists(args.db + "/benign_annotations.tsv"):
         sys.stderr.write("\t...benign_annotations.tsv does not exist\n")
-        exit(1)
+        return 1
 
-    # Read in database file
+    # Check database file
     pd.set_option("max_colwidth", 200)
     benign_desc = pd.read_csv(args.db + "/benign_annotations.tsv", sep="\t")
 
-    # Check for file - if exists, check for benign
-    if os.path.exists(args.sample_name + ".reg_path_coords.csv"):
-        coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
-        if coords.shape[0] == 0:
-            sys.stdout.write("\t...no regulated regions to clear\n")
-            exit(0)
-        coords.sort_values(by=["q. start"], inplace=True)
-        coords.reset_index(drop=True, inplace=True)
-        check_for_benign(args.sample_name, coords, benign_desc)
-    else:
-        sys.stdout.write("\t...no regulated regions to clear\n")
+    if not os.path.exists(args.sample_name + ".reg_path_coords.csv"):
+        logging.info("\t...no regulated regions to clear\n")
+        return 0
 
+    # Read database file
+    coords = pd.read_csv(args.sample_name + ".reg_path_coords.csv")
+
+    if coords.shape[0] == 0:
+        logging.info("\t...no regulated regions to clear\n")
+        return 0
+
+    coords.sort_values(by=["q. start"], inplace=True)
+    coords.reset_index(drop=True, inplace=True)
+    rv = check_for_benign(args.sample_name, coords, benign_desc)
+    sys.exit(rv)
 
 if __name__ == "__main__":
     main()

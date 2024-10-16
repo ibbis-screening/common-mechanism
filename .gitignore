@@ -27,3 +27,6 @@ __pypackages__/
 .venv
 venv/
 .conda
+.vscode
+.pylintrc
+*:Zone.Identifier

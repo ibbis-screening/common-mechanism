@@ -128,23 +128,25 @@ class CliSetup:
         """Checks for wget, and update_blastdb.pl, which should both be present
         given the conda environment to install and use Commec."""
         print("\033[38;5;242mChecking for wget, and update_blastdb")
-        dont_proceed = False
-        result = subprocess.run(["which", "wget"], check=False)
-        if result.returncode != 0:
+        dependencies = ["wget", "update_blastdb.pl"]
+        missing_deps = [
+            dep
+            for dep in dependencies
+            if subprocess.run(
+                ["which", dep],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            ).returncode
+            != 0
+        ]
+
+        if missing_deps:
             print(
-                "\033[38;5;202mDependency wget could not be found. "
-                "Check wget is installed in this environment."
+                "\033[38;5;202mRequired dependencies missing: "
+                + ", ".join(missing_deps)
             )
-            dont_proceed = True
-        result = subprocess.run(["which", "update_blastdb.pl"], check=False)
-        if result.returncode != 0:
-            print(
-                "\033[38;5;202mDependency update_blastdb.pl could not be found. "
-                "Blast is likely not installed in this python environment."
-            )
-            dont_proceed = True
-        if dont_proceed:
-            print("\033[38;5;202mError: Required dependency missing!")
+            print("Check these are installed in your environment.")
             self.stop()
         print("\033[0m")
 

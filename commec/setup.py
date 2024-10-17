@@ -83,9 +83,9 @@ class CliSetup:
 ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║███████╗╚██████╗ \033[38;5;202m     ███████▌             \033[0m
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝ \033[38;5;202m    ▐███████▌             \033[0m
 \033[48;5;17m█ █████▄ █████▄ █ ▄█▀█▄                                 \033[38;5;202m     ███████   ▄█▄      \033[0m
-\033[48;5;17m█ █    █ █    █ █ █   ▀                                 \033[38;5;202m      █████▌  ▄███▄▄     \033[0m  
-\033[48;5;17m█ █████▄ █████▄ █ ▀███▄                                 \033[38;5;202m      ▐█████▄██▀    ▀▄    \033[0m   
-\033[48;5;17m█ █    █ █    █ █ ▄   █                                 \033[38;5;202m      ▐████████       ▌  \033[0m
+\033[48;5;17m█ █    █ █    █ █ █   ▀          DATABASE               \033[38;5;202m      █████▌  ▄███▄▄     \033[0m  
+\033[48;5;17m█ █████▄ █████▄ █ ▀███▄            SETUP                \033[38;5;202m      ▐█████▄██▀    ▀▄    \033[0m   
+\033[48;5;17m█ █    █ █    █ █ ▄   █              UTILITY            \033[38;5;202m      ▐████████       ▌  \033[0m
 \033[48;5;17m█ █████▀ █████▀ █ ▀█▄█▀                                 \033[38;5;202m      ████████▀         \033[0m
                                                         \033[38;5;202m   ▄▄██████▀▀             \033[0m
                                                         \033[38;5;202m ▀▀                       \033[0m""")
@@ -94,33 +94,58 @@ class CliSetup:
               "\nCopyright © 2021-2024 ",
               "\n\nThis script will help download the mandatory databases ",
               "\nrequired for using Commec Screen, and requires a stable",
-              "\ninternet connection, wget, and update_blastdb.pl.",
-              "\n -> You can exit this setup at any time with \"exit\"",
-              "\n -> You can return to a previous step with \"back\"\n")
-
+              "\ninternet connection, wget, and update_blastdb.pl.")
+        self.print_help_info()
+        print()
         self.check_requirements()
-
         self.setup_overall_directory()
         self.do_setup()
+
+    def print_help_info(self, additional_help = [""]):
+        """ 
+        Prints helpful instructions according to the current step, 
+        as well as general instructions. 
+        """
+        add_help_str = "" if len(additional_help) == 0 else "".join(additional_help)
+        print("\033[38;5;202m"
+            " Instructions: "
+            "\n -> You can exit this setup at any time with \"exit\""
+            "\n -> You can return to a previous step with \"back\""
+            "\n -> You can get additional help with \"help\""
+              + add_help_str +
+            "\033[0m")
 
     def check_requirements(self):
         """ Checks for wget, and update_blastdb.pl, which should both be present
         given the conda environment to install and use Commec. """
-        print("Checking for wget, and update_blastdb")
+        print("\033[38;5;242mChecking for wget, and update_blastdb")
         dont_proceed = False
         result = subprocess.run(["which", "wget"], check=False)
         if result.returncode != 0:
-            print("Dependency wget could not be found. "
+            print("\033[38;5;202mDependency wget could not be found. "
                   "Check wget is installed in this environment.")
             dont_proceed = True
         result = subprocess.run(["which", "update_blastdb.pl"], check=False)
         if result.returncode != 0:
-            print("Dependency update_blastdb.pl could not be found. "
+            print("\033[38;5;202mDependency update_blastdb.pl could not be found. "
                   "Blast is likely not installed in this python environment.")
             dont_proceed = True
         if dont_proceed:
-            print("Error: Required dependency missing!")
+            print("\033[38;5;202mError: Required dependency missing!")
             self.stop()
+        print("\033[0m")
+
+    def check_directory_is_writable(self, input_directory : str) -> bool:
+        """ Checks a directory is viable by creating it and destroying it."""
+        try:
+            os.makedirs(input_directory, exist_ok=True)
+            try: # Removedirs can fail if it is a single leaf, containing other files.
+                os.removedirs(input_directory)
+            except OSError:
+                pass
+        except subprocess.CalledProcessError:
+            return False
+        return True
 
     def setup_overall_directory(self):
         """
@@ -136,18 +161,17 @@ class CliSetup:
             user_input : str = self.user_input()
             if user_input == "back":
                 self.stop() # This is the first step, no point going back.
-            if len(user_input) > 0:
-                self.database_directory = user_input
-
-            try:
-                os.makedirs(self.database_directory, exist_ok=True)
-                try: # Removedirs can fail if it is a single leaf, containing other files.
-                    os.removedirs(self.database_directory)
-                except OSError:
-                    pass
-            except subprocess.CalledProcessError:
-                print(user_input, " is not a valid directory structure!")
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> Provide a path to download into e.g. \"/location/to/download/commec-dbs\"",
+                                      "\n (The full path will be created if it does not exist.)"])
                 continue
+
+            if len(user_input) > 0:
+                directory_is_valid = self.check_directory_is_writable(user_input)
+                if not directory_is_valid:
+                    print(user_input, " is not a valid directory structure!")
+                    continue
+                self.database_directory = user_input
 
             print("Using database directory: ", self.database_directory)
             self.decide_commec_dbs()
@@ -161,16 +185,20 @@ class CliSetup:
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = self.user_input()
-            if user_input == "exit":
-                self.stop()
+            if user_input == "help":
+                self.print_help_info(["\n -> type yes,y or no,n to indicate decision.",
+                                      "\n  (The Commec databases consist of a currated biorisk",
+                                      "\n  and benign database, which are required for commec to run",
+                                      "\n  and are the only databases used in \"--fast-mode\")"])
+                continue
             if user_input == "back":
                 self.setup_overall_directory()
                 return
-            if user_input == "y" or user_input == "yes":
+            if user_input in ["y","yes"]:
                 self.download_biorisk = True
                 self.get_biorisk_url()
                 return
-            if user_input == "n" or user_input == "no":
+            if user_input in ["n","no"]:
                 self.download_biorisk = False
                 self.decide_blastnr()
                 return
@@ -186,6 +214,12 @@ class CliSetup:
               self.biorisk_download_url)
         while True:
             user_input : str = self.user_input()
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> Provide a URL to download, the commec database URL can be found at ",
+                                      "\n  https://github.com/ibbis-screening/common-mechanism/wiki/install",
+                                      "\n  (The URL will be checked that it is valid",
+                                      "\n  which will require an internet connection.)"])
+                continue
             if user_input == "back":
                 self.decide_commec_dbs()
                 return
@@ -210,6 +244,12 @@ class CliSetup:
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = self.user_input()
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> type yes,y or no,n to indicate decision.",
+                                      "\n   (The Blast non-redundant protein database is used to screen",
+                                      "\n   translated queries when not in \"--fast-mode\", and is ",
+                                      "\n   around 530 GB in size.)"])
+                continue
             if user_input == "back":
                 if self.download_biorisk:
                     self.get_biorisk_url()
@@ -234,6 +274,12 @@ class CliSetup:
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = self.user_input()
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> type yes,y or no,n to indicate decision.",
+                                      "\n   (The Blast Nucleotide database is used to screen",
+                                      "\n   non-coding regions of queries when not in \"--fast-mode\","
+                                      "\n   and is around 580 GB in size.)"])
+                continue
             if user_input == "back":
                 self.decide_blastnr()
                 return
@@ -254,6 +300,12 @@ class CliSetup:
               "\n\"y\" or \"n\", for yes or no.")
         while True:
             user_input : str = self.user_input()
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> type yes,y or no,n to indicate decision.",
+                                      "\n   (A Taxonomy database is used to check taxonomy IDs",
+                                      "\n   for regulation when not in \"--fast-mode\","
+                                      "\n   and is around 500 MB in size.)"])
+                continue
             if user_input == "back":
                 self.decide_blastnt()
                 return
@@ -278,6 +330,12 @@ class CliSetup:
               self.taxonomy_download_url)
         while True:
             user_input : str = self.user_input()
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> Provide a URL to download, the taxonomy URL can be found at ",
+                                      "\n  https://github.com/ibbis-screening/common-mechanism/wiki/install",
+                                      "\n  (The URL will be checked that it is valid",
+                                      "\n  which will require an internet connection.)"])
+                continue
             if user_input == "back":
                 self.decide_taxonomy()
                 return
@@ -319,12 +377,16 @@ class CliSetup:
                   "\nContinuing will simply exit this setup. "
                   "\nGo back to confirm a database to download.")
 
-        print("\n\nPress <Enter> to confirm these settings, ",
+        print("\nPress <Enter> to confirm these settings, ",
               "\ntype \"back\" to alter previous setting, ",
               "\ntype \"exit\" to abort setup.",
               "\ntype \"start\" to alter from the beginning.")
         while True:
             user_input : str = self.user_input()
+            if user_input in ["help", "h"]:
+                self.print_help_info(["\n -> press <Enter> to confirm choices, and start the download process.",
+                                      "\n -> type \"start\" to alter choices from the beginning."])
+                continue
             if len(user_input) == 0:
                 return
             if user_input == "back":
@@ -344,6 +406,12 @@ class CliSetup:
         call to perform the required actions. 
         """
         self.print_step(7)
+        if not (self.download_biorisk or
+                self.download_blastnr or
+                self.download_blastnt or
+                self.download_taxonomy):
+            print("No downloads were requested!")
+            self.stop()
 
         os.makedirs(self.database_directory, exist_ok=True)
 
@@ -480,9 +548,11 @@ class CliSetup:
     def print_step(self, i : int = 0, ii : int = -1):
         """ helper for quick step delinearation. """
         if ii > 0:
-            print( "\n*----------------* Step ", i, ".", ii, "*----------------*")
+            print( "\n\033[38;5;17m*----------------*\033[0m Step ",
+                   i, ".", ii, "\033[38;5;17m*----------------*\033[0m")
             return
-        print( "\n*----------------* Step ", i, "   *----------------*")
+        print( "\n\033[38;5;17m*----------------*\033[0m Step ",
+               i, " \033[38;5;17m*-------------------*\033[0m")
 
     def print_database_options(self):
         """ 
@@ -501,7 +571,7 @@ class CliSetup:
 
     def stop(self):
         """ Gracefully exit with a message to the user."""
-        print("Exiting setup for The Common Mechanism.")
+        print("\033[0mExiting setup for The Common Mechanism.")
         sys.exit()
 
 def add_args(parser_obj: argparse.ArgumentParser) -> argparse.ArgumentParser:

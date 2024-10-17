@@ -166,7 +166,7 @@ class CliSetup:
         """
         Get user inputs for global directory to store databases.
         """
-        self.print_step(1)
+        self.print_step_header(1)
         user_input: str = ""
         print(
             "\nPlease provide the absolute or relative filepath",
@@ -200,7 +200,7 @@ class CliSetup:
 
     def decide_commec_dbs(self):
         """Decide whether the Commec Benign/risks database needs to be downloaded."""
-        self.print_step(2)
+        self.print_step_header(2)
         print(
             "Do you want to download the " "mandatory Commec databases? (~1.2 GB)",
             '\n"y" or "n", for yes or no.',
@@ -234,7 +234,7 @@ class CliSetup:
         """
         Get the URL where the Commec Biorisk and Benign databases are located.
         """
-        self.print_step(2, 1)
+        self.print_step_header(2, 1)
         print(
             "Please provide the URL to download the Commec database.",
             "\nPress <Enter> to use existing: ",
@@ -273,7 +273,7 @@ class CliSetup:
 
     def decide_blastnr(self):
         """Decide whether a Protein database needs to be downloaded."""
-        self.print_step(3)
+        self.print_step_header(3)
         print(
             "Do you want to download the"
             " protein NR database for protein screening? (~530 GB)",
@@ -309,7 +309,7 @@ class CliSetup:
 
     def decide_blastnt(self):
         """Decide what Nucleotide database needs to be downloaded."""
-        self.print_step(4)
+        self.print_step_header(4)
         print(
             "Do you want to download the Nucleotide NT databases for non-coding"
             " region nucleotide screening? (~580 GB)",
@@ -342,7 +342,7 @@ class CliSetup:
 
     def decide_taxonomy(self):
         """Decide whether taxonomy database need to be downloaded."""
-        self.print_step(5)
+        self.print_step_header(5)
         print(
             "Do you want to download the Taxonomy databases? ( less than ~500 MB)",
             '\n"y" or "n", for yes or no.',
@@ -376,7 +376,7 @@ class CliSetup:
         """
         Get the URL where the Commec Biorisk and Benign databases are located.
         """
-        self.print_step(5, 1)
+        self.print_step_header(5, 1)
         user_input: str = ""
         print(
             "Please provide the URL to download the Taxonomy database.",
@@ -417,7 +417,7 @@ class CliSetup:
 
     def confirm(self):
         """Simply allows the user one last chance to confirm their settings."""
-        self.print_step(6)
+        self.print_step_header(6)
         print(
             "The following settings will be used to setup Commec:",
             "\n -> Database Directory: ",
@@ -485,7 +485,7 @@ class CliSetup:
         Once CliSetup state has been finalized,
         call to perform the required actions.
         """
-        self.print_step(7)
+        self.print_step_header(7)
         if not (
             self.download_biorisk
             or self.download_blastnr
@@ -629,7 +629,7 @@ class CliSetup:
 
         return False
 
-    def print_step(self, i: int = 0, ii: int = -1):
+    def print_step_header(self, i: int = 0, ii: int = -1):
         """helper for quick step delinearation."""
         if ii > 0:
             print(

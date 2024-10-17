@@ -29,6 +29,11 @@ from commec.split import (
     add_args as split_add_args,
     run as split_run,
 )
+from commec.setup import (
+    DESCRIPTION as setup_DESCRIPTION,
+    add_args as setup_add_args,
+    run as setup_run,
+)
 
 
 def main():
@@ -52,6 +57,10 @@ def main():
     split_parser = subparsers.add_parser("split", description=split_DESCRIPTION)
     split_add_args(split_parser)
 
+    # Sub-command for "setup"
+    setup_parser = subparsers.add_parser("setup", description=setup_DESCRIPTION)
+    setup_add_args(setup_parser)
+
     args = parser.parse_args()
     if args.command == "screen":
         screen_run(args)
@@ -59,6 +68,8 @@ def main():
         flag_run(args)
     elif args.command == "split":
         split_run(args)
+    elif args.command == "setup":
+        setup_run(args)
     else:
         parser.print_help()
 

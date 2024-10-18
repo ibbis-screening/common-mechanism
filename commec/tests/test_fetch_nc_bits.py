@@ -80,3 +80,51 @@ def test_main():
         for line1, line2 in zip(file1, file2):
             # Strip the lines to ignore trailing spaces or newlines
             assert line1.strip() == line2.strip()
+
+
+def test_fetch_nocoding_regions(tmp_path):
+    """Full test, including file parsing."""
+
+    desc_1 = "NC_TEST01"
+    desc_2 = "NC_TEST02"
+    seq_1 = """ggtagttccctaaacttatcattaagcgatcttcatcgtcaggtatctcgattggtgcagcaagagagcggtgattgt
+accgggaaattaagaggtaacgttgctgccaataaagaaactacctttcaaggtttgaccatagccagtggagccaga
+gagtcagaaaaagtatttgctcaaactgtactaagccacgtagcaaatgttgttctaactcaagaagataccgctaag
+ctattgcaaagtacggtaaagcataatttgaataattatgacttaagaagtgtcggcaatggtaat
+"""
+    seq_2 = """atggcacaagtcattaataccaacagcctctcgctgatcactcaaaataatatcaacaagaaccagtctgcgctgtcg
+agttctatcgagcgtctgtcttctggcttgcgtattaacagcgcgaaggatgacgcagcgggtcaggcgattgctaac
+cgtttcacctctaacattaaaggcctgactcaggcggcccgtaacgccaacgacggtatctccgttgcgcagaccacc
+gaaggcgcgctgtccgaaatcaacaacaacttacagcgtgtgcgtgaactgacggtacaggccact
+"""
+
+    blast_to_parse = """# BLASTX 2.15.0+
+# Query: NC_TEST
+# Database: /root/commec-dbs/mock
+#query acc.	subject title	subject acc.	subject tax ids	evalue	bit score	% identity	query length	q. start	q. end	subject length	s. start	s. end
+# 3 hits found
+NC_TEST01	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	101	200	500	1	100
+NC_TEST02	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	25	80	500	1	100
+NC_TEST02	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	275	300	500	1	100
+"""
+
+    expected_output = """>NC_TEST01 1-100
+ggtagttccctaaacttatcattaagcgatcttcatcgtcaggtatctcgattggtgcagcaagagagcggtgattgtaccgggaaattaagaggtaacg
+>NC_TEST01 201-300
+aaatgttgttctaactcaagaagataccgctaagctattgcaaagtacggtaaagcataatttgaataattatgacttaagaagtgtcggcaatggtaat
+"""
+
+    input_fasta = tmp_path / "fetch_nc_input.fasta"
+    input_fasta.write_text(f">{desc_1}\n{seq_1}\n>{desc_2}\n{seq_2}\n")
+    input_blast = tmp_path / "fetch_nc_input.blastx"
+    input_blast.write_text(blast_to_parse)
+
+    nc_output = tmp_path / "fetch_nc_input.blastx.noncoding.fasta"
+
+    fetch_noncoding_regions(str(input_blast), str(input_fasta))
+
+    # Check if the output file exists
+    assert nc_output.exists()
+
+    actual_output = nc_output.read_text()
+    assert actual_output.strip() == expected_output.strip()

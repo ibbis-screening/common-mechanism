@@ -92,6 +92,16 @@ def fetch_noncoding_regions(protein_results, query_fasta):
         shutil.copyfile(query_fasta, outfile)
         return
 
+    query_col = "query acc."
+    if blast_df[query_col].nunique() > 1:
+        first_query = blast_df[query_col].iloc[0]
+        logging.info(
+            "WARNING: Only fetching nucleotides from first query [%s] in multi-query results: %s",
+            first_query,
+            protein_results,
+        )
+        blast_df = blast_df[blast_df[query_col] == first_query]
+
     logging.info(
         "Protein hits found, fetching nt regions not covered by a 90%% ID hit or better"
     )
@@ -122,12 +132,9 @@ def main():
     Wrapper for parsing arguments direction to fetch_nc_bits if called as main.
     """
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        dest="protein_results", required=True, help="Results of a protein search"
-    )
+    parser.add_argument(dest="protein_results", help="Results of a protein search")
     parser.add_argument(
         dest="fasta_file_path",
-        required=True,
         help="FASTA file from which to fetch regions with no protein hits",
     )
     args = parser.parse_args()

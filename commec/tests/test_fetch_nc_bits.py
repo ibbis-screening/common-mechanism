@@ -27,6 +27,9 @@ from commec.screeners.fetch_nc_bits import (
     ],
 )
 def test_get_ranges_with_no_hits(hits, nc_ranges):
+    """
+    Test the BLAST hits are successfully converted into noncoding ranges.
+    """
     def _create_mock_blast_df_from(hits):
         data = {
             "q. start": [hit[0] for hit in hits],
@@ -41,6 +44,9 @@ def test_get_ranges_with_no_hits(hits, nc_ranges):
 
 
 def test_write_nc_sequences(tmp_path):
+    """
+    Test that sequences are successfully written to an output file based on noncoding regions.
+    """
     desc = "TEST_FETCH_NC"
     seq = "".join([str(i % 10) for i in range(300)])
     record = list(SeqIO.parse(StringIO(f">{desc}\n{seq}\n"), "fasta"))[0]
@@ -62,9 +68,7 @@ OUTPUT_FILE = os.path.join(
 EXPECTED_FILE = os.path.join(
     os.path.dirname(__file__), "test_data/fetch_nc_expected.fasta"
 )
-
-
-def test_fetch_nocoding_regions():
+def test_main():
     """
     Functional run of entire fetch_nc_bits, on a mock blast, and mock input fasta.
     """

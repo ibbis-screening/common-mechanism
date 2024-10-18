@@ -54,7 +54,7 @@ def get_records(fasta_file_path):
         return records
 
 
-def write_nc_sequences(nc_ranges, record, outfile: str):
+def write_nc_sequences(nc_ranges, record, outfile):
     """
     Write a FASTA containing only the parts of the record without a high-quality protein match.
     """

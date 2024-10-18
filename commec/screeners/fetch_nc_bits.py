@@ -11,15 +11,8 @@ import logging
 import shutil
 import re
 from Bio import SeqIO
-from commec.tools.blast_tools import readblast, trimblast
+from commec.tools.blast_tools import get_high_identity_matches
 from commec.tools.search_handler import SearchHandler
-
-
-def get_high_identity_matches(blast_output_file, threshold=90):
-    """Read all hits with high sequence identity from a BLAST results file."""
-    hits = readblast(blast_output_file)
-    hits = trimblast(hits)
-    return hits[hits["% identity"] >= threshold]
 
 
 def get_ranges_with_no_hits(blast_df):

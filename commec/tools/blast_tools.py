@@ -92,7 +92,11 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
 
     # Checks that the Lineage information is present, by parsing it as a string as expected.
     try:
-        for required_lineage_column_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
+        for required_lineage_column_name in [
+            "FullLineage",
+            "FullLineageTaxIDs",
+            "FullLineageRanks",
+        ]:
             assert t[required_lineage_column_name].str
     except AttributeError:
         logging.info(
@@ -358,3 +362,10 @@ def tophits(blast2):
     blast3 = blast3[blast3["subject length"] >= 50]
     blast3 = blast3.reset_index(drop=True)
     return blast3
+
+
+def get_high_identity_matches(blast_output_file, threshold=90):
+    """Read all hits with high sequence identity from a BLAST results file."""
+    hits = readblast(blast_output_file)
+    hits = trimblast(hits)
+    return hits[hits["% identity"] >= threshold]

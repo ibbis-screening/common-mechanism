@@ -62,9 +62,9 @@ def write_nc_sequences(nc_ranges, record, outfile: str):
     for start, stop in nc_ranges:
         # subtract 1 just from `start` to adjust to 0-based index and capture full range
         sequence = record.seq[int(start) - 1 : int(stop)]
-        nc_sequences.append(
-            f">{record.id} {record.description} {start}-{stop}\n{sequence}\n"
-        )
+        # when parsed from a FASTA file, description includes the id:
+        # https://biopython.org/docs/latest/Tutorial/chapter_seq_annot.html#seqrecord-objects-from-fasta-files
+        nc_sequences.append(f">{record.description} {start}-{stop}\n{sequence}\n")
 
     with open(outfile, "w", encoding="utf-8") as output_file:
         output_file.writelines(nc_sequences)
@@ -121,7 +121,7 @@ def main():
     """
     Wrapper for parsing arguments direction to fetch_nc_bits if called as main.
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         dest="protein_results", required=True, help="Results of a protein search"
     )

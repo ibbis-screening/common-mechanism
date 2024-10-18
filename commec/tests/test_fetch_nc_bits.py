@@ -2,6 +2,7 @@ from io import StringIO
 import os
 import pandas as pd
 import pytest
+import textwrap
 from Bio import SeqIO
 from commec.screeners.fetch_nc_bits import (
     get_ranges_with_no_hits,
@@ -30,6 +31,7 @@ def test_get_ranges_with_no_hits(hits, nc_ranges):
     """
     Test the BLAST hits are successfully converted into noncoding ranges.
     """
+
     def _create_mock_blast_df_from(hits):
         data = {
             "q. start": [hit[0] for hit in hits],
@@ -60,59 +62,49 @@ def test_write_nc_sequences(tmp_path):
     assert f">{desc} 91-170\n{seq[90:170]}\n" in content
 
 
-INPUT_FASTA = os.path.join(os.path.dirname(__file__), "test_data/fetch_nc_input.fasta")
-INPUT_BLAST = os.path.join(os.path.dirname(__file__), "test_data/fetch_nc_input.blastx")
-OUTPUT_FILE = os.path.join(
-    os.path.dirname(__file__), "test_data/fetch_nc_input.blastx.noncoding.fasta"
-)
-EXPECTED_FILE = os.path.join(
-    os.path.dirname(__file__), "test_data/fetch_nc_expected.fasta"
-)
-def test_main():
-    """
-    Functional run of entire fetch_nc_bits, on a mock blast, and mock input fasta.
-    """
-    fetch_noncoding_regions(INPUT_BLAST, INPUT_FASTA)
-
-    with open(OUTPUT_FILE, "r", encoding="utf-8") as file1, open(
-        EXPECTED_FILE, "r", encoding="utf-8"
-    ) as file2:
-        for line1, line2 in zip(file1, file2):
-            # Strip the lines to ignore trailing spaces or newlines
-            assert line1.strip() == line2.strip()
-
-
 def test_fetch_nocoding_regions(tmp_path):
     """Full test, including file parsing."""
 
     desc_1 = "NC_TEST01"
     desc_2 = "NC_TEST02"
-    seq_1 = """ggtagttccctaaacttatcattaagcgatcttcatcgtcaggtatctcgattggtgcagcaagagagcggtgattgt
-accgggaaattaagaggtaacgttgctgccaataaagaaactacctttcaaggtttgaccatagccagtggagccaga
-gagtcagaaaaagtatttgctcaaactgtactaagccacgtagcaaatgttgttctaactcaagaagataccgctaag
-ctattgcaaagtacggtaaagcataatttgaataattatgacttaagaagtgtcggcaatggtaat
-"""
-    seq_2 = """atggcacaagtcattaataccaacagcctctcgctgatcactcaaaataatatcaacaagaaccagtctgcgctgtcg
-agttctatcgagcgtctgtcttctggcttgcgtattaacagcgcgaaggatgacgcagcgggtcaggcgattgctaac
-cgtttcacctctaacattaaaggcctgactcaggcggcccgtaacgccaacgacggtatctccgttgcgcagaccacc
-gaaggcgcgctgtccgaaatcaacaacaacttacagcgtgtgcgtgaactgacggtacaggccact
-"""
+    seq_1 = textwrap.dedent(
+        """\
+        ggtagttccctaaacttatcattaagcgatcttcatcgtcaggtatctcgattggtgcagcaagagagcggtgattgt
+        accgggaaattaagaggtaacgttgctgccaataaagaaactacctttcaaggtttgaccatagccagtggagccaga
+        gagtcagaaaaagtatttgctcaaactgtactaagccacgtagcaaatgttgttctaactcaagaagataccgctaag
+        ctattgcaaagtacggtaaagcataatttgaataattatgacttaagaagtgtcggcaatggtaat
+        """
+    )
+    seq_2 = textwrap.dedent(
+        """\
+        atggcacaagtcattaataccaacagcctctcgctgatcactcaaaataatatcaacaagaaccagtctgcgctgtcg
+        agttctatcgagcgtctgtcttctggcttgcgtattaacagcgcgaaggatgacgcagcgggtcaggcgattgctaac
+        cgtttcacctctaacattaaaggcctgactcaggcggcccgtaacgccaacgacggtatctccgttgcgcagaccacc
+        gaaggcgcgctgtccgaaatcaacaacaacttacagcgtgtgcgtgaactgacggtacaggccact
+        """
+    )
 
-    blast_to_parse = """# BLASTX 2.15.0+
-# Query: NC_TEST
-# Database: /root/commec-dbs/mock
-#query acc.	subject title	subject acc.	subject tax ids	evalue	bit score	% identity	query length	q. start	q. end	subject length	s. start	s. end
-# 3 hits found
-NC_TEST01	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	101	200	500	1	100
-NC_TEST02	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	25	80	500	1	100
-NC_TEST02	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	275	300	500	1	100
-"""
+    blast_to_parse = textwrap.dedent(
+        """\
+        # BLASTX 2.15.0+
+        # Query: NC_TEST
+        # Database: /root/commec-dbs/mock
+        #query acc.	subject title	subject acc.	subject tax ids	evalue	bit score	% identity	query length	q. start	q. end	subject length	s. start	s. end
+        # 3 hits found
+        NC_TEST01	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	101	200	500	1	100
+        NC_TEST02	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	25	80	500	1	100
+        NC_TEST02	SUBJECT	SUBJECT_ACC	TAXID	0.0	BITSCORE	99.999	300	275	300	500	1	100
+        """
+    )
 
-    expected_output = """>NC_TEST01 1-100
-ggtagttccctaaacttatcattaagcgatcttcatcgtcaggtatctcgattggtgcagcaagagagcggtgattgtaccgggaaattaagaggtaacg
->NC_TEST01 201-300
-aaatgttgttctaactcaagaagataccgctaagctattgcaaagtacggtaaagcataatttgaataattatgacttaagaagtgtcggcaatggtaat
-"""
+    expected_output = textwrap.dedent(
+        """\
+        >NC_TEST01 1-100
+        ggtagttccctaaacttatcattaagcgatcttcatcgtcaggtatctcgattggtgcagcaagagagcggtgattgtaccgggaaattaagaggtaacg
+        >NC_TEST01 201-300
+        aaatgttgttctaactcaagaagataccgctaagctattgcaaagtacggtaaagcataatttgaataattatgacttaagaagtgtcggcaatggtaat
+        """
+    )
 
     input_fasta = tmp_path / "fetch_nc_input.fasta"
     input_fasta.write_text(f">{desc_1}\n{seq_1}\n>{desc_2}\n{seq_2}\n")

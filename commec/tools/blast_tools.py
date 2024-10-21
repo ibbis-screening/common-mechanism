@@ -153,6 +153,7 @@ def taxdist(
         full_lineage.set_index("Rank", inplace=True)
         full_lineage_taxids = list(map(str, full_lineage["TaxID"]))
 
+        # If any organism in the lineage is synthetic, drop the row
         if any(
             taxid in [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
             for taxid in full_lineage_taxids

@@ -48,6 +48,7 @@ import shutil
 import sys
 import pandas as pd
 import yaml
+from yaml.parser import ParserError
 
 from commec.utils.file_utils import file_arg, directory_arg
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
@@ -185,30 +186,31 @@ class Screen:
         """ 
         Read the contents of a YAML file, to see 
         if it contains information to override configuration.
-        TODO: Move this into json-IO, when opportunity arises.
+        TODO: Refactor this into json-IO, when opportunity arises.
         """
         config = None
         try:
             with open(config_filepath, 'r') as file:
                 config = yaml.safe_load(file)
-        except:
-            print(f"A configuration.yaml file was found ({config_filepath}) but is an invalid yaml file.")
+        except ParserError as e:
+            print(f"A configuration.yaml file was found ({config_filepath}) "
+                   "but was invalid as a yaml file:\n",e)
+            return
 
         # Extract base paths for substitution
         base_paths = []
         try:
-            base_paths = config['base_pathsss']
+            base_paths = config['base_paths']
             # Function to recursively replace placeholders
             def recursive_format(d, base_paths):
                 if isinstance(d, dict):
                     return {k: recursive_format(v, base_paths) for k, v in d.items()}
-                elif isinstance(d, str):
+                if isinstance(d, str):
                     return d.format(**base_paths)
-                else:
-                    return d
+                return d
 
             config = recursive_format(config, base_paths)
-        except KeyError:
+        except TypeError:
             pass
         
         #Debug print.

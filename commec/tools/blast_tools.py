@@ -15,6 +15,8 @@ import numpy as np
 
 from commec.tools.search_handler import SearchHandler, DatabaseValidationError
 
+TAXID_SYNTHETIC_CONSTRUCTS = 32630
+TAXID_VECTORS = 29278
 
 class BlastHandler(SearchHandler):
     """
@@ -70,6 +72,33 @@ def split_taxa(blast):
     return blast
 
 
+def _get_lineage(taxids, db_path, threads):
+    """
+    Get the full lineage for each taxid, allowing us to determine whether it belongs to any organism
+    considered a regulated pathogen; this is necessary because pathogens can be regulated at various
+    points in the lineage (i.e. not just species or genus).
+    """
+    lin = pytaxonkit.lineage(taxids, data_dir=db_path, threads=threads)
+
+
+
+    # Remove deleted and unidentified taxids
+    lin = lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
+
+    # Check that the full lineage information was fetched by parsing
+    try:
+        for required_lineage_col_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
+            assert lin[required_lineage_col_name].str
+            print(lin[required_lineage_col_name].str)
+    except AttributeError:
+        logging.info(
+            "ERROR: The Blast database used has not returned any Lineage information! "
+            "The returned Blast database is unchanged, and the following results "
+            "are invalid."
+        )
+    return lin
+
+
 def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     """
     Go through each taxonomy level and check for regulated taxIDs
@@ -81,26 +110,14 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
     # with the concatenated taxon ids - blast here is a dataframe of blast results
     blast = split_taxa(blast)
     blast["subject tax ids"] = blast["subject tax ids"].astype("int")
-    blast = blast[blast["subject tax ids"] != 32630]  # synthetic constructs
-    blast = blast[blast["subject tax ids"] != 29278]  # vectors
-    blast = blast.reset_index(drop=True)
+    blast = blast[blast["subject tax ids"] != TAXID_SYNTHETIC_CONSTRUCTS]
+    blast = blast[blast["subject tax ids"] != TAXID_VECTORS]
 
-    # checks which individual lines contain regulated pathogens
-    t = pytaxonkit.lineage(blast["subject tax ids"], data_dir=db_path, threads=threads)
+    blast = blast.reset_index(drop=True)
+    lin = _get_lineage(blast["subject tax ids"], db_path, threads)
+
     reg = list(map(str, reg_ids[0]))
     vax = list(map(str, vax_ids[0]))
-
-    # Checks that the Lineage information is present, by parsing it as a string as expected.
-    try:
-        for required_lineage_column_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
-            assert t[required_lineage_column_name].str
-    except AttributeError:
-        logging.info(
-            "ERROR: The Blast database used has not returned any Lineage information! "
-            "The returned Blast database is unchanged, and the following results "
-            "are invalid."
-        )
-        return blast
 
     for x in range(0, blast.shape[0]):  # for each hit taxID
         # fetch the full lineage for that taxID
@@ -108,16 +125,16 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
         tax_lin = pd.DataFrame(
             list(
                 zip(
-                    t["FullLineage"].str.split(";")[x],
-                    t["FullLineageTaxIDs"].str.split(";")[x],
-                    t["FullLineageRanks"].str.split(";")[x],
+                    lin["FullLineage"].str.split(";")[x],
+                    lin["FullLineageTaxIDs"].str.split(";")[x],
+                    lin["FullLineageRanks"].str.split(";")[x],
                 )
             ),
             columns=["Lineage", "TaxID", "Rank"],
         )
         tax_lin.set_index("Rank", inplace=True)
         taxlist = list(map(str, tax_lin["TaxID"]))
-        exlist = ["32630", "29278"]
+        exlist = [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
 
         if str(blast.loc[x, "subject tax ids"]) not in taxlist:
             print(

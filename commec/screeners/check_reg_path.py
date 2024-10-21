@@ -72,13 +72,13 @@ def check_for_regulated_pathogens(input_file: str, input_database_dir: str, n_th
     if not os.path.exists(benign_taxid_path):
         logging.error("\t...benign db file %s does not exist\n", benign_taxid_path)
         return 1
-    vax_taxids = pd.read_csv(benign_taxid_path, header=None, squeeze=True).astype(str).tolist()
+    vax_taxids = pd.read_csv(benign_taxid_path, header=None).squeeze().astype(str).tolist()
 
     biorisk_taxid_path = f"{input_database_dir}/biorisk_db/reg_taxids.txt"
     if not os.path.exists(biorisk_taxid_path):
         logging.error("\t...biorisk db file %s does not exist\n", biorisk_taxid_path)
         return 1
-    reg_taxids = pd.read_csv(biorisk_taxid_path, header=None, squeeze=True).astype(str).tolist()
+    reg_taxids = pd.read_csv(biorisk_taxid_path, header=None).squeeze().astype(str).tolist()
 
     # if there are already regulated regions written to file for this query, add to them
     hits1 = None

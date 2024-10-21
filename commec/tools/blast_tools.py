@@ -9,8 +9,8 @@ Also contains the abstract base class for blastX/N/Diamond database search handl
 import os
 import logging
 import glob
-import pytaxonkit
 from typing import List
+import pytaxonkit
 import pandas as pd
 import numpy as np
 from commec.tools.search_handler import SearchHandler, DatabaseValidationError
@@ -94,19 +94,8 @@ def _get_lineages(taxids, db_path: str | os.PathLike, threads: int):
             ", ".join(taxids_deleted.astype(str).tolist()),
         )
 
-    lin = lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
-
-    # Check that the full lineage information was fetched by parsing
-    try:
-        for required_lineage_col_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
-            assert lin[required_lineage_col_name].str
-    except AttributeError:
-        logging.info(
-            "ERROR: The Blast database used has not returned any Lineage information! "
-            "The returned Blast database is unchanged, and the following results "
-            "are invalid."
-        )
-    return lin
+    # Remove non-success codes from the list
+    return lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
 
 
 def taxdist(
@@ -141,29 +130,25 @@ def taxdist(
     # Check if any rows will be removed due to not finding a valid lineage for them
     rows_to_remove = blast[~blast[TAXIDS_COL].isin(lin["TaxID"])]
     if not rows_to_remove.empty:
-        removed_taxids = rows_to_remove[TAXIDS_COL].unique()
         logging.warning(
             "Removing %i rows from BLAST results due to invalid taxID(s): %s"
             " - check that taxonomy and protein databases are up to date!",
             len(rows_to_remove),
-            ", ".join(map(str, removed_taxids)),
+            ", ".join(map(str, rows_to_remove[TAXIDS_COL].unique())),
         )
-    # Filter if removing taxids
+    # Filter to only those rows which have a matching taxonomic lineage
     blast = blast[blast[TAXIDS_COL].isin(lin["TaxID"])]
 
     # Process each hit
     rows_to_drop = []
     for index, row in blast.iterrows():
-        row_lin = lin[lin["TaxID"] == row[TAXIDS_COL]]
+        row_lin = lin[lin["TaxID"] == row[TAXIDS_COL]].iloc[0]
         full_lineage = pd.DataFrame(
-            list(
-                zip(
-                    row_lin["FullLineage"].str.split(";"),
-                    row_lin["FullLineageTaxIDs"].str.split(";"),
-                    row_lin["FullLineageRanks"].str.split(";"),
-                )
-            ),
-            columns=["Lineage", "TaxID", "Rank"],
+            {
+                "Lineage": row_lin["FullLineage"].str.split(";"),
+                "TaxID": row_lin["FullLineageTaxIDs"].str.split(";"),
+                "Rank": row_lin["FullLineageRanks"].str.split(";"),
+            }
         )
         full_lineage.set_index("Rank", inplace=True)
         full_lineage_taxids = list(map(str, full_lineage["TaxID"]))

@@ -18,6 +18,7 @@ from commec.tools.search_handler import SearchHandler, DatabaseValidationError
 TAXID_SYNTHETIC_CONSTRUCTS = 32630
 TAXID_VECTORS = 29278
 
+
 class BlastHandler(SearchHandler):
     """
     A Database handler specifically for use with Blast.
@@ -41,42 +42,41 @@ class BlastHandler(SearchHandler):
         )
         files = glob.glob(search_file)
         if len(files) == 0:
-            raise DatabaseValidationError(
-                f"Mandatory screening files with {filename}* not found."
-            )
+            raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
 
 
-def split_taxa(blast):
+def _split_by_tax_id(blast: pd.DataFrame):
     """
-    Splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their
-    own taxon ID
+    Some results will have multiple tax ids listed in a semicolon-separated list; split these into
+    multiple rows, each with their own taxon id.
     """
-    blast2 = blast
-    cutrows = []
-    lastrow = blast.shape[0]
-    for i in range(0, len(blast["subject tax ids"])):
-        if str(blast.loc[i, "subject tax ids"]).find(";") != -1:
-            taxids = str(blast.loc[i, "subject tax ids"]).split(";")
-            cutrows.append(i)
-            for tax in taxids:
-                blast2.loc[lastrow + 1, :] = blast.loc[i, :]
-                blast2.loc[lastrow + 1, "subject tax ids"] = tax
-                lastrow = lastrow + 1
+    TAXIDS_COL = "subject tax ids"
+    # Create a list to hold all rows, including split ones
+    new_rows = []
 
-    blast = blast2.drop(cutrows)
-    blast = blast.reset_index(drop=True)
-    blast["regulated"] = False
-    blast["superkingdom"] = ""
-    blast["species"] = ""
-    blast["phylum"] = ""
-    return blast
+    for _, row in blast.iterrows():
+        tax_ids = str(row[TAXIDS_COL]).split(";")
+        if len(tax_ids) > 1:
+            # If there are multiple tax IDs, create a new row for each
+            for tax_id in tax_ids:
+                new_row = row.copy()
+                new_row[TAXIDS_COL] = tax_id
+                new_rows.append(new_row)
+        else:
+            # If there's only one tax ID, keep the original row
+            new_rows.append(row)
+
+    # Create a new DataFrame from the list of rows
+    split = pd.DataFrame(new_rows)
+    split[TAXIDS_COL] = split[TAXIDS_COL].astype("int")
+    return split
 
 
-def _get_lineage(taxids, db_path, threads):
+def _get_lineages(taxids, db_path, threads):
     """
-    Get the full lineage for each taxid, allowing us to determine whether it belongs to any organism
-    considered a regulated pathogen; this is necessary because pathogens can be regulated at various
-    points in the lineage (i.e. not just species or genus).
+    Get the full lineage for each unique taxid. This is needed to determine whether it belongs to
+    any regulated pathogen, since pathogens might be regulated at various points in the lineage
+    (i.e. not just species or genus).
     """
     lin = pytaxonkit.lineage(taxids, data_dir=db_path, threads=threads)
 
@@ -148,7 +148,6 @@ def taxdist(blast, reg_ids, vax_ids, db_path, threads):
             blast.loc[x, "regulated"] = True
         if any(x in vax for x in taxlist):
             blast.loc[x, "regulated"] = False
-
         if "superkingdom" in tax_lin.index:
             blast.loc[x, "superkingdom"] = tax_lin.loc["superkingdom", "Lineage"]
         else:
@@ -193,12 +192,8 @@ def readblast(fileh):
     blast.columns = columns
     blast = blast.sort_values(by=["% identity"], ascending=False)
     blast["log evalue"] = -np.log10(pd.to_numeric(blast["evalue"]) + 1e-300)
-    blast["q. coverage"] = (
-        abs(blast["q. end"] - blast["q. start"]) / blast["query length"].max()
-    )
-    blast["s. coverage"] = (
-        abs(blast["s. end"] - blast["s. start"]) / blast["subject length"]
-    )
+    blast["q. coverage"] = abs(blast["q. end"] - blast["q. start"]) / blast["query length"].max()
+    blast["s. coverage"] = abs(blast["s. end"] - blast["s. start"]) / blast["subject length"]
 
     blast = blast[blast["subject tax ids"].notna()]
     blast = blast.reset_index(drop=True)
@@ -252,9 +247,7 @@ def trim_to_top(df):
     for base in range(1, df["query length"][0]):
         # identify the row index of the top scoring hit
         if df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].shape[0] > 0:
-            top_hit = df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].index[
-                0
-            ]
+            top_hit = df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].index[0]
             # if this hit hasn't been top before, set the start of the query coverage to this base
             if top_hit not in keep_rows:
                 df.loc[top_hit, "q. start"] = base
@@ -294,10 +287,7 @@ def trim_edges(df):
                 # if the hit extends past the end of the earlier one
                 elif i_end + 1 < j_end:
                     df.loc[j, "q. start"] = i_end + 1
-                elif (
-                    i_end == j_end
-                    and df.loc[j, "% identity"] == df.loc[i, "% identity"]
-                ):
+                elif i_end == j_end and df.loc[j, "% identity"] == df.loc[i, "% identity"]:
                     pass
                 # remove if the hit is contained in the earlier one
                 else:
@@ -311,10 +301,7 @@ def trim_edges(df):
                     pass
                 elif i_start - 1 > j_start:
                     df.loc[j, "q. end"] = i_start - 1
-                elif (
-                    i_start == j_start
-                    and df.loc[j, "% identity"] == df.loc[i, "% identity"]
-                ):
+                elif i_start == j_start and df.loc[j, "% identity"] == df.loc[i, "% identity"]:
                     pass
                 else:
                     df.loc[j, "q. start"] = 0

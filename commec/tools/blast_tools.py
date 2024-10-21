@@ -45,22 +45,21 @@ class BlastHandler(SearchHandler):
             raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
 
 
-def _split_by_tax_id(blast: pd.DataFrame):
+def _split_by_tax_id(blast: pd.DataFrame, taxids_col_name="subject tax ids"):
     """
     Some results will have multiple tax ids listed in a semicolon-separated list; split these into
     multiple rows, each with their own taxon id.
     """
-    TAXIDS_COL = "subject tax ids"
     # Create a list to hold all rows, including split ones
     new_rows = []
 
     for _, row in blast.iterrows():
-        tax_ids = str(row[TAXIDS_COL]).split(";")
+        tax_ids = str(row[taxids_col_name]).split(";")
         if len(tax_ids) > 1:
             # If there are multiple tax IDs, create a new row for each
             for tax_id in tax_ids:
                 new_row = row.copy()
-                new_row[TAXIDS_COL] = tax_id
+                new_row[taxids_col_name] = tax_id
                 new_rows.append(new_row)
         else:
             # If there's only one tax ID, keep the original row
@@ -68,7 +67,7 @@ def _split_by_tax_id(blast: pd.DataFrame):
 
     # Create a new DataFrame from the list of rows
     split = pd.DataFrame(new_rows)
-    split[TAXIDS_COL] = split[TAXIDS_COL].astype("int")
+    split[taxids_col_name] = split[taxids_col_name].astype("int")
     return split
 
 
@@ -78,16 +77,29 @@ def _get_lineages(taxids, db_path, threads):
     any regulated pathogen, since pathogens might be regulated at various points in the lineage
     (i.e. not just species or genus).
     """
-    lin = pytaxonkit.lineage(taxids, data_dir=db_path, threads=threads)
+    lin = pytaxonkit.lineage(taxids.drop_duplicates(), data_dir=db_path, threads=threads)
 
-    # Remove deleted and unidentified taxids
+    # Warn about error codes from lineage search
+    taxids_not_found = lin[lin["Code"] == -1]["TaxID"]
+    if not taxids_not_found.empty:
+        logging.warning(
+            "No information about the following taxIDs could be found in the taxonomy database: %s",
+            ", ".join(taxids_not_found.astype(str).tolist()),
+        )
+
+    taxids_deleted = lin[lin["Code"] == 0]["TaxID"]
+    if not taxids_deleted.empty:
+        logging.warning(
+            "The following taxIDs have been deleted (in delnodes.dmp): %s",
+            ", ".join(taxids_deleted.astype(str).tolist()),
+        )
+
     lin = lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
 
     # Check that the full lineage information was fetched by parsing
     try:
         for required_lineage_col_name in ["FullLineage", "FullLineageTaxIDs", "FullLineageRanks"]:
             assert lin[required_lineage_col_name].str
-            print(lin[required_lineage_col_name].str)
     except AttributeError:
         logging.info(
             "ERROR: The Blast database used has not returned any Lineage information! "
@@ -97,72 +109,87 @@ def _get_lineages(taxids, db_path, threads):
     return lin
 
 
-def taxdist(blast, reg_ids, vax_ids, db_path, threads):
+def taxdist(blast: pd.DataFrame, reg_ids, vax_ids, db_path: str | os.PathLike, threads: int):
     """
     Go through each taxonomy level and check for regulated taxIDs
     """
+    # TODO: This should be done elsewhere
+    regulated_taxids = list(map(str, reg_ids[0]))
+    vaccine_taxids = list(map(str, vax_ids[0]))
+
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row
-    # with the concatenated taxon ids - blast here is a dataframe of blast results
-    blast = split_taxa(blast)
-    blast["subject tax ids"] = blast["subject tax ids"].astype("int")
-    blast = blast[blast["subject tax ids"] != TAXID_SYNTHETIC_CONSTRUCTS]
-    blast = blast[blast["subject tax ids"] != TAXID_VECTORS]
+    TAXIDS_COL = "subject tax ids"
+    blast = _split_by_tax_id(blast, TAXIDS_COL)
 
+    # Add new columns, which will later be used to classify the hits as regulated or non-regulated
+    blast["regulated"] = False
+    blast["superkingdom"] = ""
+    blast["phylum"] = ""
+    blast["genus"] = ""
+    blast["species"] = ""
+
+    blast = blast[blast[TAXIDS_COL] != TAXID_SYNTHETIC_CONSTRUCTS]
+    blast = blast[blast[TAXIDS_COL] != TAXID_VECTORS]
     blast = blast.reset_index(drop=True)
-    lin = _get_lineage(blast["subject tax ids"], db_path, threads)
 
-    reg = list(map(str, reg_ids[0]))
-    vax = list(map(str, vax_ids[0]))
+    lin = _get_lineages(blast[TAXIDS_COL], db_path, threads)
 
-    for x in range(0, blast.shape[0]):  # for each hit taxID
-        # fetch the full lineage for that taxID
-        # go through each taxonomy level and check for regulated taxIDs
-        tax_lin = pd.DataFrame(
+    # Check if any rows will be removed due to not finding a valid lineage for them
+    rows_to_remove = blast[~blast[TAXIDS_COL].isin(lin["TaxID"])]
+    if not rows_to_remove.empty:
+        removed_taxids = rows_to_remove[TAXIDS_COL].unique()
+        logging.warning(
+            "Removing %i rows from BLAST results due to invalid taxIDs: %s"
+            " - check that taxonomy and protein databases are up to date!",
+            len(rows_to_remove),
+            ", ".join(map(str, removed_taxids)),
+        )
+    # Filter if removing taxids
+    blast = blast[blast[TAXIDS_COL].isin(lin["TaxID"])]
+
+    # Process each hit
+    rows_to_drop = []
+    for index, row in blast.iterrows():
+        row_lin = lin[lin["TaxID"] == row[TAXIDS_COL]]
+        full_lineage = pd.DataFrame(
             list(
                 zip(
-                    lin["FullLineage"].str.split(";")[x],
-                    lin["FullLineageTaxIDs"].str.split(";")[x],
-                    lin["FullLineageRanks"].str.split(";")[x],
+                    row_lin["FullLineage"].str.split(";"),
+                    row_lin["FullLineageTaxIDs"].str.split(";"),
+                    row_lin["FullLineageRanks"].str.split(";"),
                 )
             ),
             columns=["Lineage", "TaxID", "Rank"],
         )
-        tax_lin.set_index("Rank", inplace=True)
-        taxlist = list(map(str, tax_lin["TaxID"]))
-        exlist = [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
+        full_lineage.set_index("Rank", inplace=True)
+        full_lineage_taxids = list(map(str, full_lineage["TaxID"]))
 
-        if str(blast.loc[x, "subject tax ids"]) not in taxlist:
-            print(
-                "Problem with taxID "
-                + str(blast.loc[x, "subject tax ids"])
-                + " - check that your taxID and protein database are up to date"
-            )
-
-        if any(x in exlist for x in taxlist):
-            blast.drop(x, axis=0, inplace=True)
+        if any(
+            taxid in [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
+            for taxid in full_lineage_taxids
+        ):
+            rows_to_drop.append(index)
             continue
-        if any(x in reg for x in taxlist):
-            blast.loc[x, "regulated"] = True
-        if any(x in vax for x in taxlist):
-            blast.loc[x, "regulated"] = False
-        if "superkingdom" in tax_lin.index:
-            blast.loc[x, "superkingdom"] = tax_lin.loc["superkingdom", "Lineage"]
-        else:
-            blast.loc[x, "superkingdom"] = ""
-        if "species" in tax_lin.index:
-            blast.loc[x, "species"] = tax_lin.loc["species", "Lineage"]
-        else:
-            blast.loc[x, "species"] = ""
-        if "phylum" in tax_lin.index:
-            blast.loc[x, "phylum"] = tax_lin.loc["phylum", "Lineage"]
-        else:
-            blast.loc[x, "phylum"] = ""
 
+        # If any organism in the lineage is regulated, set this hit as regulated
+        if any(taxid in regulated_taxids for taxid in full_lineage_taxids):
+            blast.at[index, "regulated"] = True
+
+        # Unless we're dealing with a known vaccine strain
+        if any(taxid in vaccine_taxids for taxid in full_lineage_taxids):
+            blast.at[index, "regulated"] = False
+
+        # Set additional taxonomic information
+        for rank in ["superkingdom", "phylum", "genus", "species"]:
+            if rank in full_lineage.index:
+                blast.at[index, rank] = full_lineage.loc[index, "Lineage"]
+            else:
+                blast.at[index, rank] = ""
+
+    blast = blast.drop(rows_to_drop)
     blast = blast.sort_values(by=["% identity"], ascending=False)
-
     blast = blast.reset_index(drop=True)
 
     return blast

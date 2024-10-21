@@ -4,7 +4,7 @@ import textwrap
 from unittest.mock import patch
 import numpy as np
 import pandas as pd
-from commec.tools.blast_tools import _split_by_tax_id, readblast, _get_lineages
+from commec.tools.blast_tools import _split_by_tax_id, readblast, _get_lineages, taxdist
 
 
 @pytest.fixture
@@ -33,31 +33,33 @@ def lineage_df():
     """
     Dataframe subsetting columns from the results of pytaxonkit.lineage applied to blast_df
     """
-    return pd.DataFrame({
-        "TaxID": [2371, 644357, 10760, 110011001100, 32630],
-        "Code": [2371, 644357, 10760, -1, 32630],
-        "FullLineage": [
-            "cellular organisms;Bacteria;Pseudomonadota;Gammaproteobacteria;Lysobacterales;Lysobacteraceae;Xylella;Xylella fastidiosa",
-            "cellular organisms;Bacteria;Pseudomonadota;Gammaproteobacteria;Lysobacterales;Lysobacteraceae;Xylella;Xylella fastidiosa;Xylella fastidiosa subsp. multiplex",
-            "Viruses;Duplodnaviria;Heunggongvirae;Uroviricota;Caudoviricetes;Autographiviridae;Studiervirinae;Teseptimavirus;Teseptimavirus T7;Escherichia phage T7",
-            np.nan,
-            "other entries;other sequences;artificial sequences;synthetic construct",
-        ],
-        "FullLineageTaxIDs": [
-            "131567;2;1224;1236;135614;32033;2370;2371",
-            "131567;2;1224;1236;135614;32033;2370;2371;644357",
-            "10239;2731341;2731360;2731618;2731619;2731643;2731653;110456;1985738;10760",
-            np.nan,
-            "2787854;28384;81077;32630",
-        ],
-        "FullLineageRanks": [
-            "no rank;superkingdom;phylum;class;order;family;genus;species",
-            "no rank;superkingdom;phylum;class;order;family;genus;species;subspecies",
-            "superkingdom;clade;kingdom;phylum;class;family;subfamily;genus;species;no rank",
-            np.nan,
-            "no rank;no rank;no rank;species",
-        ],
-    })
+    return pd.DataFrame(
+        {
+            "TaxID": [2371, 644357, 10760, 110011001100, 32630],
+            "Code": [2371, 644357, 10760, -1, 32630],
+            "FullLineage": [
+                "cellular organisms;Bacteria;Pseudomonadota;Gammaproteobacteria;Lysobacterales;Lysobacteraceae;Xylella;Xylella fastidiosa",
+                "cellular organisms;Bacteria;Pseudomonadota;Gammaproteobacteria;Lysobacterales;Lysobacteraceae;Xylella;Xylella fastidiosa;Xylella fastidiosa subsp. multiplex",
+                "Viruses;Duplodnaviria;Heunggongvirae;Uroviricota;Caudoviricetes;Autographiviridae;Studiervirinae;Teseptimavirus;Teseptimavirus T7;Escherichia phage T7",
+                np.nan,
+                "other entries;other sequences;artificial sequences;synthetic construct",
+            ],
+            "FullLineageTaxIDs": [
+                "131567;2;1224;1236;135614;32033;2370;2371",
+                "131567;2;1224;1236;135614;32033;2370;2371;644357",
+                "10239;2731341;2731360;2731618;2731619;2731643;2731653;110456;1985738;10760",
+                np.nan,
+                "2787854;28384;81077;32630",
+            ],
+            "FullLineageRanks": [
+                "no rank;superkingdom;phylum;class;order;family;genus;species",
+                "no rank;superkingdom;phylum;class;order;family;genus;species;subspecies",
+                "superkingdom;clade;kingdom;phylum;class;family;subfamily;genus;species;no rank",
+                np.nan,
+                "no rank;no rank;no rank;species",
+            ],
+        }
+    )
 
 
 def test_split_by_tax_id(blast_df: pd.DataFrame):
@@ -68,11 +70,24 @@ def test_split_by_tax_id(blast_df: pd.DataFrame):
     assert set(split_blast["subject tax ids"]) == expected_tax_ids
 
 
-@patch('pytaxonkit.lineage')
+@patch("pytaxonkit.lineage")
 def test_get_lineages(mock_lineage, blast_df, lineage_df):
     mock_lineage.return_value = lineage_df
     blast_df = _split_by_tax_id(blast_df)
-    lin = _get_lineages(blast_df["subject tax ids"], "/home/tessa/cm_databases/taxonomy/", 8)
+    lin = _get_lineages(
+        blast_df["subject tax ids"], "/home/tessa/cm_databases/taxonomy/", 8
+    )
     # Expect the invalid taxid to be filtered out
     expected_tax_ids = {2371, 644357, 10760, 32630}
     assert set(lin["TaxID"]) == expected_tax_ids
+
+
+@patch("pytaxonkit.lineage")
+def test_taxdist(mock_lineage, blast_df, lineage_df):
+    mock_lineage.return_value = lineage_df
+    # Fake values - should find 1 regulated hit after filtering
+    reg_taxids = [644357, 10760]
+    vax_taxids = [10760]
+    test = taxdist(
+        blast_df, reg_taxids, vax_taxids, "/home/tessa/cm_databases/taxonomy/", 8
+    )

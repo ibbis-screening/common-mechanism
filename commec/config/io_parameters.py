@@ -9,6 +9,8 @@ import os
 import glob
 import argparse
 import logging
+import yaml
+from yaml.parser import ParserError
 from dataclasses import dataclass
 from typing import Optional
 import multiprocessing
@@ -29,6 +31,7 @@ class ScreenConfig:
     skip_nt_search: bool = False
     do_cleanup: bool = False
     diamond_jobs: Optional[int] = None
+    configuration_yaml_file : str | os.PathLike = "commec-config.yaml"
 
 
 class ScreenIOParameters:
@@ -45,6 +48,7 @@ class ScreenIOParameters:
             args.skip_nt_search,
             args.cleanup,
             args.diamond_jobs,
+            args.config_yaml,
         )
 
         # Outputs
@@ -57,6 +61,10 @@ class ScreenIOParameters:
 
         # Storage of user input, used by screen_tools.
         self.db_dir = args.database_dir
+
+        self.yaml_configuration = {}
+        if os.path.exists(self.config.configuration_yaml_file):
+            self.get_configurations_from_yaml(self.config.configuration_yaml_file)
 
         # Check whether a .screen output file already exists.
         if os.path.exists(self.output_screen_file):
@@ -92,6 +100,42 @@ class ScreenIOParameters:
 
         self.query.setup(self.output_prefix)
         return True
+
+    def get_configurations_from_yaml(self, config_filepath : str):
+        """ 
+        Read the contents of a YAML file, to see 
+        if it contains information to override configuration.
+        TODO: Refactor this into json-IO, when opportunity arises.
+        """
+        config = None
+        try:
+            with open(config_filepath, 'r') as file:
+                config = yaml.safe_load(file)
+        except ParserError as e:
+            print(f"A configuration.yaml file was found ({config_filepath}) "
+                   "but was invalid as a yaml file:\n",e)
+            return {}
+
+        # Extract base paths for substitution
+        base_paths = []
+        try:
+            base_paths = config['base_paths']
+            # Function to recursively replace placeholders
+            def recursive_format(d, base_paths):
+                if isinstance(d, dict):
+                    return {k: recursive_format(v, base_paths) for k, v in d.items()}
+                if isinstance(d, str):
+                    return d.format(**base_paths)
+                return d
+
+            config = recursive_format(config, base_paths)
+        except TypeError:
+            pass
+        
+        #Debug print.
+        print(config)
+        self.yaml_configuration = config
+        return
 
     @staticmethod
     def get_output_prefix(input_file, prefix_arg=""):

@@ -47,8 +47,6 @@ import os
 import shutil
 import sys
 import pandas as pd
-import yaml
-from yaml.parser import ParserError
 
 from commec.utils.file_utils import file_arg, directory_arg
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
@@ -104,7 +102,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "-y",
         "--config",
         dest="config_yaml",
-        default="commec-config.yaml",
+        default=default_config.configuration_yaml_file,
         help="Configuration overrides in yaml format for Commec Screen",
     )
     parser.add_argument(
@@ -175,47 +173,8 @@ class Screen:
         self.database_tools: ScreenTools = ScreenTools(self.params)
         self.params.query.translate_query()
 
-        # Check for a configuration yaml, to update all existing settings.
-        if os.path.exists(args.config_yaml):
-            self.update_configurations_from_yaml(args.config_yaml)
-
         # Add the input contents to the log
         shutil.copyfile(self.params.query.input_fasta_path, self.params.tmp_log)
-
-    def update_configurations_from_yaml(self, config_filepath : str):
-        """ 
-        Read the contents of a YAML file, to see 
-        if it contains information to override configuration.
-        TODO: Refactor this into json-IO, when opportunity arises.
-        """
-        config = None
-        try:
-            with open(config_filepath, 'r') as file:
-                config = yaml.safe_load(file)
-        except ParserError as e:
-            print(f"A configuration.yaml file was found ({config_filepath}) "
-                   "but was invalid as a yaml file:\n",e)
-            return
-
-        # Extract base paths for substitution
-        base_paths = []
-        try:
-            base_paths = config['base_paths']
-            # Function to recursively replace placeholders
-            def recursive_format(d, base_paths):
-                if isinstance(d, dict):
-                    return {k: recursive_format(v, base_paths) for k, v in d.items()}
-                if isinstance(d, str):
-                    return d.format(**base_paths)
-                return d
-
-            config = recursive_format(config, base_paths)
-        except TypeError:
-            pass
-        
-        #Debug print.
-        print(config)
-        return
 
     def run(self, args: argparse.ArgumentParser):
         """

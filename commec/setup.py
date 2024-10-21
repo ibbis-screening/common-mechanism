@@ -19,8 +19,8 @@ DESCRIPTION = """Helper script for downloading the databases
  required for running the Common Mechanism Screen"""
 
 C_F_ORANGE = "\033[38;5;202m" # Colour Foreground Orange.
-C_F_GRAY = "\033[38;5;242m"
-C_F_BLUE = "\033[38;5;17m" # Colour Background Blue
+C_F_GRAY = "\033[38;5;242m" # Colour Foreground Gray
+C_F_BLUE = "\033[38;5;17m" # Colour Foreground Blue
 C_B_BLUE = "\033[48;5;17m" # Colour Background Blue
 C_RESET = "\033[0m" # Reset Console Formatting.
 

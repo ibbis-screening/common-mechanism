@@ -1,0 +1,27 @@
+base_paths:
+  default: /path/to/default/db/
+  test: /path/to/test/db/
+
+# Database configurations
+databases:
+  biorisk_hmm: 
+    path: "{default}biorisk_db/biorisk.hmm"
+  regulated_protein:
+    blast:
+      path: "{default}nr_blast/nr"
+    diamond:
+      path: "{default}nr_dmnd/nr.dmnd"
+  regulated_nt:
+    path: "{default}nt_blast/nt"
+  benign:
+    hmm:
+      path: "{default}benign_db/benign.hmm"
+    fasta:
+      path: "{default}benign_db/benign.fasta"
+    cm:
+      path: "{default}benign_db/benign.cm"
+
+# Override specific paths if needed
+overrides:
+  regulated_nt:
+    path: "{test}/nt_blast/nt"

@@ -6,8 +6,10 @@ databases are downloaded in a desired database directory.
 """
 import sys
 import os
+import shutil
 import argparse
 import subprocess
+from pathlib import Path
 import ftplib
 from urllib import request, error, parse
 import zipfile
@@ -16,6 +18,11 @@ import tarfile
 DESCRIPTION = """Helper script for downloading the databases
  required for running the Common Mechanism Screen"""
 
+C_F_ORANGE = "\033[38;5;202m" # Colour Foreground Orange.
+C_F_GRAY = "\033[38;5;242m"
+C_F_BLUE = "\033[38;5;17m" # Colour Background Blue
+C_B_BLUE = "\033[48;5;17m" # Colour Background Blue
+C_RESET = "\033[0m" # Reset Console Formatting.
 
 class CliSetup:
     """
@@ -81,20 +88,20 @@ class CliSetup:
         Starts the user interrogation process.
         """
         print(
-            """\n                       Welcome to\n
- ██████╗ ██████╗ ███╗   ███╗███╗   ███╗███████╗ ██████╗ \033[38;5;202m         ▄▄               \033[0m
-██╔════╝██╔═══██╗████╗ ████║████╗ ████║██╔════╝██╔════╝ \033[38;5;202m       ▄███▌              \033[0m
-██║     ██║   ██║██╔████╔██║██╔████╔██║█████╗  ██║      \033[38;5;202m      ▐█████              \033[0m
-██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██╔══╝  ██║      \033[38;5;202m     ▐██████▌             \033[0m
-╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║███████╗╚██████╗ \033[38;5;202m     ███████▌             \033[0m
- ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝ \033[38;5;202m    ▐███████▌             \033[0m
-\033[48;5;17m█ █████▄ █████▄ █ ▄█▀█▄                                 \033[38;5;202m     ███████   ▄█▄      \033[0m
-\033[48;5;17m█ █    █ █    █ █ █   ▀          DATABASE               \033[38;5;202m      █████▌  ▄███▄▄     \033[0m  
-\033[48;5;17m█ █████▄ █████▄ █ ▀███▄            SETUP                \033[38;5;202m      ▐█████▄██▀    ▀▄    \033[0m   
-\033[48;5;17m█ █    █ █    █ █ ▄   █              UTILITY            \033[38;5;202m      ▐████████       ▌  \033[0m
-\033[48;5;17m█ █████▀ █████▀ █ ▀█▄█▀                                 \033[38;5;202m      ████████▀         \033[0m
-                                                        \033[38;5;202m   ▄▄██████▀▀             \033[0m
-                                                        \033[38;5;202m ▀▀                       \033[0m"""
+            f"""\n                       Welcome to\n
+ ██████╗ ██████╗ ███╗   ███╗███╗   ███╗███████╗ ██████╗ {C_F_ORANGE}         ▄▄               {C_RESET}
+██╔════╝██╔═══██╗████╗ ████║████╗ ████║██╔════╝██╔════╝ {C_F_ORANGE}       ▄███▌              {C_RESET}
+██║     ██║   ██║██╔████╔██║██╔████╔██║█████╗  ██║      {C_F_ORANGE}      ▐█████              {C_RESET}
+██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██╔══╝  ██║      {C_F_ORANGE}     ▐██████▌             {C_RESET}
+╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║███████╗╚██████╗ {C_F_ORANGE}     ███████▌             {C_RESET}
+ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝ {C_F_ORANGE}    ▐███████▌             {C_RESET}
+{C_B_BLUE}█ █████▄ █████▄ █ ▄█▀█▄                                 {C_F_ORANGE}     ███████   ▄█▄      {C_RESET}
+{C_B_BLUE}█ █    █ █    █ █ █   ▀          DATABASE               {C_F_ORANGE}      █████▌  ▄███▄▄     {C_RESET}  
+{C_B_BLUE}█ █████▄ █████▄ █ ▀███▄            SETUP                {C_F_ORANGE}      ▐█████▄██▀    ▀▄    {C_RESET}   
+{C_B_BLUE}█ █    █ █    █ █ ▄   █              UTILITY            {C_F_ORANGE}      ▐████████       ▌  {C_RESET}
+{C_B_BLUE}█ █████▀ █████▀ █ ▀█▄█▀                                 {C_F_ORANGE}      ████████▀         {C_RESET}
+                                                        {C_F_ORANGE}   ▄▄██████▀▀             {C_RESET}
+                                                        {C_F_ORANGE} ▀▀                       {C_RESET}"""
         )
         print(
             "                 The Common Mechanism!",
@@ -103,6 +110,10 @@ class CliSetup:
             "\n\nThis script will help download the mandatory databases ",
             "\nrequired for using Commec Screen, and requires a stable",
             "\ninternet connection, wget, and update_blastdb.pl.",
+            "\n\nThis setup is split over 3 steps:",
+            "\n 1. Specify download location.",
+            "\n 2. Choose which databases to download.",
+            "\n 3. Confirm and start downloads."
         )
         self.print_help_info()
         print()
@@ -117,17 +128,17 @@ class CliSetup:
         """
         add_help_str = "" if len(additional_help) == 0 else "".join(additional_help)
         print(
-            "\033[38;5;202m"
+            f"{C_F_ORANGE}"
             " Instructions: "
             '\n -> You can exit this setup at any time with "exit"'
             '\n -> You can return to a previous step with "back"'
-            '\n -> You can get additional help with "help"' + add_help_str + "\033[0m"
+            '\n -> You can get additional help at each step with "help"' + add_help_str + C_RESET
         )
 
     def check_requirements(self):
         """Checks for wget, and update_blastdb.pl, which should both be present
         given the conda environment to install and use Commec."""
-        print("\033[38;5;242mChecking for wget, and update_blastdb")
+        print(f"{C_F_GRAY}Checking for wget, and update_blastdb{C_RESET}")
         dependencies = ["wget", "update_blastdb.pl"]
         missing_deps = [
             dep
@@ -143,24 +154,49 @@ class CliSetup:
 
         if missing_deps:
             print(
-                "\033[38;5;202mRequired dependencies missing: "
-                + ", ".join(missing_deps)
+                f"{C_F_ORANGE}Required dependencies missing: "
+                + ", ".join(missing_deps) + C_RESET
             )
-            print("Check these are installed in your environment.")
+            print(f"{C_F_ORANGE}Check these are installed in your environment.{C_RESET}")
             self.stop()
-        print("\033[0m")
 
     def check_directory_is_writable(self, input_directory: str) -> bool:
         """Checks a directory is viable by creating it and destroying it."""
-        try:
-            os.makedirs(input_directory, exist_ok=True)
-            try:  # Removedirs can fail if it is a single leaf, containing other files.
-                os.removedirs(input_directory)
+        path = Path(input_directory).absolute().resolve()
+
+        print(path)
+        if path.exists():
+            return True
+        
+        if path.is_reserved():
+            print("This path contains reserved characters for this Operating System.")
+            return False
+        
+        # Handily, all sorts of special characters are identified with a %XX, within posix, and are replaced
+        # by similar characters during mkdir, whilst technically legal, lets recommend against cursed dir names.
+        if '%' in path.as_posix():
+            print("Please avoid using special characters (\"|\}{\":?><*&\" etc) in filepath names.")
+            return False
+    
+        # If the path doesn't exist, the best way to know if user input is valid, is to try make it.
+
+        # Find the part of the directory which is new, so we can delete only it after.
+        path_to_remove_dirs = Path(path.parts[0])
+        for part in path.parts:
+            if path_to_remove_dirs.exists():
+                path_to_remove_dirs = path_to_remove_dirs / part
+                continue
+            break
+
+        # Create the directory, and delete anything created.
+        os.makedirs(path, exist_ok=True)
+        if path.exists():
+            try:
+                shutil.rmtree(path_to_remove_dirs)
             except OSError:
                 pass
-        except subprocess.CalledProcessError:
-            return False
-        return True
+            return True
+        return False
 
     def setup_overall_directory(self):
         """
@@ -171,7 +207,7 @@ class CliSetup:
         print(
             "\nPlease provide the absolute or relative filepath",
             "to where you would like the Commec databases to be located...",
-            "\nPress <Enter> to use default: ",
+            "\nPress <Enter> to use existing: ",
             self.database_directory,
         )
         while True:
@@ -200,7 +236,7 @@ class CliSetup:
 
     def decide_commec_dbs(self):
         """Decide whether the Commec Benign/risks database needs to be downloaded."""
-        self.print_step_header(2)
+        self.print_step_header(2,1)
         print(
             "Do you want to download the " "mandatory Commec databases? (~1.2 GB)",
             '\n"y" or "n", for yes or no.',
@@ -234,7 +270,7 @@ class CliSetup:
         """
         Get the URL where the Commec Biorisk and Benign databases are located.
         """
-        self.print_step_header(2, 1)
+        self.print_step_header(2, 2)
         print(
             "Please provide the URL to download the Commec database.",
             "\nPress <Enter> to use existing: ",
@@ -273,7 +309,7 @@ class CliSetup:
 
     def decide_blastnr(self):
         """Decide whether a Protein database needs to be downloaded."""
-        self.print_step_header(3)
+        self.print_step_header(2,3)
         print(
             "Do you want to download the"
             " protein NR database for protein screening? (~530 GB)",
@@ -309,7 +345,7 @@ class CliSetup:
 
     def decide_blastnt(self):
         """Decide what Nucleotide database needs to be downloaded."""
-        self.print_step_header(4)
+        self.print_step_header(2,4)
         print(
             "Do you want to download the Nucleotide NT databases for non-coding"
             " region nucleotide screening? (~580 GB)",
@@ -342,7 +378,7 @@ class CliSetup:
 
     def decide_taxonomy(self):
         """Decide whether taxonomy database need to be downloaded."""
-        self.print_step_header(5)
+        self.print_step_header(2,5)
         print(
             "Do you want to download the Taxonomy databases? ( less than ~500 MB)",
             '\n"y" or "n", for yes or no.',
@@ -376,7 +412,7 @@ class CliSetup:
         """
         Get the URL where the Commec Biorisk and Benign databases are located.
         """
-        self.print_step_header(5, 1)
+        self.print_step_header(2, 6)
         user_input: str = ""
         print(
             "Please provide the URL to download the Taxonomy database.",
@@ -417,7 +453,7 @@ class CliSetup:
 
     def confirm(self):
         """Simply allows the user one last chance to confirm their settings."""
-        self.print_step_header(6)
+        self.print_step_header(3)
         print(
             "The following settings will be used to setup Commec:",
             "\n -> Database Directory: ",
@@ -633,17 +669,17 @@ class CliSetup:
         """helper for quick step delinearation."""
         if ii > 0:
             print(
-                "\n\033[38;5;17m*----------------*\033[0m Step ",
+                f"\n{C_F_BLUE}*----------------*{C_RESET} Step ",
                 i,
                 ".",
                 ii,
-                "\033[38;5;17m*----------------*\033[0m",
+                f"{C_F_BLUE}*----------------*{C_RESET}",
             )
             return
         print(
-            "\n\033[38;5;17m*----------------*\033[0m Step ",
+            f"\n{C_F_BLUE}*----------------*{C_RESET} Step ",
             i,
-            " \033[38;5;17m*-------------------*\033[0m",
+            f" {C_F_BLUE}*-------------------*{C_RESET}",
         )
 
     def print_database_options(self):
@@ -663,7 +699,7 @@ class CliSetup:
 
     def stop(self):
         """Gracefully exit with a message to the user."""
-        print("\033[0mExiting setup for The Common Mechanism.")
+        print(f"{C_RESET}Exiting setup for The Common Mechanism.")
         sys.exit()
 
 

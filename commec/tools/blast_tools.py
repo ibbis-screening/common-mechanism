@@ -10,9 +10,9 @@ import os
 import logging
 import glob
 import pytaxonkit
+from typing import List
 import pandas as pd
 import numpy as np
-
 from commec.tools.search_handler import SearchHandler, DatabaseValidationError
 
 TAXID_SYNTHETIC_CONSTRUCTS = 32630
@@ -71,7 +71,7 @@ def _split_by_tax_id(blast: pd.DataFrame, taxids_col_name="subject tax ids"):
     return split
 
 
-def _get_lineages(taxids, db_path, threads):
+def _get_lineages(taxids, db_path: str | os.PathLike, threads: int):
     """
     Get the full lineage for each unique taxid. This is needed to determine whether it belongs to
     any regulated pathogen, since pathogens might be regulated at various points in the lineage
@@ -83,14 +83,14 @@ def _get_lineages(taxids, db_path, threads):
     taxids_not_found = lin[lin["Code"] == -1]["TaxID"]
     if not taxids_not_found.empty:
         logging.warning(
-            "No information about the following taxIDs could be found in the taxonomy database: %s",
+            "No information about the following taxID(s) was found in the taxonomy database: %s",
             ", ".join(taxids_not_found.astype(str).tolist()),
         )
 
     taxids_deleted = lin[lin["Code"] == 0]["TaxID"]
     if not taxids_deleted.empty:
         logging.warning(
-            "The following taxIDs have been deleted (in delnodes.dmp): %s",
+            "The following taxID(s) have been deleted (in delnodes.dmp): %s",
             ", ".join(taxids_deleted.astype(str).tolist()),
         )
 
@@ -109,14 +109,16 @@ def _get_lineages(taxids, db_path, threads):
     return lin
 
 
-def taxdist(blast: pd.DataFrame, reg_ids, vax_ids, db_path: str | os.PathLike, threads: int):
+def taxdist(
+    blast: pd.DataFrame,
+    regulated_taxids: List[str],
+    vaccine_taxids: List[str],
+    db_path: str | os.PathLike,
+    threads: int,
+):
     """
     Go through each taxonomy level and check for regulated taxIDs
     """
-    # TODO: This should be done elsewhere
-    regulated_taxids = list(map(str, reg_ids[0]))
-    vaccine_taxids = list(map(str, vax_ids[0]))
-
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
@@ -141,7 +143,7 @@ def taxdist(blast: pd.DataFrame, reg_ids, vax_ids, db_path: str | os.PathLike, t
     if not rows_to_remove.empty:
         removed_taxids = rows_to_remove[TAXIDS_COL].unique()
         logging.warning(
-            "Removing %i rows from BLAST results due to invalid taxIDs: %s"
+            "Removing %i rows from BLAST results due to invalid taxID(s): %s"
             " - check that taxonomy and protein databases are up to date!",
             len(rows_to_remove),
             ", ".join(map(str, removed_taxids)),

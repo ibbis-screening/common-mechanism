@@ -6,16 +6,15 @@ synthetic constructs.
 
 Usage:
   python check_reg_path.py -i INPUT -d database_folder -t threads
-      -i, --input 
+
 """
-import logging
-import re
-import os
-import sys
 import argparse
+import logging
+import os
+import re
+import sys
 import textwrap
 import pandas as pd
-
 from commec.tools.blast_tools import readblast, trimblast, taxdist, tophits
 from commec.tools.blastn import BlastNHandler
 
@@ -55,37 +54,35 @@ def main():
         handlers=[logging.StreamHandler(sys.stderr)],
     )
 
-    rv = check_for_regulated_pathogens(args.in_file, args.db, args.threads)
-    sys.exit(rv)
+    exit_code = check_for_regulated_pathogens(args.in_file, args.db, args.threads)
+    sys.exit(exit_code)
 
 
 def check_for_regulated_pathogens(
     input_file: str, input_database_dir: str, n_threads: int
 ):
-    """Check an input file (output from a database search) for regulated pathogens, from the benign and biorisk database taxids."""
-
+    """
+    Check an input file (output from a database search) for regulated pathogens, from the benign and
+    biorisk database taxids.
+    """
     # check input files
     if not os.path.exists(input_file):
-        logging.error("\t...input query file %s does not exist\n" % input_file)
+        logging.error("\t...input query file %s does not exist\n", input_file)
         return 1
-    if not os.path.exists(input_database_dir + "/benign_db/vax_taxids.txt"):
-        logging.error(
-            "\t...benign db file %s does not exist\n"
-            % (input_database_dir + "/benign_db/vax_taxids.txt")
-        )
+
+    benign_taxid_path = f"{input_database_dir}/benign_db/vax_taxids.txt"
+    if not os.path.exists(benign_taxid_path):
+        logging.error("\t...benign db file %s does not exist\n", benign_taxid_path)
         return 1
-    if not os.path.exists(input_database_dir + "/biorisk_db/reg_taxids.txt"):
-        logging.error(
-            "\t...biorisk db file %s does not exist\n"
-            % (input_database_dir + "/biorisk_db/reg_taxids.txt")
-        )
+
+    biorisk_taxid_path = f"{input_database_dir}/biorisk_db/reg_taxids.txt"
+    if not os.path.exists(biorisk_taxid_path):
+        logging.error("\t...biorisk db file %s does not exist\n", biorisk_taxid_path)
         return 1
 
     # read in files
-    reg_ids = pd.read_csv(
-        input_database_dir + "/biorisk_db/reg_taxids.txt", header=None
-    )
-    vax_ids = pd.read_csv(input_database_dir + "/benign_db/vax_taxids.txt", header=None)
+    reg_ids = pd.read_csv(biorisk_taxid_path, header=None)
+    vax_ids = pd.read_csv(benign_taxid_path, header=None)
 
     sample_name = re.sub(".nr.*", "", input_file)
     sample_name = re.sub(".nt.blastn", "", sample_name)
@@ -96,11 +93,16 @@ def check_for_regulated_pathogens(
         hits1 = pd.read_csv(sample_name + ".reg_path_coords.csv")
 
     if BlastNHandler.is_empty(input_file):
-        logging.info("\tERROR: Homology search has failed\n")
+        logging.info(
+            "\tERROR: Cannot check for regulated pathogens in empty or non-existent file: %s\n",
+            input_file,
+        )
         return 1
 
     if not BlastNHandler.has_hits(input_file):
-        logging.info("\t...no hits\n")
+        logging.info(
+            "\t... Skipping regulated pathogens check, no hits in: %s\n", input_file
+        )
         return 0
 
     blast = readblast(input_file)
@@ -112,12 +114,9 @@ def check_for_regulated_pathogens(
     ]  # ignore submissions made above the species level
 
     # trim down to the top hit for each region, ignoring any top hits that are synthetic constructs
-    # interesting_cols = ['query acc.', 'subject title', 'subject tax ids', 'regulated', 'q. start', 'q. end', '% identity']
-
     blast2 = trimblast(blast)
-    blast2 = tophits(
-        blast2
-    )  # trims down to only label each base with the top matching hit, but includes the different taxids attributed to the same hit
+    # label each base with the top matching hit, but include different taxids attributed to same hit
+    blast2 = tophits(blast2)
 
     reg_bac = 0
     reg_vir = 0
@@ -164,8 +163,10 @@ def check_for_regulated_pathogens(
                             + " overlapped with a nucleotide hit\n"
                         )
                         logging.info(
-                            "\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n"
-                            % (species_list, taxid_list, percent_ids)
+                            "\t\t     Species: %s (taxid(s): %s) (%s percent identity to query)\n",
+                            species_list,
+                            taxid_list,
+                            percent_ids,
                         )
 
     if blast2["regulated"].sum():  # if ANY of the trimmed hits are regulated

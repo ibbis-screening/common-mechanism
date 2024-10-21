@@ -80,8 +80,6 @@ def _get_lineage(taxids, db_path, threads):
     """
     lin = pytaxonkit.lineage(taxids, data_dir=db_path, threads=threads)
 
-
-
     # Remove deleted and unidentified taxids
     lin = lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
 
@@ -375,3 +373,10 @@ def tophits(blast2):
     blast3 = blast3[blast3["subject length"] >= 50]
     blast3 = blast3.reset_index(drop=True)
     return blast3
+
+
+def get_high_identity_matches(blast_output_file, threshold=90):
+    """Read all hits with high sequence identity from a BLAST results file."""
+    hits = readblast(blast_output_file)
+    hits = trimblast(hits)
+    return hits[hits["% identity"] >= threshold]

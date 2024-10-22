@@ -88,6 +88,15 @@ def test_taxdist(mock_lineage, blast_df, lineage_df):
     # Fake values - should find 1 regulated hit after filtering
     reg_taxids = [644357, 10760]
     vax_taxids = [10760]
-    test = taxdist(
+    reg_df = taxdist(
         blast_df, reg_taxids, vax_taxids, "/home/tessa/cm_databases/taxonomy/", 8
     )
+    # Expect the synthetic taxid to be filtered out
+    expected_tax_ids = {2371, 644357, 10760}
+    assert set(reg_df["subject tax ids"]) == expected_tax_ids
+
+    # Expect only taxid 644357 to be marked as "regulated"
+    assert not reg_df[reg_df["subject tax ids"] == 2371]["regulated"].iloc[0]
+    assWert reg_df[reg_df["subject tax ids"] == 644357]["regulated"].iloc[0]
+    assert not reg_df[reg_df["subject tax ids"] == 10760]["regulated"].iloc[0]
+W

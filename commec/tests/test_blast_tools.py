@@ -4,7 +4,7 @@ import textwrap
 from unittest.mock import patch
 import numpy as np
 import pandas as pd
-from commec.tools.blast_tools import _split_by_tax_id, readblast, _get_lineages, taxdist
+from commec.tools.blast_tools import _split_by_tax_id, readblast, _get_lineages, get_taxonomic_labels
 
 
 @pytest.fixture
@@ -88,7 +88,7 @@ def test_taxdist(mock_lineage, blast_df, lineage_df):
     # Fake values - should find 1 regulated hit after filtering
     reg_taxids = [644357, 10760]
     vax_taxids = [10760]
-    reg_df = taxdist(
+    reg_df = get_taxonomic_labels(
         blast_df, reg_taxids, vax_taxids, "/home/tessa/cm_databases/taxonomy/", 8
     )
     # Expect the synthetic taxid to be filtered out
@@ -96,7 +96,6 @@ def test_taxdist(mock_lineage, blast_df, lineage_df):
     assert set(reg_df["subject tax ids"]) == expected_tax_ids
 
     # Expect only taxid 644357 to be marked as "regulated"
-    assert not reg_df[reg_df["subject tax ids"] == 2371]["regulated"].iloc[0]
-    assert reg_df[reg_df["subject tax ids"] == 644357]["regulated"].iloc[0]
-    assert not reg_df[reg_df["subject tax ids"] == 10760]["regulated"].iloc[0]
-
+    assert reg_df[reg_df["subject tax ids"] == 2371]["regulated"].iloc[0] == False
+    assert reg_df[reg_df["subject tax ids"] == 644357]["regulated"].iloc[0] == True
+    assert reg_df[reg_df["subject tax ids"] == 10760]["regulated"].iloc[0] == False

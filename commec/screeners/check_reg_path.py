@@ -15,7 +15,7 @@ import re
 import sys
 import textwrap
 import pandas as pd
-from commec.tools.blast_tools import readblast, trim_to_top_hits, taxdist, tophits
+from commec.tools.blast_tools import readblast, _trim_to_top_hits, get_taxonomic_labels, get_top_hits
 from commec.tools.blastn import BlastNHandler
 
 pd.set_option("display.max_colwidth", 10000)
@@ -97,7 +97,7 @@ def check_for_regulated_pathogens(input_file: str, input_database_dir: str, n_th
         return 0
 
     blast = readblast(input_file)
-    blast = taxdist(blast, reg_taxids, vax_taxids, input_database_dir + "/taxonomy/", n_threads)
+    blast = get_taxonomic_labels(blast, reg_taxids, vax_taxids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast["species"] != ""]  # ignore submissions made above the species level
 
     blast2 = trim_to_top_hits(blast)

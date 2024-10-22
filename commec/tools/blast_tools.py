@@ -98,7 +98,7 @@ def _get_lineages(taxids, db_path: str | os.PathLike, threads: int):
     return lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
 
 
-def taxdist(
+def get_taxonomic_labels(
     blast: pd.DataFrame,
     regulated_taxids: List[str],
     vaccine_taxids: List[str],
@@ -106,12 +106,15 @@ def taxdist(
     threads: int,
 ):
     """
-    Go through each taxonomy level and check for regulated taxIDs
+    Fetch the full lineage for each taxonomy id returned in a similarity search, check if any
+    taxonomy id in the lineage is regulated (filtering out synthetic constructs), and return a new
+    dataframe with taxonomy information.
     """
+    TAXIDS_COL = "subject tax ids"
+
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
-    TAXIDS_COL = "subject tax ids"
     blast = _split_by_tax_id(blast, TAXIDS_COL)
 
     # Add new columns, which will later be used to classify the hits as regulated or non-regulated
@@ -155,18 +158,18 @@ def taxdist(
 
         # If any organism in the lineage is synthetic, drop the row
         if any(
-            taxid in [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
+            int(taxid) in [TAXID_SYNTHETIC_CONSTRUCTS, TAXID_VECTORS]
             for taxid in full_lineage_taxids
         ):
             rows_to_drop.append(index)
             continue
 
         # If any organism in the lineage is regulated, set this hit as regulated
-        if any(taxid in regulated_taxids for taxid in full_lineage_taxids):
+        if any(int(taxid) in regulated_taxids for taxid in full_lineage_taxids):
             blast.at[index, "regulated"] = True
 
         # Unless we're dealing with a known vaccine strain
-        if any(taxid in vaccine_taxids for taxid in full_lineage_taxids):
+        if any(int(taxid) in vaccine_taxids for taxid in full_lineage_taxids):
             blast.at[index, "regulated"] = False
 
         # Set additional taxonomic information

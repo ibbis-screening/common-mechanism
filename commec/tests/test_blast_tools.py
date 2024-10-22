@@ -97,6 +97,6 @@ def test_taxdist(mock_lineage, blast_df, lineage_df):
 
     # Expect only taxid 644357 to be marked as "regulated"
     assert not reg_df[reg_df["subject tax ids"] == 2371]["regulated"].iloc[0]
-    assWert reg_df[reg_df["subject tax ids"] == 644357]["regulated"].iloc[0]
+    assert reg_df[reg_df["subject tax ids"] == 644357]["regulated"].iloc[0]
     assert not reg_df[reg_df["subject tax ids"] == 10760]["regulated"].iloc[0]
-W
+

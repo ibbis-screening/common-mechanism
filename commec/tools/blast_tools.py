@@ -158,18 +158,18 @@ def get_taxonomic_labels(
 
         # If any organism in the lineage is synthetic, drop the row
         if any(
-            int(taxid) in [TAXID_SYNTHETIC_CONSTRUCTS, TAXID_VECTORS]
+            taxid in [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
             for taxid in full_lineage_taxids
         ):
             rows_to_drop.append(index)
             continue
 
         # If any organism in the lineage is regulated, set this hit as regulated
-        if any(int(taxid) in regulated_taxids for taxid in full_lineage_taxids):
+        if any(taxid in regulated_taxids for taxid in full_lineage_taxids):
             blast.at[index, "regulated"] = True
 
         # Unless we're dealing with a known vaccine strain
-        if any(int(taxid) in vaccine_taxids for taxid in full_lineage_taxids):
+        if any(taxid in vaccine_taxids for taxid in full_lineage_taxids):
             blast.at[index, "regulated"] = False
 
         # Set additional taxonomic information

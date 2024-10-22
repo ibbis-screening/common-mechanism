@@ -86,8 +86,8 @@ def test_get_lineages(mock_lineage, blast_df, lineage_df):
 def test_taxdist(mock_lineage, blast_df, lineage_df):
     mock_lineage.return_value = lineage_df
     # Fake values - should find 1 regulated hit after filtering
-    reg_taxids = [644357, 10760]
-    vax_taxids = [10760]
+    reg_taxids = ['644357', '10760']
+    vax_taxids = ['10760']
     reg_df = get_taxonomic_labels(
         blast_df, reg_taxids, vax_taxids, "/home/tessa/cm_databases/taxonomy/", 8
     )

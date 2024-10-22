@@ -16,7 +16,7 @@ import sys
 import pandas as pd
 
 from commec.tools.blastn import BlastNHandler # For has_hits.
-from commec.tools.blast_tools import tophits, readblast, trim_to_top_hits
+from commec.tools.blast_tools import get_top_hits, readblast, _trim_overlapping
 from commec.tools.hmmer import readhmmer
 from commec.tools.cmscan import readcmscan
 
@@ -124,8 +124,7 @@ def check_for_benign(query, coords, benign_desc):
         logging.info("\t...no Synbio sequence hits\n")
     else:
         blastn = readblast(blast)  # synbio parts
-        blastn = trim_to_top_hits(blastn)
-        blastn = tophits(blastn)
+        blastn = get_top_hits(blastn)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             htrim = blastn[
                 ~(

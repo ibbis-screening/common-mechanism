@@ -219,9 +219,9 @@ def readblast(fileh):
     return blast
 
 
-def trim_to_top_hits(blast: pd.DataFrame):
+def _trim_overlapping(blast: pd.DataFrame):
     """
-    Trim BLAST results down to the top hit for each region.
+    Remove any hits that are completely overlapped by another, higher-quality hit.
     """
     # set start to the lowest coordinate and end to the highest to avoid confusion
     blast = shift_hits_pos_strand(blast)
@@ -229,53 +229,34 @@ def trim_to_top_hits(blast: pd.DataFrame):
     # if any multispecies hits contain regulated pathogens, put the regulated up top
     if "regulated" in blast:
         blast = blast.sort_values(by=["regulated"], ascending=False)
+
     # rank hits by percent identity, then bit score
     blast = blast.sort_values(by=["% identity", "bit score"], ascending=False)
     blast = blast.reset_index(drop=True)
 
     blast2 = blast
-    # only keep  top ranked hits that don't overlap
+    # only keep top-ranked hits that don't overlap
     for query in blast["query acc."].unique():
         df = blast[blast["query acc."] == query]
         for i in df.index:  # run through each hit from the top
             for j in df.index[(i + 1) :]:  # compare to each below
                 if j in blast2.index:
-                    # if the beginning and end of the higher rank hit both overlap or extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
+                    # if beginning and end of the higher-rank hit both overlap or extend further
+                    # than the beginning and end of lower-ranked hit, discard the lower-ranked hit
                     if (
                         df.loc[i, "q. start"] <= df.loc[j, "q. start"]
                         and df.loc[i, "q. end"] >= df.loc[j, "q. end"]
                     ):
+                        # Unless the hits have the same coordinates and % identity
                         if (
                             df.loc[i, "q. start"] < df.loc[j, "q. start"]
                             or df.loc[i, "q. end"] > df.loc[j, "q. end"]
                             or df.loc[i, "% identity"] > df.loc[j, "% identity"]
-                        ):  # don't drop hits if they have the same coordinates and % identity
+                        ):
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
 
     return blast2
-
-
-def trim_to_top(df):
-    keep_rows = []
-    df = df.sort_values("% identity", ascending=False)
-    df.reset_index(inplace=True)
-    df = shift_hits_pos_strand(df)
-    prev_hit = None
-    for base in range(1, df["query length"][0]):
-        # identify the row index of the top scoring hit
-        if df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].shape[0] > 0:
-            top_hit = df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].index[0]
-            # if this hit hasn't been top before, set the start of the query coverage to this base
-            if top_hit not in keep_rows:
-                df.loc[top_hit, "q. start"] = base
-                keep_rows.append(top_hit)
-            # if the top hit just changed, set the end of query coverage for the last hit to the previous base
-            if (top_hit != prev_hit) & (prev_hit != None):
-                df.loc[prev_hit, "q. end"] = base - 1
-            prev_hit = top_hit
-    return df.iloc[keep_rows]
-
 
 def shift_hits_pos_strand(blast):
     for j in blast.index:
@@ -347,16 +328,16 @@ def trim_edges(df):
     return df, rerun
 
 
-def tophits(blast2):
+def get_top_hits(blast: pd.DataFrame):
     """
-    Go through trimmed BLAST hits and only look at top protein hit for each base
+    Trim BLAST results down to the top hit for each base.
     """
-    blast3 = blast2
-    blast3 = blast3.sort_values("% identity", ascending=False)
+    top_hits = _trim_overlapping(blast)
+    top_hits = top_hits.sort_values("% identity", ascending=False)
 
     # only keep coordinates of each hit that are not already covered by a better hit
-    for query in blast3["query acc."].unique():
-        df = blast3[blast3["query acc."] == query]
+    for query in top_hits["query acc."].unique():
+        df = top_hits[top_hits["query acc."] == query]
 
         rerun = 1
         while (
@@ -365,23 +346,23 @@ def tophits(blast2):
             df, rerun = trim_edges(df)
 
         for j in df.index:
-            blast3.loc[j, "subject length"] = max(
+            top_hits.loc[j, "subject length"] = max(
                 [df.loc[j, "q. start"], df.loc[j, "q. end"]]
             ) - min([df.loc[j, "q. start"], df.loc[j, "q. end"]])
-            blast3.loc[j, "q. start"] = df.loc[j, "q. start"]
-            blast3.loc[j, "q. end"] = df.loc[j, "q. end"]
+            top_hits.loc[j, "q. start"] = df.loc[j, "q. start"]
+            top_hits.loc[j, "q. end"] = df.loc[j, "q. end"]
 
-    blast3 = blast3.sort_values("q. start")
-    blast3 = blast3[blast3["q. start"] != 0]
+    top_hits = top_hits.sort_values("q. start")
+    top_hits = top_hits[top_hits["q. start"] != 0]
 
     # only keep annotations covering 50 bases or more
-    blast3 = blast3[blast3["subject length"] >= 50]
-    blast3 = blast3.reset_index(drop=True)
-    return blast3
+    top_hits = top_hits[top_hits["subject length"] >= 50]
+    top_hits = top_hits.reset_index(drop=True)
+    return top_hits
 
 
 def get_high_identity_matches(blast_output_file, threshold=90):
     """Read all hits with high sequence identity from a BLAST results file."""
     hits = readblast(blast_output_file)
-    hits = trim_to_top_hits(hits)
+    hits = _trim_overlapping(hits)
     return hits[hits["% identity"] >= threshold]

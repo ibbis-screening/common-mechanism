@@ -216,17 +216,17 @@ def readblast(fileh):
     return blast
 
 
-def trimblast(blast):
+def trim_to_top_hits(blast: pd.DataFrame):
     """
-    Trim BLAST results to the most interesting ones
+    Trim BLAST results down to the top hit for each region.
     """
     # set start to the lowest coordinate and end to the highest to avoid confusion
     blast = shift_hits_pos_strand(blast)
 
-    # rank hits by PID
     # if any multispecies hits contain regulated pathogens, put the regulated up top
     if "regulated" in blast:
         blast = blast.sort_values(by=["regulated"], ascending=False)
+    # rank hits by percent identity, then bit score
     blast = blast.sort_values(by=["% identity", "bit score"], ascending=False)
     blast = blast.reset_index(drop=True)
 
@@ -380,5 +380,5 @@ def tophits(blast2):
 def get_high_identity_matches(blast_output_file, threshold=90):
     """Read all hits with high sequence identity from a BLAST results file."""
     hits = readblast(blast_output_file)
-    hits = trimblast(hits)
+    hits = trim_to_top_hits(hits)
     return hits[hits["% identity"] >= threshold]

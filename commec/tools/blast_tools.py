@@ -145,9 +145,9 @@ def taxdist(
         row_lin = lin[lin["TaxID"] == row[TAXIDS_COL]].iloc[0]
         full_lineage = pd.DataFrame(
             {
-                "Lineage": row_lin["FullLineage"].str.split(";"),
-                "TaxID": row_lin["FullLineageTaxIDs"].str.split(";"),
-                "Rank": row_lin["FullLineageRanks"].str.split(";"),
+                "Lineage": row_lin["FullLineage"].split(";"),
+                "TaxID": row_lin["FullLineageTaxIDs"].split(";"),
+                "Rank": row_lin["FullLineageRanks"].split(";"),
             }
         )
         full_lineage.set_index("Rank", inplace=True)
@@ -172,7 +172,7 @@ def taxdist(
         # Set additional taxonomic information
         for rank in ["superkingdom", "phylum", "genus", "species"]:
             if rank in full_lineage.index:
-                blast.at[index, rank] = full_lineage.loc[index, "Lineage"]
+                blast.at[index, rank] = full_lineage.loc[rank, "Lineage"]
             else:
                 blast.at[index, rank] = ""
 

@@ -48,7 +48,7 @@ class ScreenIOParameters:
             args.skip_nt_search,
             args.cleanup,
             args.diamond_jobs,
-            args.config_yaml,
+            args.config_yaml.strip()
         )
 
         # Outputs
@@ -65,6 +65,12 @@ class ScreenIOParameters:
         self.yaml_configuration = {}
         if os.path.exists(self.config.configuration_yaml_file):
             self.get_configurations_from_yaml(self.config.configuration_yaml_file)
+        else:
+            print("File not found: " + self.config.configuration_yaml_file)
+            raise FileNotFoundError(
+                f"No configuration yaml was found,{self.config.configuration_yaml_file}"
+                "if you are using a custom config file, check the path is correct"
+            )
 
         # Check whether a .screen output file already exists.
         if os.path.exists(self.output_screen_file):

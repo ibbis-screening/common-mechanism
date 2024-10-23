@@ -7,6 +7,7 @@ databases:
   biorisk_hmm: 
     path: "{default}biorisk_db/biorisk.hmm"
   regulated_protein:
+    protein_search_tool: "blast"
     blast:
       path: "{default}nr_blast/nr"
     diamond:

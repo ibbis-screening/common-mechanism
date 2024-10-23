@@ -59,13 +59,13 @@ class ScreenIOParameters:
         # Query
         self.query: Query = Query(args.fasta_file)
 
-        # Storage of user input, used by screen_tools.
+        # Parse user input paths to local databases:
         self.db_dir = args.database_dir
         yaml_db_dir_override = self.db_dir if self.db_dir else None
 
         self.yaml_configuration = {}
         if os.path.exists(self.config.configuration_yaml_file):
-            self.get_configurations_from_yaml(self.config.configuration_yaml_file, self.db_dir)
+            self.get_configurations_from_yaml(self.config.configuration_yaml_file, yaml_db_dir_override)
         else:
             print("File not found: " + self.config.configuration_yaml_file)
             raise FileNotFoundError(
@@ -108,7 +108,11 @@ class ScreenIOParameters:
         self.query.setup(self.output_prefix)
         return True
 
-    def get_configurations_from_yaml(self, config_filepath : str, base_path_defaut_override : str = None):
+    def get_configurations_from_yaml(
+            self, 
+            config_filepath : str,
+            base_path_defaut_override : str = None
+        ):
         """ 
         Read the contents of a YAML file, to see 
         if it contains information to override configuration.
@@ -116,12 +120,15 @@ class ScreenIOParameters:
         """
         config = None
         try:
-            with open(config_filepath, 'r') as file:
+            with open(config_filepath, 'r', encoding="utf-8") as file:
                 config = yaml.safe_load(file)
         except ParserError as e:
             print(f"A configuration.yaml file was found ({config_filepath}) "
                    "but was invalid as a yaml file:\n",e)
             return {}
+        
+        if config["databases"]["regulated_protein"]["protein_search_tool"]:
+            self.config.protein_search_tool = config["databases"]["regulated_protein"]["protein_search_tool"]
 
         # Extract base paths for substitution
         base_paths = {}

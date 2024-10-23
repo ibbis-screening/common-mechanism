@@ -1,13 +1,12 @@
 base_paths:
-  default: /path/to/default/db/
-  test: /path/to/test/db/
+  default: /path/to/default/db/ # Overridden if database directory is passed in CLI to screen.
 
 # Database configurations
 databases:
   biorisk_hmm: 
     path: "{default}biorisk_db/biorisk.hmm"
   regulated_protein:
-    protein_search_tool: "blast"
+    protein_search_tool: "blastx" # Overrides CLI.
     blast:
       path: "{default}nr_blast/nr"
     diamond:
@@ -21,8 +20,3 @@ databases:
       path: "{default}benign_db/benign.fasta"
     cm:
       path: "{default}benign_db/benign.cm"
-
-# Override specific paths if needed
-overrides:
-  regulated_nt:
-    path: "{test}/nt_blast/nt"

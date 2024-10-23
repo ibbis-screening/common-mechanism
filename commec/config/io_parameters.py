@@ -61,14 +61,15 @@ class ScreenIOParameters:
 
         # Storage of user input, used by screen_tools.
         self.db_dir = args.database_dir
+        yaml_db_dir_override = self.db_dir if self.db_dir else None
 
         self.yaml_configuration = {}
         if os.path.exists(self.config.configuration_yaml_file):
-            self.get_configurations_from_yaml(self.config.configuration_yaml_file)
+            self.get_configurations_from_yaml(self.config.configuration_yaml_file, self.db_dir)
         else:
             print("File not found: " + self.config.configuration_yaml_file)
             raise FileNotFoundError(
-                f"No configuration yaml was found,{self.config.configuration_yaml_file}"
+                "No configuration yaml was found at " + self.config.configuration_yaml_file + " "
                 "if you are using a custom config file, check the path is correct"
             )
 
@@ -107,7 +108,7 @@ class ScreenIOParameters:
         self.query.setup(self.output_prefix)
         return True
 
-    def get_configurations_from_yaml(self, config_filepath : str):
+    def get_configurations_from_yaml(self, config_filepath : str, base_path_defaut_override : str = None):
         """ 
         Read the contents of a YAML file, to see 
         if it contains information to override configuration.
@@ -123,9 +124,11 @@ class ScreenIOParameters:
             return {}
 
         # Extract base paths for substitution
-        base_paths = []
+        base_paths = {}
         try:
             base_paths = config['base_paths']
+            if base_path_defaut_override:
+                base_paths["default"] = base_path_defaut_override
             # Function to recursively replace placeholders
             def recursive_format(d, base_paths):
                 if isinstance(d, dict):

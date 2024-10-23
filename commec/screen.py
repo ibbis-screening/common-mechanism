@@ -72,7 +72,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--databases",
         dest="database_dir",
         type=directory_arg,
-        required=True,
+        default = None,
         help="Path to directory containing reference databases (e.g. taxonomy, protein, HMM)",
     )
     parser.add_argument(

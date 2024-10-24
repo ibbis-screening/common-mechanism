@@ -3,13 +3,13 @@
 """
 Module for Blast related tools, a library for dealing with general blast file parsing tasks.
 Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
-(split_taxa, taxdist, readblast, trimblast, tophits)
+
 Also contains the abstract base class for blastX/N/Diamond database search handlers.
 """
 import os
 import logging
 import glob
-from typing import List
+from typing import List, Union, BinaryIO, TextIO
 import pytaxonkit
 import pandas as pd
 import numpy as np
@@ -186,11 +186,11 @@ def get_taxonomic_labels(
     return blast
 
 
-def readblast(fileh):
+def read_blast(blast_file: Union[str, os.PathLike, BinaryIO, TextIO]) -> pd.DataFrame:
     """
     Read in BLAST/DIAMOND files and pre-format the data frame with essential info
     """
-    blast = pd.read_csv(fileh, sep="\t", comment="#", header=None)
+    blast = pd.read_csv(blast_file, sep="\t", comment="#", header=None)
     columns = [
         "query acc.",
         "subject title",
@@ -363,6 +363,6 @@ def get_top_hits(blast: pd.DataFrame):
 
 def get_high_identity_matches(blast_output_file, threshold=90):
     """Read all hits with high sequence identity from a BLAST results file."""
-    hits = readblast(blast_output_file)
+    hits = read_blast(blast_output_file)
     hits = _trim_overlapping(hits)
     return hits[hits["% identity"] >= threshold]

@@ -4,7 +4,7 @@ import textwrap
 from unittest.mock import patch
 import numpy as np
 import pandas as pd
-from commec.tools.blast_tools import _split_by_tax_id, readblast, _get_lineages, get_taxonomic_labels
+from commec.tools.blast_tools import _split_by_tax_id, read_blast, _get_lineages, get_taxonomic_labels
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def blast_df():
         BT_01	SUBJECT	SUBJECT_ACC	32630	0.0	BITSCORE	99.999	300	275	300	500	1	100
         """
     )
-    return readblast(StringIO(blast_to_parse))
+    return read_blast(StringIO(blast_to_parse))
 
 
 @pytest.fixture

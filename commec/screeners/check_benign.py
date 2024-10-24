@@ -15,15 +15,16 @@ import os
 import sys
 import pandas as pd
 
-from commec.tools.blastn import BlastNHandler # For has_hits.
-from commec.tools.blast_tools import get_top_hits, readblast, _trim_overlapping
+from commec.tools.blastn import BlastNHandler  # For has_hits.
+from commec.tools.blast_tools import get_top_hits, read_blast
 from commec.tools.hmmer import readhmmer
 from commec.tools.cmscan import readcmscan
 
+
 def check_for_benign(query, coords, benign_desc):
-    '''
-    Checks a query against taxonomy 
-    '''
+    """
+    Checks a query against taxonomy
+    """
     cleared = [0] * coords.shape[0]
 
     # PROTEIN HITS
@@ -55,8 +56,12 @@ def check_for_benign(query, coords, benign_desc):
                     # for row in range(htrim.shape[0]):
                     for row in [0]:  # just print the top hit
                         hit = htrim["target name"][row]
-                        hit_msg = (hit + ": " + str(*benign_desc['Description'][benign_desc['ID'] == hit])
-                                   + f" (E-value: {htrim['E-value'][row]:.3g}")
+                        hit_msg = (
+                            hit
+                            + ": "
+                            + str(*benign_desc["Description"][benign_desc["ID"] == hit])
+                            + f" (E-value: {htrim['E-value'][row]:.3g}"
+                        )
                         descriptions.append(hit_msg + "\n")
                     annot_string = "\n".join(str(v) for v in descriptions)
                     logging.info(
@@ -123,7 +128,7 @@ def check_for_benign(query, coords, benign_desc):
     if not BlastNHandler.has_hits(blast):
         logging.info("\t...no Synbio sequence hits\n")
     else:
-        blastn = readblast(blast)  # synbio parts
+        blastn = read_blast(blast)  # synbio parts
         blastn = get_top_hits(blastn)
         for region in range(0, coords.shape[0]):  # for each regulated pathogen region
             htrim = blastn[
@@ -170,10 +175,10 @@ def check_for_benign(query, coords, benign_desc):
 
 
 def main():
-    '''
-    Alternative legacy entry point wrapper for calling check_benign as main, 
+    """
+    Alternative legacy entry point wrapper for calling check_benign as main,
     as isolated python script. No longer used in commec screen.
-    '''
+    """
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
@@ -198,9 +203,10 @@ def main():
         required=True,
         help="Benign HMM database folder (must contain benign_annotations.tsv)",
     )
-    parser.add_argument("-o","--out", dest="output_json",
-        required=True,help="output_json_filepath")
-    
+    parser.add_argument(
+        "-o", "--out", dest="output_json", required=True, help="output_json_filepath"
+    )
+
     args = parser.parse_args()
 
     if not os.path.exists(args.db + "/benign_annotations.tsv"):
@@ -226,6 +232,7 @@ def main():
     coords.reset_index(drop=True, inplace=True)
     rv = check_for_benign(args.sample_name, coords, benign_desc)
     sys.exit(rv)
+
 
 if __name__ == "__main__":
     main()

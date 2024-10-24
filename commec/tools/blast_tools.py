@@ -3,17 +3,20 @@
 """
 Module for Blast related tools, a library for dealing with general blast file parsing tasks.
 Useful for reading any blast related outputs, for example from Blastx, Blastn, or diamond.
-(split_taxa, taxdist, readblast, trimblast, tophits)
+
 Also contains the abstract base class for blastX/N/Diamond database search handlers.
 """
 import os
 import logging
 import glob
+from typing import List, Union, BinaryIO, TextIO
 import pytaxonkit
 import pandas as pd
 import numpy as np
-
 from commec.tools.search_handler import SearchHandler, DatabaseValidationError
+
+TAXID_SYNTHETIC_CONSTRUCTS = 32630
+TAXID_VECTORS = 29278
 
 
 class BlastHandler(SearchHandler):
@@ -39,130 +42,155 @@ class BlastHandler(SearchHandler):
         )
         files = glob.glob(search_file)
         if len(files) == 0:
-            raise DatabaseValidationError(
-                f"Mandatory screening files with {filename}* not found."
-            )
+            raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
 
 
-def split_taxa(blast):
+def _split_by_tax_id(blast: pd.DataFrame, taxids_col_name="subject tax ids"):
     """
-    Splits multi-taxon IDs in BLAST results into multiple rows in the results table each with their
-    own taxon ID
+    Some results will have multiple tax ids listed in a semicolon-separated list; split these into
+    multiple rows, each with their own taxon id.
     """
-    blast2 = blast
-    cutrows = []
-    lastrow = blast.shape[0]
-    for i in range(0, len(blast["subject tax ids"])):
-        if str(blast.loc[i, "subject tax ids"]).find(";") != -1:
-            taxids = str(blast.loc[i, "subject tax ids"]).split(";")
-            cutrows.append(i)
-            for tax in taxids:
-                blast2.loc[lastrow + 1, :] = blast.loc[i, :]
-                blast2.loc[lastrow + 1, "subject tax ids"] = tax
-                lastrow = lastrow + 1
+    # Create a list to hold all rows, including split ones
+    new_rows = []
 
-    blast = blast2.drop(cutrows)
-    blast = blast.reset_index(drop=True)
-    blast["regulated"] = False
-    blast["superkingdom"] = ""
-    blast["species"] = ""
-    blast["phylum"] = ""
-    return blast
+    for _, row in blast.iterrows():
+        tax_ids = str(row[taxids_col_name]).split(";")
+        if len(tax_ids) > 1:
+            # If there are multiple tax IDs, create a new row for each
+            for tax_id in tax_ids:
+                new_row = row.copy()
+                new_row[taxids_col_name] = tax_id
+                new_rows.append(new_row)
+        else:
+            # If there's only one tax ID, keep the original row
+            new_rows.append(row)
+
+    # Create a new DataFrame from the list of rows
+    split = pd.DataFrame(new_rows)
+    split[taxids_col_name] = split[taxids_col_name].astype("int")
+    return split
 
 
-def taxdist(blast, reg_ids, vax_ids, db_path, threads):
+def _get_lineages(taxids, db_path: str | os.PathLike, threads: int):
     """
-    Go through each taxonomy level and check for regulated taxIDs
+    Get the full lineage for each unique taxid. This is needed to determine whether it belongs to
+    any regulated pathogen, since pathogens might be regulated at various points in the lineage
+    (i.e. not just species or genus).
     """
+    lin = pytaxonkit.lineage(taxids.drop_duplicates(), data_dir=db_path, threads=threads)
+
+    # Warn about error codes from lineage search
+    taxids_not_found = lin[lin["Code"] == -1]["TaxID"]
+    if not taxids_not_found.empty:
+        logging.warning(
+            "No information about the following taxID(s) was found in the taxonomy database: %s",
+            ", ".join(taxids_not_found.astype(str).tolist()),
+        )
+
+    taxids_deleted = lin[lin["Code"] == 0]["TaxID"]
+    if not taxids_deleted.empty:
+        logging.warning(
+            "The following taxID(s) have been deleted (in delnodes.dmp): %s",
+            ", ".join(taxids_deleted.astype(str).tolist()),
+        )
+
+    # Remove non-success codes from the list
+    return lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
+
+
+def get_taxonomic_labels(
+    blast: pd.DataFrame,
+    regulated_taxids: List[str],
+    vaccine_taxids: List[str],
+    db_path: str | os.PathLike,
+    threads: int,
+):
+    """
+    Fetch the full lineage for each taxonomy id returned in a similarity search, check if any
+    taxonomy id in the lineage is regulated (filtering out synthetic constructs), and return a new
+    dataframe with taxonomy information.
+    """
+    TAXIDS_COL = "subject tax ids"
+
     # prevent truncation of taxonomy results
     pd.set_option("display.max_colwidth", None)
 
-    # create a new row for each taxon id in a semicolon-separated list, then delete the original row
-    # with the concatenated taxon ids - blast here is a dataframe of blast results
-    blast = split_taxa(blast)
-    blast["subject tax ids"] = blast["subject tax ids"].astype("int")
-    blast = blast[blast["subject tax ids"] != 32630]  # synthetic constructs
-    blast = blast[blast["subject tax ids"] != 29278]  # vectors
+    blast = _split_by_tax_id(blast, TAXIDS_COL)
+
+    # Add new columns, which will later be used to classify the hits as regulated or non-regulated
+    blast["regulated"] = False
+    blast["superkingdom"] = ""
+    blast["phylum"] = ""
+    blast["genus"] = ""
+    blast["species"] = ""
+
+    blast = blast[blast[TAXIDS_COL] != TAXID_SYNTHETIC_CONSTRUCTS]
+    blast = blast[blast[TAXIDS_COL] != TAXID_VECTORS]
     blast = blast.reset_index(drop=True)
 
-    # checks which individual lines contain regulated pathogens
-    t = pytaxonkit.lineage(blast["subject tax ids"], data_dir=db_path, threads=threads)
-    reg = list(map(str, reg_ids[0]))
-    vax = list(map(str, vax_ids[0]))
+    lin = _get_lineages(blast[TAXIDS_COL], db_path, threads)
 
-    # Checks that the Lineage information is present, by parsing it as a string as expected.
-    try:
-        for required_lineage_column_name in [
-            "FullLineage",
-            "FullLineageTaxIDs",
-            "FullLineageRanks",
-        ]:
-            assert t[required_lineage_column_name].str
-    except AttributeError:
-        logging.info(
-            "ERROR: The Blast database used has not returned any Lineage information! "
-            "The returned Blast database is unchanged, and the following results "
-            "are invalid."
+    # Check if any rows will be removed due to not finding a valid lineage for them
+    rows_to_remove = blast[~blast[TAXIDS_COL].isin(lin["TaxID"])]
+    if not rows_to_remove.empty:
+        logging.warning(
+            "Removing %i rows from BLAST results due to invalid taxID(s): %s"
+            " - check that taxonomy and protein databases are up to date!",
+            len(rows_to_remove),
+            ", ".join(map(str, rows_to_remove[TAXIDS_COL].unique())),
         )
-        return blast
+    # Filter to only those rows which have a matching taxonomic lineage
+    blast = blast[blast[TAXIDS_COL].isin(lin["TaxID"])]
 
-    for x in range(0, blast.shape[0]):  # for each hit taxID
-        # fetch the full lineage for that taxID
-        # go through each taxonomy level and check for regulated taxIDs
-        tax_lin = pd.DataFrame(
-            list(
-                zip(
-                    t["FullLineage"].str.split(";")[x],
-                    t["FullLineageTaxIDs"].str.split(";")[x],
-                    t["FullLineageRanks"].str.split(";")[x],
-                )
-            ),
-            columns=["Lineage", "TaxID", "Rank"],
+    # Process each hit
+    rows_to_drop = []
+    for index, row in blast.iterrows():
+        row_lin = lin[lin["TaxID"] == row[TAXIDS_COL]].iloc[0]
+        full_lineage = pd.DataFrame(
+            {
+                "Lineage": row_lin["FullLineage"].split(";"),
+                "TaxID": row_lin["FullLineageTaxIDs"].split(";"),
+                "Rank": row_lin["FullLineageRanks"].split(";"),
+            }
         )
-        tax_lin.set_index("Rank", inplace=True)
-        taxlist = list(map(str, tax_lin["TaxID"]))
-        exlist = ["32630", "29278"]
+        full_lineage.set_index("Rank", inplace=True)
+        full_lineage_taxids = list(map(str, full_lineage["TaxID"]))
 
-        if str(blast.loc[x, "subject tax ids"]) not in taxlist:
-            print(
-                "Problem with taxID "
-                + str(blast.loc[x, "subject tax ids"])
-                + " - check that your taxID and protein database are up to date"
-            )
-
-        if any(x in exlist for x in taxlist):
-            blast.drop(x, axis=0, inplace=True)
+        # If any organism in the lineage is synthetic, drop the row
+        if any(
+            taxid in [str(TAXID_SYNTHETIC_CONSTRUCTS), str(TAXID_VECTORS)]
+            for taxid in full_lineage_taxids
+        ):
+            rows_to_drop.append(index)
             continue
-        if any(x in reg for x in taxlist):
-            blast.loc[x, "regulated"] = True
-        if any(x in vax for x in taxlist):
-            blast.loc[x, "regulated"] = False
 
-        if "superkingdom" in tax_lin.index:
-            blast.loc[x, "superkingdom"] = tax_lin.loc["superkingdom", "Lineage"]
-        else:
-            blast.loc[x, "superkingdom"] = ""
-        if "species" in tax_lin.index:
-            blast.loc[x, "species"] = tax_lin.loc["species", "Lineage"]
-        else:
-            blast.loc[x, "species"] = ""
-        if "phylum" in tax_lin.index:
-            blast.loc[x, "phylum"] = tax_lin.loc["phylum", "Lineage"]
-        else:
-            blast.loc[x, "phylum"] = ""
+        # If any organism in the lineage is regulated, set this hit as regulated
+        if any(taxid in regulated_taxids for taxid in full_lineage_taxids):
+            blast.at[index, "regulated"] = True
 
+        # Unless we're dealing with a known vaccine strain
+        if any(taxid in vaccine_taxids for taxid in full_lineage_taxids):
+            blast.at[index, "regulated"] = False
+
+        # Set additional taxonomic information
+        for rank in ["superkingdom", "phylum", "genus", "species"]:
+            if rank in full_lineage.index:
+                blast.at[index, rank] = full_lineage.loc[rank, "Lineage"]
+            else:
+                blast.at[index, rank] = ""
+
+    blast = blast.drop(rows_to_drop)
     blast = blast.sort_values(by=["% identity"], ascending=False)
-
     blast = blast.reset_index(drop=True)
 
     return blast
 
 
-def readblast(fileh):
+def read_blast(blast_file: Union[str, os.PathLike, BinaryIO, TextIO]) -> pd.DataFrame:
     """
     Read in BLAST/DIAMOND files and pre-format the data frame with essential info
     """
-    blast = pd.read_csv(fileh, sep="\t", comment="#", header=None)
+    blast = pd.read_csv(blast_file, sep="\t", comment="#", header=None)
     columns = [
         "query acc.",
         "subject title",
@@ -182,12 +210,8 @@ def readblast(fileh):
     blast.columns = columns
     blast = blast.sort_values(by=["% identity"], ascending=False)
     blast["log evalue"] = -np.log10(pd.to_numeric(blast["evalue"]) + 1e-300)
-    blast["q. coverage"] = (
-        abs(blast["q. end"] - blast["q. start"]) / blast["query length"].max()
-    )
-    blast["s. coverage"] = (
-        abs(blast["s. end"] - blast["s. start"]) / blast["subject length"]
-    )
+    blast["q. coverage"] = abs(blast["q. end"] - blast["q. start"]) / blast["query length"].max()
+    blast["s. coverage"] = abs(blast["s. end"] - blast["s. start"]) / blast["subject length"]
 
     blast = blast[blast["subject tax ids"].notna()]
     blast = blast.reset_index(drop=True)
@@ -195,65 +219,44 @@ def readblast(fileh):
     return blast
 
 
-def trimblast(blast):
+def _trim_overlapping(blast: pd.DataFrame):
     """
-    Trim BLAST results to the most interesting ones
+    Remove any hits that are completely overlapped by another, higher-quality hit.
     """
     # set start to the lowest coordinate and end to the highest to avoid confusion
     blast = shift_hits_pos_strand(blast)
 
-    # rank hits by PID
     # if any multispecies hits contain regulated pathogens, put the regulated up top
     if "regulated" in blast:
         blast = blast.sort_values(by=["regulated"], ascending=False)
+
+    # rank hits by percent identity, then bit score
     blast = blast.sort_values(by=["% identity", "bit score"], ascending=False)
     blast = blast.reset_index(drop=True)
 
     blast2 = blast
-    # only keep  top ranked hits that don't overlap
+    # only keep top-ranked hits that don't overlap
     for query in blast["query acc."].unique():
         df = blast[blast["query acc."] == query]
         for i in df.index:  # run through each hit from the top
             for j in df.index[(i + 1) :]:  # compare to each below
                 if j in blast2.index:
-                    # if the beginning and end of the higher rank hit both overlap or extend further than the beginning and end of the lower ranked hit, discard the lower ranked hit
+                    # if beginning and end of the higher-rank hit both overlap or extend further
+                    # than the beginning and end of lower-ranked hit, discard the lower-ranked hit
                     if (
                         df.loc[i, "q. start"] <= df.loc[j, "q. start"]
                         and df.loc[i, "q. end"] >= df.loc[j, "q. end"]
                     ):
+                        # Unless the hits have the same coordinates and % identity
                         if (
                             df.loc[i, "q. start"] < df.loc[j, "q. start"]
                             or df.loc[i, "q. end"] > df.loc[j, "q. end"]
                             or df.loc[i, "% identity"] > df.loc[j, "% identity"]
-                        ):  # don't drop hits if they have the same coordinates and % identity
+                        ):
                             blast2 = blast2.drop([j])
     blast2 = blast2.reset_index(drop=True)
 
     return blast2
-
-
-def trim_to_top(df):
-    keep_rows = []
-    df = df.sort_values("% identity", ascending=False)
-    df.reset_index(inplace=True)
-    df = shift_hits_pos_strand(df)
-    prev_hit = None
-    for base in range(1, df["query length"][0]):
-        # identify the row index of the top scoring hit
-        if df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].shape[0] > 0:
-            top_hit = df[(df["q. start"] <= base) & (df["q. end"] >= base).all()].index[
-                0
-            ]
-            # if this hit hasn't been top before, set the start of the query coverage to this base
-            if top_hit not in keep_rows:
-                df.loc[top_hit, "q. start"] = base
-                keep_rows.append(top_hit)
-            # if the top hit just changed, set the end of query coverage for the last hit to the previous base
-            if (top_hit != prev_hit) & (prev_hit != None):
-                df.loc[prev_hit, "q. end"] = base - 1
-            prev_hit = top_hit
-    return df.iloc[keep_rows]
-
 
 def shift_hits_pos_strand(blast):
     for j in blast.index:
@@ -283,10 +286,7 @@ def trim_edges(df):
                 # if the hit extends past the end of the earlier one
                 elif i_end + 1 < j_end:
                     df.loc[j, "q. start"] = i_end + 1
-                elif (
-                    i_end == j_end
-                    and df.loc[j, "% identity"] == df.loc[i, "% identity"]
-                ):
+                elif i_end == j_end and df.loc[j, "% identity"] == df.loc[i, "% identity"]:
                     pass
                 # remove if the hit is contained in the earlier one
                 else:
@@ -300,10 +300,7 @@ def trim_edges(df):
                     pass
                 elif i_start - 1 > j_start:
                     df.loc[j, "q. end"] = i_start - 1
-                elif (
-                    i_start == j_start
-                    and df.loc[j, "% identity"] == df.loc[i, "% identity"]
-                ):
+                elif i_start == j_start and df.loc[j, "% identity"] == df.loc[i, "% identity"]:
                     pass
                 else:
                     df.loc[j, "q. start"] = 0
@@ -331,16 +328,16 @@ def trim_edges(df):
     return df, rerun
 
 
-def tophits(blast2):
+def get_top_hits(blast: pd.DataFrame):
     """
-    Go through trimmed BLAST hits and only look at top protein hit for each base
+    Trim BLAST results down to the top hit for each base.
     """
-    blast3 = blast2
-    blast3 = blast3.sort_values("% identity", ascending=False)
+    top_hits = _trim_overlapping(blast)
+    top_hits = top_hits.sort_values("% identity", ascending=False)
 
     # only keep coordinates of each hit that are not already covered by a better hit
-    for query in blast3["query acc."].unique():
-        df = blast3[blast3["query acc."] == query]
+    for query in top_hits["query acc."].unique():
+        df = top_hits[top_hits["query acc."] == query]
 
         rerun = 1
         while (
@@ -349,23 +346,23 @@ def tophits(blast2):
             df, rerun = trim_edges(df)
 
         for j in df.index:
-            blast3.loc[j, "subject length"] = max(
+            top_hits.loc[j, "subject length"] = max(
                 [df.loc[j, "q. start"], df.loc[j, "q. end"]]
             ) - min([df.loc[j, "q. start"], df.loc[j, "q. end"]])
-            blast3.loc[j, "q. start"] = df.loc[j, "q. start"]
-            blast3.loc[j, "q. end"] = df.loc[j, "q. end"]
+            top_hits.loc[j, "q. start"] = df.loc[j, "q. start"]
+            top_hits.loc[j, "q. end"] = df.loc[j, "q. end"]
 
-    blast3 = blast3.sort_values("q. start")
-    blast3 = blast3[blast3["q. start"] != 0]
+    top_hits = top_hits.sort_values("q. start")
+    top_hits = top_hits[top_hits["q. start"] != 0]
 
     # only keep annotations covering 50 bases or more
-    blast3 = blast3[blast3["subject length"] >= 50]
-    blast3 = blast3.reset_index(drop=True)
-    return blast3
+    top_hits = top_hits[top_hits["subject length"] >= 50]
+    top_hits = top_hits.reset_index(drop=True)
+    return top_hits
 
 
 def get_high_identity_matches(blast_output_file, threshold=90):
     """Read all hits with high sequence identity from a BLAST results file."""
-    hits = readblast(blast_output_file)
-    hits = trimblast(hits)
+    hits = read_blast(blast_output_file)
+    hits = _trim_overlapping(hits)
     return hits[hits["% identity"] >= threshold]

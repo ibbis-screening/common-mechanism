@@ -1,5 +1,5 @@
 base_paths:
-  default: test_db_download/commec-dbs
+  default: commec-dbs/
 databases:
   benign:
     cm:

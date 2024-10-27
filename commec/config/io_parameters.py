@@ -109,18 +109,19 @@ class ScreenIOParameters:
         return True
 
     def get_configurations_from_yaml(
-            self, 
+            self,
             config_filepath : str,
             base_path_defaut_override : str = None
         ):
         """ 
         Read the contents of a YAML file, to see 
         if it contains information to override configuration.
-        TODO: Refactor this into json-IO, when opportunity arises.
+        TODO: Candidate for future yaml/json io refactor in future.
         """
         config = None
         try:
             with open(config_filepath, 'r', encoding="utf-8") as file:
+                print("Using configurations from " + config_filepath)
                 config = yaml.safe_load(file)
         except ParserError as e:
             print(f"A configuration.yaml file was found ({config_filepath}) "

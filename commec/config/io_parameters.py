@@ -121,7 +121,6 @@ class ScreenIOParameters:
         config = None
         try:
             with open(config_filepath, 'r', encoding="utf-8") as file:
-                print("Using configurations from " + config_filepath)
                 config = yaml.safe_load(file)
         except ParserError as e:
             print(f"A configuration.yaml file was found ({config_filepath}) "
@@ -148,9 +147,7 @@ class ScreenIOParameters:
             config = recursive_format(config, base_paths)
         except TypeError:
             pass
-        
-        #Debug print.
-        print(config)
+
         self.yaml_configuration = config
         return
 

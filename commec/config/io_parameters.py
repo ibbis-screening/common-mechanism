@@ -126,7 +126,8 @@ class ScreenIOParameters:
             print(f"A configuration.yaml file was found ({config_filepath}) "
                    "but was invalid as a yaml file:\n",e)
             return {}
-        
+
+        # Override the protein search tool with the one set by the config file.
         if config["databases"]["regulated_protein"]["protein_search_tool"]:
             self.config.protein_search_tool = config["databases"]["regulated_protein"]["protein_search_tool"]
 

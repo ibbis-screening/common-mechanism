@@ -14,6 +14,8 @@ import ftplib
 from urllib import request, error, parse
 import zipfile
 import tarfile
+import yaml
+from yaml.parser import ParserError
 
 DESCRIPTION = """Helper script for downloading the databases
  required for running the Common Mechanism Screen"""
@@ -617,6 +619,9 @@ class CliSetup:
 
             os.remove(filename_zipped)
 
+        # We update the default path of the configuration file to point to the newly installed databases.
+        self.update_default_base_path("commec-config.yaml",self.database_directory)
+
         print(
             "\n\nThe common mechanism setup has completed!"
             "\nYou can find all downloaded databases in",
@@ -681,6 +686,35 @@ class CliSetup:
             i,
             f" {C_F_BLUE}*-------------------*{C_RESET}",
         )
+
+    def update_default_base_path(self, config_file: str, new_path: str) -> None:
+        """
+        Updates the default yaml-config file with a default that matches the path
+        where the databases were installed. Courtesy for the user.
+        """
+        try:
+            with open(config_file, 'r', encoding = "utf-8") as file:
+                config_data = yaml.safe_load(file)
+
+            # Update the default path under 'base_paths'
+            if 'base_paths' in config_data and 'default' in config_data['base_paths']:
+                config_data['base_paths']['default'] = new_path
+            else:
+                # For some reason this didn't exist, so lets just silently make it, and throw a warning.
+                print(f"{C_F_ORANGE}Warning, base paths weren't defined in the default configuration file "
+                      "(commec-config.yaml), the correct data will be added, however we recommend you double "
+                      "check that the default config yaml is correct. {C_RESET}")
+                config_data['base_paths'] = {'default' : new_path}
+
+            with open(config_file, 'w', encoding = "utf-8") as file:
+                yaml.safe_dump(config_data, file)
+
+        except FileNotFoundError:
+            print(f"Error: File '{config_file}' not found.")
+        except ParserError as e:
+            print(f"YAML parsing error: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     def print_database_options(self):
         """

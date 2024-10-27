@@ -1,22 +1,20 @@
 base_paths:
-  default: commec-dbs/ # Overridden if database directory is passed in CLI to screen.
-
-# Database configurations
+  default: test_db_download/commec-dbs
 databases:
-  biorisk_hmm: 
-    path: "{default}biorisk_db/biorisk.hmm"
-  regulated_protein:
-    protein_search_tool: "blastx" # Overrides CLI.
-    blast:
-      path: "{default}nr_blast/nr"
-    diamond:
-      path: "{default}nr_dmnd/nr.dmnd"
-  regulated_nt:
-    path: "{default}nt_blast/nt"
   benign:
-    hmm:
-      path: "{default}benign_db/benign.hmm"
-    fasta:
-      path: "{default}benign_db/benign.fasta"
     cm:
-      path: "{default}benign_db/benign.cm"
+      path: '{default}benign_db/benign.cm'
+    fasta:
+      path: '{default}benign_db/benign.fasta'
+    hmm:
+      path: '{default}benign_db/benign.hmm'
+  biorisk_hmm:
+    path: '{default}biorisk_db/biorisk.hmm'
+  regulated_nt:
+    path: '{default}nt_blast/nt'
+  regulated_protein:
+    blast:
+      path: '{default}nr_blast/nr'
+    diamond:
+      path: '{default}nr_dmnd/nr.dmnd'
+    protein_search_tool: blastx

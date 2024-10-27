@@ -1,5 +1,5 @@
 base_paths:
-  default: /path/to/default/db/ # Overridden if database directory is passed in CLI to screen.
+  default: commec-dbs/ # Overridden if database directory is passed in CLI to screen.
 
 # Database configurations
 databases:

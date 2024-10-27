@@ -9,14 +9,14 @@ import os
 import glob
 import argparse
 import logging
-import yaml
-from yaml.parser import ParserError
 from dataclasses import dataclass
 from typing import Optional
 import multiprocessing
 
-from commec.config.query import Query
+import yaml
+from yaml.parser import ParserError
 
+from commec.config.query import Query
 
 @dataclass
 class ScreenConfig:

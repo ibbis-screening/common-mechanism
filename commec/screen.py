@@ -250,20 +250,18 @@ class Screen:
         """
         logging.debug("\t...running %s", self.params.config.protein_search_tool)
         self.database_tools.regulated_protein.search()
-        if (
-            not self.database_tools.regulated_protein.check_output()
-        ):  # os.path.exists(search_output):
+        if not self.database_tools.regulated_protein.check_output():
             raise RuntimeError(
-                "Protein search failed and "
-                f"{self.database_tools.regulated_protein.out_file}"
-                " was not created. Aborting."
+                "ERROR: Expected protein search output not created: "
+                + self.database_tools.regulated_protein.out_file
             )
 
         logging.debug(
             "\t...checking %s results", self.params.config.protein_search_tool
         )
-        # Delete any previous check_reg_path results
         reg_path_coords = f"{self.params.output_prefix}.reg_path_coords.csv"
+
+        # Delete any previous check_reg_path results for this search
         if os.path.isfile(reg_path_coords):
             os.remove(reg_path_coords)
 
@@ -297,9 +295,8 @@ class Screen:
 
         if not self.database_tools.regulated_nt.check_output():
             raise RuntimeError(
-                "Nucleotide search failed and "
-                f"{self.database_tools.regulated_nt.out_file}"
-                " was not created. Aborting."
+                "ERROR: Expected nucleotide search output not created: "
+                + self.database_tools.regulated_nt.out_file
             )
 
         logging.debug("\t...checking blastn results")

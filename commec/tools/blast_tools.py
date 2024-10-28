@@ -273,7 +273,7 @@ def shift_hits_pos_strand(blast):
             blast.loc[j, "q. end"] = end
     return blast
 
-def trim_edges(df):
+def _trim_edges(df):
 
     # Use this enumeration, instead of below, for pylint errors - needs testing first.
     #for top, i in enumerate(df.index):  # run through each hit from the top
@@ -353,7 +353,7 @@ def get_top_hits(blast: pd.DataFrame):
         while (
             rerun == 1
         ):  # edges of hits can be moved within a higher scoring hit in the first pass
-            df, rerun = trim_edges(df)
+            df, rerun = _trim_edges(df)
 
         for j in df.index:
             top_hits.loc[j, "subject length"] = max(

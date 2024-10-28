@@ -34,7 +34,7 @@ def get_ranges_with_no_hits(blast_df):
     # Add ranges if there is a noncoding region of >=50 between hits
     for i in range(len(hit_ranges) - 1):
         nc_start = hit_ranges[i][1] + 1  # starts after this hit
-        nc_end = hit_ranges[i + 1][0] - 1  # ends before next hit
+        nc_end = hit_ranges[i + 1][0] - 1 # ends before next hit
 
         if nc_end - nc_start + 1 >= 50:
             nc_ranges.append([nc_start, nc_end])

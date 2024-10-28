@@ -87,8 +87,8 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "-o",
         "--output",
         dest="output_prefix",
-        help="Prefix for output files. Can be a string (interpreted as output basename) or a" +
-         " directory (in which case the output file names will be determined from the input FASTA)",
+        help="Prefix for output files. Can be a string (interpreted as output basename) or a"
+        + " directory (in which case the output file names will be determined from the input FASTA)",
     )
     parser.add_argument(
         "-t",
@@ -138,8 +138,8 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return parser
 
 class Screen:
-    """ 
-    Handles the parsing of input arguments, the control of databases, and 
+    """
+    Handles the parsing of input arguments, the control of databases, and
     the logical flow of the screening process for commec.
     """
 
@@ -291,20 +291,18 @@ class Screen:
         """
         logging.debug("\t...running %s", self.params.config.protein_search_tool)
         self.database_tools.regulated_protein.search()
-        if (
-            not self.database_tools.regulated_protein.check_output()
-        ):  # os.path.exists(search_output):
+        if not self.database_tools.regulated_protein.check_output():
             raise RuntimeError(
-                "Protein search failed and "
-                f"{self.database_tools.regulated_protein.out_file}"
-                " was not created. Aborting."
+                "ERROR: Expected protein search output not created: "
+                + self.database_tools.regulated_protein.out_file
             )
 
         logging.debug(
             "\t...checking %s results", self.params.config.protein_search_tool
         )
-        # Delete any previous check_reg_path results
         reg_path_coords = f"{self.params.output_prefix}.reg_path_coords.csv"
+
+        # Delete any previous check_reg_path results for this search
         if os.path.isfile(reg_path_coords):
             os.remove(reg_path_coords)
 
@@ -346,9 +344,8 @@ class Screen:
 
         if not self.database_tools.regulated_nt.check_output():
             raise RuntimeError(
-                "Nucleotide search failed and "
-                f"{self.database_tools.regulated_nt.out_file}"
-                " was not created. Aborting."
+                "ERROR: Expected nucleotide search output not created: "
+                + self.database_tools.regulated_nt.out_file
             )
 
         logging.debug("\t...checking blastn results")

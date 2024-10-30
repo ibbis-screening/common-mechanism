@@ -128,7 +128,7 @@ class DiamondHandler(BlastHandler):
 
         return n_concurrent_runs, n_threads_per_run
 
-    def search(self):
+    def _search(self):
         """
         Search the DIAMOND-formatted nr protein database for matches to the query file.
         """

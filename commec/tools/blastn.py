@@ -46,7 +46,7 @@ class BlastNHandler(BlastHandler):
         }
         self.blastcall = "blastn"
 
-    def search(self):
+    def _search(self):
         command = [
             self.blastcall,
             "-query",

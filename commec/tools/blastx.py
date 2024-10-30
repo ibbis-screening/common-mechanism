@@ -53,7 +53,7 @@ class BlastXHandler(BlastHandler):
         }
         self.blastcall = "blastx"
 
-    def search(self):
+    def _search(self):
         command = [
             self.blastcall,
             "-db",

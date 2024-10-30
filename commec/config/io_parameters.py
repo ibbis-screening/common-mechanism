@@ -6,6 +6,7 @@ Objects responsible for parsing and interpreting user input for
 the screen workflow of commec.
 """
 import os
+import sys
 import glob
 import argparse
 import logging
@@ -29,13 +30,12 @@ class ScreenConfig:
     skip_nt_search: bool = False
     do_cleanup: bool = False
     diamond_jobs: Optional[int] = None
-
+    force: bool = False
 
 class ScreenIOParameters:
     """
     Container for input settings constructed from arguments to `screen`.
     """
-
     def __init__(self, args: argparse.ArgumentParser):
         # Inputs
         self.config: ScreenConfig = ScreenConfig(
@@ -45,6 +45,7 @@ class ScreenIOParameters:
             args.skip_nt_search,
             args.cleanup,
             args.diamond_jobs,
+            args.force,
         )
 
         # Outputs
@@ -59,10 +60,9 @@ class ScreenIOParameters:
         self.db_dir = args.database_dir
 
         # Check whether a .screen output file already exists.
-        if os.path.exists(self.output_screen_file):
-            raise RuntimeError(
-                f"Screen output {self.output_screen_file} already exists. Aborting."
-            )
+        if os.path.exists(self.output_screen_file) and not self.config.force:
+            print(f"Screen output {self.output_screen_file} already exists. Aborting.")
+            sys.exit(1)
 
     def setup(self) -> bool:
         """

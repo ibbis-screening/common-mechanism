@@ -55,8 +55,21 @@ class SearchHandler(ABC):
         """Temporary log file used for this search. Based on outfile name."""
         return f"{self.out_file}.log.tmp"
 
+    def search(self, force: bool):
+        """
+        Wrapper for _search, to ensure that it is only called if 
+         - The output doesn't already exist,
+         - If force is enabled.
+        """
+        if not force and self.check_output():
+            logging.info("%s expected output data already exists, "
+                         "will use existing data found in:\n%s",
+                         self.__class__.__name__, self.out_file)
+            return
+        self._search()
+
     @abstractmethod
-    def search(self):
+    def _search(self):
         """
         Use a tool to search the input query against a database.
         Should be implemented by all subclasses to perform the actual search against the database.

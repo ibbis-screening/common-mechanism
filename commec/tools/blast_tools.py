@@ -15,6 +15,8 @@ import pandas as pd
 import numpy as np
 from commec.tools.search_handler import SearchHandler, DatabaseValidationError
 
+from commec.utils.benchmark import benchmark
+
 TAXID_SYNTHETIC_CONSTRUCTS = 32630
 TAXID_VECTORS = 29278
 
@@ -51,6 +53,7 @@ class BlastHandler(SearchHandler):
         if len(files) == 0:
             raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
 
+@benchmark
 def _split_by_tax_id(blast: pd.DataFrame, taxids_col_name="subject tax ids"):
     """
     Some results will have multiple tax ids listed in a semicolon-separated list; split these into
@@ -76,7 +79,7 @@ def _split_by_tax_id(blast: pd.DataFrame, taxids_col_name="subject tax ids"):
     split[taxids_col_name] = split[taxids_col_name].astype("int")
     return split
 
-
+@benchmark
 def _get_lineages(taxids, db_path: str | os.PathLike, threads: int):
     """
     Get the full lineage for each unique taxid. This is needed to determine whether it belongs to
@@ -103,7 +106,7 @@ def _get_lineages(taxids, db_path: str | os.PathLike, threads: int):
     # Remove non-success codes from the list
     return lin[(lin["Code"] != -1) & (lin["Code"] != 0)]
 
-
+@benchmark
 def get_taxonomic_labels(
     blast: pd.DataFrame,
     regulated_taxids: List[str],
@@ -191,7 +194,7 @@ def get_taxonomic_labels(
 
     return blast
 
-
+@benchmark
 def read_blast(blast_file: Union[str, os.PathLike, BinaryIO, TextIO]) -> pd.DataFrame:
     """
     Read in BLAST/DIAMOND files and pre-format the data frame with essential info
@@ -224,7 +227,7 @@ def read_blast(blast_file: Union[str, os.PathLike, BinaryIO, TextIO]) -> pd.Data
 
     return blast
 
-
+@benchmark
 def _trim_overlapping(blast: pd.DataFrame):
     """
     Remove any hits that are completely overlapped by another, higher-quality hit.
@@ -264,6 +267,7 @@ def _trim_overlapping(blast: pd.DataFrame):
 
     return blast2
 
+@benchmark
 def shift_hits_pos_strand(blast):
     for j in blast.index:
         if blast.loc[j, "q. start"] > blast.loc[j, "q. end"]:
@@ -273,6 +277,7 @@ def shift_hits_pos_strand(blast):
             blast.loc[j, "q. end"] = end
     return blast
 
+@benchmark
 def _trim_edges(df):
 
     # Use this enumeration, instead of below, for pylint errors - needs testing first.
@@ -337,7 +342,7 @@ def _trim_edges(df):
                 mix_starts = mix_starts + 1
     return df, rerun
 
-
+@benchmark
 def get_top_hits(blast: pd.DataFrame):
     """
     Trim BLAST results down to the top hit for each base.
@@ -370,7 +375,7 @@ def get_top_hits(blast: pd.DataFrame):
     top_hits = top_hits.reset_index(drop=True)
     return top_hits
 
-
+@benchmark
 def get_high_identity_matches(blast_output_file, threshold=90):
     """Read all hits with high sequence identity from a BLAST results file."""
     hits = read_blast(blast_output_file)

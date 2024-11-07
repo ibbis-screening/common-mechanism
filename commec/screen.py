@@ -50,6 +50,7 @@ import sys
 import pandas as pd
 
 from commec.utils.file_utils import file_arg, directory_arg
+from commec.utils.benchmark import benchmark, benchmark_set_log_file_name, benchmark_write_log
 from commec.utils.json_html_output import generate_html_from_screen_data
 from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
 from commec.config.screen_tools import ScreenTools
@@ -151,6 +152,7 @@ class Screen:
         self.screen_data : ScreenData = ScreenData()
         self.start_time = time.time()
 
+    @benchmark
     def setup(self, args: argparse.ArgumentParser):
         """Instantiates and validates parameters, and databases, ready for a run."""
         self.params: ScreenIOParameters = ScreenIOParameters(args)
@@ -206,7 +208,7 @@ class Screen:
         # Less of this, and more just passing the object in future - this might take too long in larger queries.
         #encode_screen_data_to_json(self.screen_data, self.params.output_json)
         
-
+    @benchmark
     def run(self, args : argparse.ArgumentParser):
         """
         Wrapper so that args be parsed in main() or commec.py interface.
@@ -273,6 +275,7 @@ class Screen:
 
         self.params.clean()
 
+    @benchmark
     def screen_biorisks(self):
         """
         Call hmmscan` and `check_biorisk.py` to add biorisk results to `screen_file`.
@@ -286,6 +289,7 @@ class Screen:
         )
         update_biorisk_data_from_database(self.database_tools.biorisk_hmm, self.screen_data)
 
+    @benchmark
     def screen_proteins(self):
         """
         Call `run_blastx.sh` or `run_diamond.sh` followed by `check_reg_path.py` to add regulated
@@ -321,7 +325,7 @@ class Screen:
                                             CommecScreenStep.TAXONOMY_AA,
                                             self.params.config.threads)
 
-
+    @benchmark
     def screen_nucleotides(self):
         """
         Call `fetch_nc_bits.py`, search noncoding regions with `blastn` and
@@ -364,6 +368,7 @@ class Screen:
                                             CommecScreenStep.TAXONOMY_AA,
                                             self.params.config.threads)
 
+    @benchmark
     def screen_benign(self):
         """
         Call `hmmscan`, `blastn`, and `cmscan` and then pass results
@@ -400,6 +405,7 @@ def run(args: argparse.ArgumentParser):
     """
     my_screen: Screen = Screen()
     my_screen.run(args)
+    benchmark_write_log()
 
 
 def main():

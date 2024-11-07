@@ -12,6 +12,8 @@ import sys
 import argparse
 import pandas as pd
 from commec.tools.hmmer import readhmmer, trimhmmer, HmmerHandler
+from commec.utils.benchmark import benchmark
+
 from commec.config.json_io import (
     ScreenData,
     HitDescription,
@@ -25,6 +27,7 @@ from commec.config.json_io import (
     compare
 )
 
+@benchmark
 def update_biorisk_data_from_database(search_handle : HmmerHandler, data : ScreenData):
     """
     Takes an input database, reads its outputs, and updates the input data to contain
@@ -133,6 +136,7 @@ def update_biorisk_data_from_database(search_handle : HmmerHandler, data : Scree
         # Update the recommendation for this query for biorisk.
         query_data.recommendation.biorisk_screen = biorisk_overall
 
+@benchmark
 def check_biorisk(hmmscan_input_file : str, biorisk_annotations_directory : str):
     """
     Checks an HMM scan output, and parses it for biorisks, according to those found in the biorisk_annotations.csv.

@@ -20,6 +20,8 @@ from commec.tools.blast_tools import get_top_hits, read_blast
 from commec.tools.hmmer import readhmmer
 from commec.tools.cmscan import readcmscan
 
+from commec.utils.benchmark import benchmark
+
 from commec.config.json_io import (
     ScreenData,
     HitDescription,
@@ -33,6 +35,7 @@ from commec.config.json_io import (
     compare
 )
 
+@benchmark
 def update_benign_data_from_database(search_handle : HmmerHandler, data : ScreenData):
 
     if not search_handle.check_output():
@@ -44,6 +47,7 @@ def update_benign_data_from_database(search_handle : HmmerHandler, data : Screen
         hmmer = hmmer[hmmer["E-value"] < 1e-20]
         # print(hmmer)
 
+@benchmark
 def check_for_benign(query, coords, benign_desc):
     """
     Checks a query against taxonomy

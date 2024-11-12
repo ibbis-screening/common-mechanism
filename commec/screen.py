@@ -236,7 +236,7 @@ class Screen:
         Call hmmscan` and `check_biorisk.py` to add biorisk results to `screen_file`.
         """
         logging.debug("\t...running hmmscan")
-        self.database_tools.biorisk_hmm.search(self.params.config.force)
+        self.database_tools.biorisk_hmm.search()
         logging.debug("\t...checking hmmscan results")
         check_biorisk(
             self.database_tools.biorisk_hmm.out_file,
@@ -249,7 +249,7 @@ class Screen:
         pathogen protein screening results to `screen_file`.
         """
         logging.debug("\t...running %s", self.params.config.protein_search_tool)
-        self.database_tools.regulated_protein.search(self.params.config.force)
+        self.database_tools.regulated_protein.search()
         if not self.database_tools.regulated_protein.check_output():
             raise RuntimeError(
                 "ERROR: Expected protein search output not created: "
@@ -291,7 +291,7 @@ class Screen:
 
         # Only run new blastn search if there are no previous results
         if not self.database_tools.regulated_nt.check_output():
-            self.database_tools.regulated_nt.search(self.params.config.force)
+            self.database_tools.regulated_nt.search()
 
         if not self.database_tools.regulated_nt.check_output():
             raise RuntimeError(
@@ -317,11 +317,11 @@ class Screen:
             return
 
         logging.debug("\t...running benign hmmscan")
-        self.database_tools.benign_hmm.search(self.params.config.force)
+        self.database_tools.benign_hmm.search()
         logging.debug("\t...running benign blastn")
-        self.database_tools.benign_blastn.search(self.params.config.force)
+        self.database_tools.benign_blastn.search()
         logging.debug("\t...running benign cmscan")
-        self.database_tools.benign_cmscan.search(self.params.config.force)
+        self.database_tools.benign_cmscan.search()
 
         coords = pd.read_csv(sample_name + ".reg_path_coords.csv")
         benign_desc = pd.read_csv(

@@ -1,29 +1,53 @@
-import plotly.graph_objects as go
-from plotly.colors import qualitative
 
-def time_str_to_seconds(time_str):
-    # Convert "HH:MM:SS.SSS" to seconds as a float
+import os
+import sys
+import pandas as pd
+import plotly.express as px
+
+def time_str_to_seconds(time_str : str) -> float:
+    """ 
+    Convert string format 
+    from "HH:MM:SS.SSS" 
+    to seconds.milliseconds (float).
+    """
     h, m, s = time_str.split(':')
     return int(h) * 3600 + int(m) * 60 + float(s)
 
-def visualize_data(filename):
-    # Read data from file
+def capitalize_and_concatenate(input_str):
+    """ Helper function to make function names a little nicer to read."""
+    tokens = input_str.replace('_', ' ').split()
+    capitalized_tokens = [token.capitalize() for token in tokens]
+    return ' '.join(capitalized_tokens)
+
+def visualize_data(filename : os.PathLike):
+    """ 
+    Takes the output benchmarking log from commec, 
+    and produces a pretty html visual using plotly. 
+    """
+
+    if not os.path.exists(filename):
+        sys.stderr.write("\t... input benchmarking file does not exist!\n" + filename)
+        return
+
+    # Parse the benchmark file:
     entries = []
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding="utf-8") as file:
         for line in file:
             parts = line.strip().split()
-            if len(parts) < 5:
-                continue  # Skip malformed lines
 
-            y_pos = int(parts[0])                  # Y-axis location
-            label = parts[1]                       # Task name
-            duration = parts[2]                    # Duration string (for hover info)
-            start_time_str = parts[3]              # Start time as string
-            end_time_str = parts[4]                # End time as string
+            # Skip any bad lines.
+            if len(parts) < 5:
+                continue
+
+            y_pos = parts[0]                             # Stack depth
+            label = capitalize_and_concatenate(parts[1]) # Function name
+            duration_str = parts[2]                      # Duration string (for hover info)
+            start_time_str = parts[3]                    # Start time as string
+            end_time_str = parts[4]                      # End time as string
 
             start_time = time_str_to_seconds(start_time_str)
             end_time = time_str_to_seconds(end_time_str)
-            width = end_time - start_time          # Rectangle width in seconds
+            duration = time_str_to_seconds(duration_str)
 
             entries.append({
                 "y_pos": y_pos,
@@ -33,50 +57,31 @@ def visualize_data(filename):
                 "end_time": end_time
             })
 
-    print(entries)
+    df = pd.DataFrame(entries)
 
-    # Create a Plotly figure
-    fig = go.Figure()
+    # Plotly timelines REQUIRE a date string as the x-axis, so we start counting from 0... i.e. 1970.
+    base_date = pd.Timestamp("1970-01-01")
+    df['start_datetime'] = base_date + pd.to_timedelta(df['start_time'], unit='s')
+    df['end_datetime'] = base_date + pd.to_timedelta(df['end_time'], unit='s')
+    
+    fig = px.timeline(
+        df,
+        x_start="start_datetime",
+        x_end="end_datetime",
+        y="y_pos",
+        color="label",              # Unique colours for unique functions.
+        hover_name="label",
+        hover_data={"Duration": df["duration"]},
+        title="Benchmark Visualization"
+    )
 
-    # Get unique labels and assign a color to each
-    unique_labels = list(set(entry['label'] for entry in entries))
-    colors = {label: qualitative.Plotly[(i-3) % len(qualitative.Plotly)] for i, label in enumerate(unique_labels)}
-
-    for entry in entries:
-        # Add a rectangle for each entry
-        label_color = colors[entry['label']]
-
-        # Add a rectangle shape with the designated color
-        fig.add_shape(
-            type="rect",
-            x0=entry['start_time'], x1=entry['end_time'],  # x-axis start and end
-            y0=entry['y_pos'] - 0.45, y1=entry['y_pos'] + 0.45,  # y-axis position with some height
-            line=dict(width=0),  # No border around the rectangle
-            fillcolor=label_color,  # Unique color for each task label
-            opacity=0.5  # Transparency
-        )
-
-        fig.update()
-
-        # Add a hover label for each rectangle as text
-        fig.add_trace(go.Scatter(
-            x=[(entry['start_time'] + entry['end_time']) / 2],  # Position text at the center of the rectangle
-            y=[entry['y_pos']],
-            text=f"{entry['label']}<br>{entry['duration']})",
-            mode="text",
-            showlegend=False,
-            zorder=-100,
-        ))
-
-
-
-    # Configure plot layout
     fig.update_layout(
         title="Benchmark Visualization",
         xaxis=dict(
             title="Time (seconds)",
             showgrid=True,
-            zeroline=False
+            zeroline=False,
+            tickformat="%s"
         ),
         yaxis=dict(
             title="Call Stack",
@@ -86,9 +91,16 @@ def visualize_data(filename):
         )
     )
 
-    # Save the plot as an HTML file
-    fig.write_html("timeline_visualization.html")
-    print("Plot saved as timeline_visualization.html")
+    # Customize hover to show only label and duration
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>Duration: %{customdata[0]}<extra></extra>"
+    )
+
+    root, _ext = os.path.splitext(filename)
+    output_filename = root + ".html"
+    fig.write_html(output_filename)
+    print("Benchmarking plot saved at " + output_filename)
 
 # Usage:
-visualize_data("benchmark.txt")
+if __name__ == "__main__":
+    visualize_data("benchmark.txt")

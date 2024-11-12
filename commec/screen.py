@@ -59,6 +59,7 @@ from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_fr
 from commec.screeners.check_benign import check_for_benign
 from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_taxonomic_data_from_database
 from commec.tools.fetch_nc_bits import fetch_noncoding_regions
+from dev_scripts.benchmark_visualisation import visualize_data as create_benchmark_visual
 
 from commec.config.json_io import (
     ScreenData,
@@ -204,6 +205,8 @@ class Screen:
             self.screen_data.commec_info.benign_synbio_database_info = self.database_tools.benign_cmscan.get_version_information()
 
         self.screen_data.commec_info.date_run = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        benchmark_set_log_file_name(self.params.output_prefix+".bm")
         
         # Less of this, and more just passing the object in future - this might take too long in larger queries.
         #encode_screen_data_to_json(self.screen_data, self.params.output_json)
@@ -265,13 +268,17 @@ class Screen:
 
         #self.screen_data = get_screen_data_from_json(self.params.output_json)
         time_taken = (time.time() - self.start_time)
+
         # Convert the elapsed time to hours, minutes, and seconds
         hours, rem = divmod(time_taken, 3600)
         minutes, seconds = divmod(rem, 60)
         self.screen_data.commec_info.time_taken = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
         self.screen_data.update()
         encode_screen_data_to_json(self.screen_data, self.params.output_json)
-        generate_html_from_screen_data(self.screen_data, self.params.output_prefix+"_summary.html")
+        generate_html_from_screen_data(self.screen_data, self.params.output_prefix+"_summary")
+
+        benchmark_write_log()
+        create_benchmark_visual(self.params.output_prefix + ".bm")
 
         self.params.clean()
 
@@ -405,8 +412,6 @@ def run(args: argparse.ArgumentParser):
     """
     my_screen: Screen = Screen()
     my_screen.run(args)
-    benchmark_write_log()
-
 
 def main():
     """

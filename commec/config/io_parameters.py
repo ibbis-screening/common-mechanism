@@ -129,6 +129,7 @@ class ScreenIOParameters:
                 "*blastx",
                 "*dmnd",
                 "*.tmp",
+                "*.bm",
             ]:
                 for file in glob.glob(f"{self.output_prefix}.{pattern}"):
                     if os.path.isfile(file):

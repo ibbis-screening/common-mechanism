@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Set of tools that allow for a lightweight benchmarking system at the function level.
+Set of tools that allow for a lightweight benchmarking system at the function, and sub-function level.
 
 Usage:
-    Create a benchamrk_scope("name") instance within any scope you wish to measure.
+    Create a benchmark_scope("name") instance within any scope you wish to measure.
     The benched time is from instantiation to instance deletion - via either out of scope or manual del.
-    Apply the @benchmark decorator to any function you wish to measure.
+    Apply an additional stack offset to nested benched scoped, for cleaner visualisation.
+    Apply the @benchmark decorator to any function you wish to measure, stack depth handled automatically.
+
+    Note stack depth may collide in visualisation if a nested scope contains @benchmark decorators.
 """
 import time
 import inspect
@@ -56,8 +59,11 @@ def benchmark_write_log():
     logger.write_to_file()
 
 class benchmark_scope:
-    """ Benchmarks a given scope from instantiation to out of scope deletion."""
-    def __init__(self,name : str, stack : int = 0):
+    """ 
+    Benchmarks a given scope from instantiation
+    to out of scope or deletion.
+    """
+    def __init__(self, name : str, stack : int = 0):
         """ 
             Implement a benchmark timer with a given name, 
             and optional additional stack number, 

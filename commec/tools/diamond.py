@@ -26,7 +26,7 @@ class DiamondHandler(BlastHandler):
     """
 
     def __init__(self, database_file: str, input_file: str, out_file: str, **kwargs):
-        super().__init__(database_file, input_file, out_file, kwargs=kwargs)
+        super().__init__(database_file, input_file, out_file, **kwargs)
         self.frameshift: int = 15
         self.do_range_culling = True
         self.jobs: Optional[int] = None

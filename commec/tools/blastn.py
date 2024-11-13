@@ -20,7 +20,7 @@ class BlastNHandler(BlastHandler):
     def __init__(
         self, database_file: str, input_file: str, out_file: str, **kwargs,
     ):
-        super().__init__(database_file, input_file, out_file, kwargs=kwargs)
+        super().__init__(database_file, input_file, out_file, **kwargs)
         # We fill this with defaults, however they can always be overridden before screening.
         self.arguments_dictionary = {
             "-outfmt": [

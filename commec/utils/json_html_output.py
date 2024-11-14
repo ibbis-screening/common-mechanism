@@ -67,7 +67,7 @@ def generate_html_from_screen_data(input_data : ScreenData, output_file : str):
 
     # Create the plot
     fig = go.Figure()
-    query_to_draw = input_data.queries[2]
+    query_to_draw = input_data.queries[0]
 
     #fig = make_subplots(
     #    rows=len(input_data.queries),
@@ -101,7 +101,11 @@ def generate_html_from_screen_data(input_data : ScreenData, output_file : str):
             showticklabels=False,
             autorange='reversed',
             fixedrange=True,
+            tickmode="linear",
+            zeroline=False,
+            range=[-0.5,stacks+1+0.5]
         ),
+        bargap=0.0,
 
         template='plotly_white',
         
@@ -113,10 +117,29 @@ def generate_html_from_screen_data(input_data : ScreenData, output_file : str):
             ticks='outside',
             showgrid=True,
             #fixedrange=True,
+            zeroline=False,
             tickformat="%s",  # Display seconds as a numeric value
+            type="date"
             #tickmode="linear",  # Ensure ticks are linearly spaced
         ),
-        
+
+
+    #fig.update_layout(
+    #    title="Benchmark Visualization",
+    #    xaxis=dict(
+    #        title="Time (seconds)",
+    #        showgrid=True,
+    #        zeroline=False,
+    #        tickformat="%s"
+    #    ),
+    #    yaxis=dict(
+    #        title="Call Stack",
+    #        tickmode="linear",
+    #        showgrid=True,
+    #        zeroline=False
+    #    )
+    #)
+
         # Second x-axis (xaxis2) at the top
         # the issue with having two axis is they don't necessarily scroll together.
         # We could try draw the same thing to both axis, and hope for the best.
@@ -142,7 +165,7 @@ def convert_basepairs_to_datetime(bp : int) -> datetime:
     We can't draw timelines with any dtype, so we convert bps to seconds, 
     and use a datetime object which parses as a string. Hurrah for hacky work-arounds.
     """
-    return datetime.datetime(1970, 1, 1) + datetime.timedelta(milliseconds=bp)
+    return datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds=bp)
 
 def draw_query_to_plot(fig : go.Figure, query_to_draw : QueryData):
     """ 
@@ -195,8 +218,8 @@ def draw_query_to_plot(fig : go.Figure, query_to_draw : QueryData):
 
     # Convert start and stop times from seconds to datetime strings
     epoch = datetime.datetime(1970, 1, 1)
-    df['start'] = df['start'].apply(lambda x: epoch + datetime.timedelta(milliseconds=x))
-    df['stop'] = df['stop'].apply(lambda x: epoch + datetime.timedelta(milliseconds=x))
+    df['start'] = df['start'].apply(lambda x: epoch + datetime.timedelta(seconds=x))
+    df['stop'] = df['stop'].apply(lambda x: epoch + datetime.timedelta(seconds=x))
 
     print(df['start'])
     print(df['stop'])
@@ -212,6 +235,19 @@ def draw_query_to_plot(fig : go.Figure, query_to_draw : QueryData):
     df['hovertext'] = df.apply(lambda row: f"{row['label']}<br>({row['start']}-{row['stop']})", axis=1)
 
     print(df)
+
+    # From benchmarking.
+    #fig = px.timeline(
+    #    df,
+    #    x_start="start_datetime",
+    #    x_end="end_datetime",
+    #    y="y_pos",
+    #    color="label",              # Unique colours for unique functions.
+    #    hover_name="label",
+    #    hover_data={"Duration": df["duration"]},
+    #    title="Benchmark Visualization"
+    #)
+
 
     # Plot the timeline with Plotly
     temp_fig = px.timeline(

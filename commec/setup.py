@@ -175,7 +175,7 @@ class CliSetup:
         # Handily, all sorts of special characters are identified with a %XX, within posix, and are replaced
         # by similar characters during mkdir, whilst technically legal, lets recommend against cursed dir names.
         if '%' in path.as_posix():
-            print("Please avoid using special characters (\"|\}{\":?><*&\" etc) in filepath names.")
+            print("Please avoid using special characters (\"|}{\":?><*&\" etc) in filepath names.")
             return False
     
         # If the path doesn't exist, the best way to know if user input is valid, is to try make it.

@@ -49,7 +49,9 @@ def color_from_hit(hit : HitDescription) -> CommecPalette:
     """ Convert a Screen step into an associated Colour."""
     if hit.recommendation.from_step == CommecScreenStep.BIORISK:
         return CommecPalette.RED
-    if hit.recommendation.from_step == CommecScreenStep.BENIGN:
+    if (hit.recommendation.from_step == CommecScreenStep.BENIGN_PROTEIN or
+        hit.recommendation.from_step == CommecScreenStep.BENIGN_RNA or
+        hit.recommendation.from_step == CommecScreenStep.BENIGN_SYNBIO):
         return CommecPalette.LT_BLUE
     if hit.recommendation.from_step == CommecScreenStep.TAXONOMY_AA:
         return CommecPalette.ORANGE

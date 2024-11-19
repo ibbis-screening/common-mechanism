@@ -55,7 +55,7 @@ from commec.config.io_parameters import ScreenIOParameters, ScreenConfig
 from commec.config.screen_tools import ScreenTools
 
 from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_from_database
-from commec.screeners.check_benign import check_for_benign
+from commec.screeners.check_benign import check_for_benign, update_benign_data_from_database
 from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_taxonomic_data_from_database
 from commec.tools.fetch_nc_bits import fetch_noncoding_regions
 
@@ -202,10 +202,6 @@ class Screen:
             self.screen_data.commec_info.benign_synbio_database_info = self.database_tools.benign_cmscan.get_version_information()
 
         self.screen_data.commec_info.date_run = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Less of this, and more just passing the object in future - this might take too long in larger queries.
-        #encode_screen_data_to_json(self.screen_data, self.params.output_json)
-        
 
     def run(self, args : argparse.ArgumentParser):
         """
@@ -261,7 +257,6 @@ class Screen:
             ">> COMPLETED AT %s", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
 
-        #self.screen_data = get_screen_data_from_json(self.params.output_json)
         time_taken = (time.time() - self.start_time)
         # Convert the elapsed time to hours, minutes, and seconds
         hours, rem = divmod(time_taken, 3600)
@@ -356,12 +351,12 @@ class Screen:
             self.params.db_dir,
             str(self.params.config.threads),
         )
-        update_taxonomic_data_from_database(self.database_tools.regulated_nt, 
-                                            self.database_tools.benign_blastn, 
+        update_taxonomic_data_from_database(self.database_tools.regulated_nt,
+                                            self.database_tools.benign_blastn,
                                             self.database_tools.biorisk_hmm,
                                             self.params.db_dir + "/taxonomy/",
                                             self.screen_data,
-                                            CommecScreenStep.TAXONOMY_AA,
+                                            CommecScreenStep.TAXONOMY_NT,
                                             self.params.config.threads)
 
     def screen_benign(self):
@@ -396,6 +391,15 @@ class Screen:
         # Note currently check_for_benign hard codes .benign.hmmscan,
         # in future parse, and grab from search handler instead.
         check_for_benign(sample_name, coords, benign_desc)
+
+        update_benign_data_from_database(
+            self.database_tools.benign_hmm,
+            self.database_tools.benign_cmscan,
+            self.database_tools.benign_blastn,
+            self.screen_data,
+            coords,
+            benign_desc
+        )
 
 
 def run(args: argparse.ArgumentParser):

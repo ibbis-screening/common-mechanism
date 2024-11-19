@@ -387,6 +387,10 @@ class Screen:
             sep="\t",
         )
 
+        if coords.shape[0] == 0:
+                logging.info("\t...no regulated regions to clear\n")
+                return
+
         logging.debug("\t...checking benign scan results")
 
         # Note currently check_for_benign hard codes .benign.hmmscan,

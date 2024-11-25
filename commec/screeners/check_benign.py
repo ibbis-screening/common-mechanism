@@ -101,6 +101,8 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                             match_ranges
                         )
                     )
+                    #TODO: This passes the whole query for a small region, need to go through and do a make-shift mini-cleared scenario. That is QUERY based.
+                    query_write.recommendation.benign_screen = CommecRecomendation.PASS
 
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
@@ -160,6 +162,8 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                                 match_ranges
                             )
                         )
+                        #TODO: This passes the whole query for a small region, need to go through and do a make-shift mini-cleared scenario. That is QUERY based.
+                        query_write.recommendation.benign_screen = CommecRecomendation.PASS
 
     # SYNBIO HITS
     # annotate and clear benign nucleotide sequences
@@ -212,6 +216,8 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                             match_ranges
                         )
                     )
+                    #TODO: This passes the whole query for a small region, need to go through and do a make-shift mini-cleared scenario. That is QUERY based.
+                    query_write.recommendation.benign_screen = CommecRecomendation.PASS
 
 
 def _trim_to_coords(data : pd.DataFrame, coords, region):

@@ -121,6 +121,13 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="Overwrite any pre-existing output for this Screen job.",
     )
     parser.add_argument(
+        "-R",
+        "--resume",
+        dest="resume",
+        action="store_true",
+        help="Re-use any pre-existing output for this Screen job.",
+    )
+    parser.add_argument(
         "-n",
         "--skip-nt",
         dest="skip_nt_search",

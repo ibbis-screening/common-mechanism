@@ -31,6 +31,7 @@ class ScreenConfig:
     do_cleanup: bool = False
     diamond_jobs: Optional[int] = None
     force: bool = False
+    resume: bool = False
 
 class ScreenIOParameters:
     """
@@ -46,6 +47,7 @@ class ScreenIOParameters:
             args.cleanup,
             args.diamond_jobs,
             args.force,
+            args.resume,
         )
 
         # Outputs
@@ -60,9 +62,15 @@ class ScreenIOParameters:
         self.db_dir = args.database_dir
 
         # Check whether a .screen output file already exists.
-        if os.path.exists(self.output_screen_file) and not self.config.force:
-            print(f"Screen output {self.output_screen_file} already exists. Aborting.")
+        # Note : The only operational difference between force and resume, is that resume is not passed into the search handlers.
+        if os.path.exists(self.output_screen_file) and not (self.config.force or self.config.resume):
+            print(f"Screen output {self.output_screen_file} already exists. \n"
+                  "Either use a different output location, or use --force, --resume to override. "
+                  "\nAborting Screen.")
             sys.exit(1)
+
+        if self.config.force and self.config.resume:
+            print("Warning: Using --force, overrides --resume behaviour.")
 
     def setup(self) -> bool:
         """

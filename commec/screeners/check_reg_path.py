@@ -26,7 +26,7 @@ from commec.config.json_io import (
     CommecScreenStepRecommendation,
     MatchRange,
     LifeDomainFlag,
-    RegulationFlag,
+    RegulationList,
     compare
 )
 
@@ -128,8 +128,6 @@ def update_taxonomic_data_from_database(
                     n_reg += (blast2["regulated"][blast2['q. start'] == region['q. start']] != False).sum()
                     n_total += len(blast2["regulated"][blast2['q. start'] == region['q. start']])
 
-                non_regulated_percent : int = 100 - round(float(n_reg)/float(n_total)*100)
-
                 domain = LifeDomainFlag.SKIP
                 if unique_hit_data['superkingdom'].iloc[0] == "Viruses":
                     domain = LifeDomainFlag.VIRUS
@@ -144,8 +142,8 @@ def update_taxonomic_data_from_database(
                 recommendation : CommecRecomendation = CommecRecomendation.FLAG
 
                 # Example of how we might make decisions regarding the percent regulation from this step...
-                if non_regulated_percent > 50:
-                    recommendation = CommecRecomendation.WARN
+                #if non_regulated_percent > 50:
+                #    recommendation = CommecRecomendation.WARN
 
                 # Update the query level recommendation of this step.
                 if step == CommecScreenStep.TAXONOMY_AA:
@@ -166,9 +164,8 @@ def update_taxonomic_data_from_database(
                     write_hit.ranges.extend(match_ranges)
                     write_hit.domain = domain # Always overwrite, better than our guess from biorisk.
                     write_hit.description += " " + hit_description
-                    if (write_hit.regulation == RegulationFlag.SKIP):
-                        write_hit.regulation = RegulationFlag.REGULATED
-                    write_hit.non_regulated_overlap_percent = non_regulated_percent
+                    if (write_hit.regulation == RegulationList.SKIP):
+                        write_hit.regulation = RegulationList.REGULATED
                     write_hit.recommendation = compare(write_hit.recommendation, recommendation)
                     continue
                     
@@ -181,8 +178,7 @@ def update_taxonomic_data_from_database(
                         ),
                         hit,
                         hit_description,
-                        RegulationFlag.REGULATED,
-                        non_regulated_percent,
+                        RegulationList.REGULATED,
                         domain,
                         match_ranges
                     )

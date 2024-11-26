@@ -27,7 +27,7 @@ import json
 import string
 import os
 from dataclasses import dataclass, asdict, fields, field, is_dataclass
-from typing import Dict, Type, get_origin, Any, get_args
+from typing import Dict, Type, get_origin, Any, get_args, List
 from enum import StrEnum
 from commec.tools.search_handler import SearchToolVersion
 
@@ -41,17 +41,63 @@ class LifeDomainFlag(StrEnum):
     BACTERIA = "Bacteria"
     VIRUS = "Virus"
 
-class RegulationFlag(StrEnum):
-    """ Domains of life. """
-    REGULATED = "Regulated"
-    REGULATED_GENE = "Regulated gene"
-    VIRULANCE_FACTOR = "Virulance Factor"
+class RegulationRegions(StrEnum):
+    """ Flag for . """
+    # BIORISK:
+    VIRULANCE_FACTOR = "Virulance Factor" # For Biorisk.
+    TOXIN = "Toxin"
+    REGULATED = "Regulated Biorisk" # For Biorisk / undefined NR taxonomy.
+    REGULATED_GENE = "Regulated gene" # For undefined NT taxonomy.
+    # Update supported lists here.
+    AUS_HU_ANI_PATH = "australia_group_human_and_animal_pathogens"
+    EU_EXP_CONTROLS = "eu_export_controls"
+    US_FED_SELAGNTS = "us_federal_select_agents"
+
     SKIP = "Not assigned"
+
+class RegulationList(StrEnum):
+    """ 
+    Information related to what list regulation originates from. 
+    Includes Flags used in Commec Biorisk VF outputs.
+    """
+    REGULATED = "Commec Regulated Biorisk" # For Biorisk / undefined NR taxonomy.
+    VIRULANCE_FACTOR = "Commec Virulance Factor" # For Biorisk.
+    REGULATED_GENE = "Regulated gene" # For undefined NT taxonomy.
+    # Update supported lists here.
+    AUS_HU_ANI_PATH = "australia_group_human_and_animal_pathogens"
+    EU_EXP_CONTROLS = "eu_export_controls"
+    US_FED_SELAGNTS = "us_federal_select_agents"
+
+    SKIP = "Not assigned"
+
+class RegulationRegion(StrEnum):
+    """ Information related to what list regulation originates from. Includes Commec Biorisk VF outputs."""
+    EU = "European Union"
+    US = "United States of America"
+    JP = "Japan"
+    CH = "Peoples Republic of China"
+    SK = "Republic of Korea"
+    SKIP = "Not assigned"
+
+@dataclass
+class TaxonomicData():
+    """ Container for holding Domain, and Species information. """
+    domains : List[LifeDomainFlag] = field(default_factory=list)#= [LifeDomainFlag.SKIP]
+    species : List[str] = field(default_factory=list)# = ["skip"]
+
+@dataclass
+class RegulationData():
+    list : RegulationList = RegulationList.SKIP
+    regions : List[str] = field(default_factory=list)
+    species : List[str] = field(default_factory=list)
+    non_regulated_species : List[str] = field(default_factory=list)
+    #regulated_domains : str = field(default_factory=list)
 
 def guess_domain(search_string : str) -> LifeDomainFlag:
     """ 
     Given a string description, try to determine 
-    which domain of life this has come from.
+    which domain of life this has come from. Temporary work around
+    until we can retrieve this data directly from biorisk outputs.
     """
     def contains(search_string : str, search_terms):
         for token in search_terms:
@@ -105,7 +151,7 @@ class CommecRecomendation(StrEnum):
             CommecRecomendation.ERROR: 5,
         }
         return order[self]
-    
+
 def compare(a : CommecRecomendation, b : CommecRecomendation):
     """ Compare two recommendations, return the most important one. """
     if a.importance > b.importance:
@@ -121,12 +167,11 @@ class CommecScreenStepRecommendation:
 @dataclass
 class CommecSummaryStatistics:
     """
-    Summary of the recommendations at each step of the commec screen process, and 
-    some useful statistics for rapid intepretation of complicated screen outputs.
+    Useful data on the summary of a Commec Screen.
     """
-    biorisk_toxin_percentage : int = 0
-    percentage_of_regulated_for_taxonomy_best_matches : int = 0
-    human_pathogen_flag_percentage : int = 0
+    virus_hits : int = 0
+    bacteria_hits : int = 0
+    eukaryote_hits : int = 0
 
 @dataclass
 class MatchRange:
@@ -145,10 +190,9 @@ class HitDescription:
     recommendation : CommecScreenStepRecommendation = field(default_factory=CommecScreenStepRecommendation)
     name : str = ""
     description : str = ""
-    regulation : RegulationFlag = RegulationFlag.SKIP
-    non_regulated_overlap_percent : int =  0 # The Percentage of non-regulated hits, sharing this hits start site(s).
-    domain : LifeDomainFlag = LifeDomainFlag.SKIP
-    ranges : list[MatchRange] = field(default_factory = list)
+    regulation : RegulationData = field(default_factory = RegulationData)
+    taxonomic_data : TaxonomicData = field(default_factory = TaxonomicData)
+    ranges : list[MatchRange] = field(default_factory=list)
 
     def get_e_value(self) -> float:
         """ Gets the best e-value across all ranges, useful for sorting hits"""
@@ -156,6 +200,37 @@ class HitDescription:
         for r in self.ranges:
             out = min(out, r.e_value)
         return out
+    
+    def get_taxonomic_text(self):
+        output_string = ""
+        if len(TaxonomicData.domains) > 1:
+            output_string += "multiple "
+        output_string += "multiple domains " if len(TaxonomicData.domains) > 1 else ""
+        return output_string
+    
+@dataclass
+class HitDescriptionBiorisk:
+    """ Container for all information regarding a single hit with a range(s), to a single query."""
+    recommendation : CommecScreenStepRecommendation = field(default_factory=CommecScreenStepRecommendation)
+    name : str = ""
+    description : str = ""
+    regulation : RegulationData = field(default_factory = RegulationData)
+    taxonomic_data : TaxonomicData = field(default_factory = TaxonomicData)
+    ranges : list[MatchRange] = field(default_factory=list)
+
+    def get_e_value(self) -> float:
+        """ Gets the best e-value across all ranges, useful for sorting hits"""
+        out : float = 10.0
+        for r in self.ranges:
+            out = min(out, r.e_value)
+        return out
+    
+    def get_taxonomic_text(self):
+        output_string = ""
+        if len(TaxonomicData.domains) > 1:
+            output_string += "multiple "
+        output_string += "multiple domains " if len(TaxonomicData.domains) > 1 else ""
+        return output_string
     
 @dataclass
 class CommecRecomendationContainer:
@@ -166,9 +241,6 @@ class CommecRecomendationContainer:
     biorisk_screen : CommecRecomendation = CommecRecomendation.NULL
     protein_taxonomy_screen : CommecRecomendation = CommecRecomendation.NULL
     nucleotide_taxonomy_screen : CommecRecomendation = CommecRecomendation.NULL
-    virus_hits : int = 0
-    bacteria_hits : int = 0
-    eukaryote_hits : int = 0
     benign_screen : CommecRecomendation = CommecRecomendation.NULL
 
     def update_commec_recommendation(self, list_of_hits : list[HitDescription]):
@@ -254,7 +326,7 @@ class ScreenData:
     Root dataclass to hold all data related to the screening of an individual query by commec.
     '''
     commec_info : CommecRunInformation = field(default_factory = CommecRunInformation)
-    queries : list[QueryData] = field(default_factory = list)
+    queries : list[QueryData] = field(default_factory=list)
 
     def format(self):
         ''' Format this ScreenData as a json string to pass to a standard out if desired.'''
@@ -304,6 +376,7 @@ def dict_to_dataclass(cls: Type, data: Dict[str, Any]) -> Any:
     for f in fields(cls):
         field_name = f.name
         field_type = f.type
+
         if field_name in data:
             field_value = data[field_name]
 
@@ -312,17 +385,32 @@ def dict_to_dataclass(cls: Type, data: Dict[str, Any]) -> Any:
                 filtered_data[field_name] = dict_to_dataclass(field_type, field_value)
                 continue
 
-            # Check if the field is a list of dataclasses
+            # Check if the field is a list
             if get_origin(field_type) is list:
                 item_type = get_args(field_type)[0]
+
+                # Handle lists of StrEnums
+                if issubclass(item_type, StrEnum):
+                    filtered_data[field_name] = [item_type(item) for item in field_value]
+
+                #Handles Dataclasses
                 if is_dataclass(item_type) and isinstance(field_value, list):
                     filtered_data[field_name] = [
                         dict_to_dataclass(item_type, item) for item in field_value
-                        if isinstance(item, dict) 
+                            if isinstance(item, dict)
                             and any(key in {f.name for f in fields(item_type)} for key in item.keys())
                             or isinstance(item, item_type)]
                     continue
+
                 filtered_data[field_name] = field_value
+                continue
+
+            # Handle custom StrEnums
+            if issubclass(field_type, StrEnum):
+                try:
+                    filtered_data[field_name] = field_type(field_value)
+                except ValueError:
+                    print(f"Invalid value '{field_value}' for field '{field_name}' of type {field_type}.")
                 continue
 
             # Handle other field types

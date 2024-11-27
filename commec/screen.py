@@ -113,14 +113,15 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         action="store_true",
         help="Run in fast mode and skip homology search",
     )
-    parser.add_argument(
+    fr_group = parser.add_mutually_exclusive_group()
+    fr_group.add_argument(
         "-F",
         "--force",
         dest="force",
         action="store_true",
         help="Overwrite any pre-existing output for this Screen job.",
     )
-    parser.add_argument(
+    fr_group.add_argument(
         "-R",
         "--resume",
         dest="resume",

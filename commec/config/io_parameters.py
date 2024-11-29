@@ -62,10 +62,9 @@ class ScreenIOParameters:
         self.db_dir = args.database_dir
 
         # Check whether a .screen output file already exists.
-        # Note : The only operational difference between force and resume, is that resume is not passed into the search handlers.
         if os.path.exists(self.output_screen_file) and not (self.config.force or self.config.resume):
             print(f"Screen output {self.output_screen_file} already exists. \n"
-                  "Either use a different output location, or use --force, --resume to override. "
+                  "Either use a different output location, or use --force or --resume to override. "
                   "\nAborting Screen.")
             sys.exit(1)
 

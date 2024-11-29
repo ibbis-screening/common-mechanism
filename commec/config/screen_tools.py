@@ -34,6 +34,7 @@ class ScreenTools:
             params.query.aa_path,
             f"{params.output_prefix}.biorisk.hmmscan",
             threads=params.config.threads,
+            force=params.config.force,
         )
 
         if params.should_do_protein_screening:
@@ -43,6 +44,7 @@ class ScreenTools:
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.blastx",
                     threads=params.config.threads,
+                    force=params.config.force,
                 )
             elif params.config.protein_search_tool in ("nr.dmnd", "diamond"):
                 self.regulated_protein = DiamondHandler(
@@ -50,6 +52,7 @@ class ScreenTools:
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.dmnd",
                     threads=params.config.threads,
+                    force=params.config.force,
                 )
                 self.regulated_protein.jobs = params.config.diamond_jobs
                 if params.config.protein_search_tool == "nr.dmnd":
@@ -66,6 +69,7 @@ class ScreenTools:
                 input_file=f"{params.output_prefix}.noncoding.fasta",
                 out_file=f"{params.output_prefix}.nt.blastn",
                 threads=params.config.threads,
+                force=params.config.force,
             )
 
         if params.should_do_benign_screening:
@@ -74,16 +78,19 @@ class ScreenTools:
                 input_file=params.query.aa_path,
                 out_file=f"{params.output_prefix}.benign.hmmscan",
                 threads=params.config.threads,
+                force=params.config.force,
             )
             self.benign_blastn = BlastNHandler(
                 os.path.join(params.db_dir, "benign_db/benign.fasta"),
                 input_file=params.query.nt_path,
                 out_file=f"{params.output_prefix}.benign.blastn",
                 threads=params.config.threads,
+                force=params.config.force,
             )
             self.benign_cmscan = CmscanHandler(
                 os.path.join(params.db_dir, "benign_db/benign.cm"),
                 input_file=params.query.nt_path,
                 out_file=f"{params.output_prefix}.benign.cmscan",
                 threads=params.config.threads,
+                force=params.config.force,
             )

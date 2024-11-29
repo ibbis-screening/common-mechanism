@@ -67,13 +67,9 @@ class ScreenIOParameters:
 
         # Parse user input paths to local databases:
         self.db_dir = args.database_dir
-        yaml_db_dir_override = self.db_dir if self.db_dir else None
-
         self.yaml_configuration = {}
         if os.path.exists(self.config.config_yaml_file):
-            self.get_configurations_from_yaml(
-                self.config.config_yaml_file, yaml_db_dir_override
-            )
+            self.get_configurations_from_yaml(self.config.config_yaml_file, self.db_dir)
         else:
             print("File not found: " + self.config.config_yaml_file)
             raise FileNotFoundError(
@@ -124,17 +120,17 @@ class ScreenIOParameters:
         return True
 
     def get_configurations_from_yaml(
-        self, config_filepath: str, base_path_defaut_override: str = None
+        self, config_filepath: str, db_dir_override: str = None
     ):
         """
         Read the contents of a YAML file, to see
         if it contains information to override configuration.
         TODO: Candidate for future yaml/json io refactor in future.
         """
-        config = None
+        config_from_yaml = None
         try:
             with open(config_filepath, "r", encoding="utf-8") as file:
-                config = yaml.safe_load(file)
+                config_from_yaml = yaml.safe_load(file)
         except ParserError as e:
             print(
                 f"A configuration.yaml file was found ({config_filepath}) "
@@ -144,17 +140,17 @@ class ScreenIOParameters:
             return {}
 
         # Override the protein search tool with the one set by the config file.
-        if config["databases"]["regulated_protein"]["protein_search_tool"]:
-            self.config.protein_search_tool = config["databases"]["regulated_protein"][
+        if config_from_yaml["databases"]["regulated_protein"]["protein_search_tool"]:
+            self.config.protein_search_tool = config_from_yaml["databases"]["regulated_protein"][
                 "protein_search_tool"
             ]
 
         # Extract base paths for substitution
         base_paths = {}
         try:
-            base_paths = config["base_paths"]
-            if base_path_defaut_override:
-                base_paths["default"] = base_path_defaut_override
+            base_paths = config_from_yaml["base_paths"]
+            if db_dir_override:
+                base_paths["default"] = db_dir_override
 
             # Function to recursively replace placeholders
             def recursive_format(d, base_paths):
@@ -164,11 +160,11 @@ class ScreenIOParameters:
                     return d.format(**base_paths)
                 return d
 
-            config = recursive_format(config, base_paths)
+            config_from_yaml = recursive_format(config_from_yaml, base_paths)
         except TypeError:
             pass
 
-        self.yaml_configuration = config
+        self.yaml_configuration = config_from_yaml
         return
 
     @staticmethod

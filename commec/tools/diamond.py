@@ -25,8 +25,8 @@ class DiamondHandler(BlastHandler):
     Concatenates all diamond outputs into a single output file.
     """
 
-    def __init__(self, database_file: str, input_file: str, out_file: str, threads: int = 1):
-        super().__init__(database_file, input_file, out_file, threads)
+    def __init__(self, database_file: str, input_file: str, out_file: str, **kwargs):
+        super().__init__(database_file, input_file, out_file, **kwargs)
         self.frameshift: int = 15
         self.do_range_culling = True
         self.jobs: Optional[int] = None
@@ -128,7 +128,7 @@ class DiamondHandler(BlastHandler):
 
         return n_concurrent_runs, n_threads_per_run
 
-    def search(self):
+    def _search(self):
         """
         Search the DIAMOND-formatted nr protein database for matches to the query file.
         """

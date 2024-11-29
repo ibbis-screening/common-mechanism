@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) 2021-2024 International Biosecurity and Biosafety Initiative for Science
 """
-Defines the `ScreenIOParameters` class and associated dataclasses. 
-Objects responsible for parsing and interpreting user input for 
+Defines the `ScreenIOParameters` class and associated dataclasses.
+Objects responsible for parsing and interpreting user input for
 the screen workflow of commec.
 """
 import os
+import sys
 import glob
 import argparse
 import logging
@@ -17,6 +18,7 @@ import yaml
 from yaml.parser import ParserError
 
 from commec.config.query import Query
+
 
 @dataclass
 class ScreenConfig:
@@ -31,7 +33,9 @@ class ScreenConfig:
     skip_nt_search: bool = False
     do_cleanup: bool = False
     diamond_jobs: Optional[int] = None
-    configuration_yaml_file : str | os.PathLike = "commec-config.yaml"
+    config_yaml_file: str | os.PathLike = "commec-config.yaml"
+    force: bool = False
+    resume: bool = False
 
 
 class ScreenIOParameters:
@@ -42,13 +46,15 @@ class ScreenIOParameters:
     def __init__(self, args: argparse.ArgumentParser):
         # Inputs
         self.config: ScreenConfig = ScreenConfig(
-            args.threads,
-            args.protein_search_tool,
-            args.fast_mode,
-            args.skip_nt_search,
-            args.cleanup,
-            args.diamond_jobs,
-            args.config_yaml.strip()
+            threads=args.threads,
+            protein_search_tool=args.protein_search_tool,
+            in_fast_mode=args.fast_mode,
+            skip_nt_search=args.skip_nt_search,
+            do_cleanup=args.cleanup,
+            diamond_jobs=args.diamond_jobs,
+            config_yaml_file=args.config_yaml.strip(),
+            force=args.force,
+            resume=args.resume,
         )
 
         # Outputs
@@ -64,20 +70,29 @@ class ScreenIOParameters:
         yaml_db_dir_override = self.db_dir if self.db_dir else None
 
         self.yaml_configuration = {}
-        if os.path.exists(self.config.configuration_yaml_file):
-            self.get_configurations_from_yaml(self.config.configuration_yaml_file, yaml_db_dir_override)
+        if os.path.exists(self.config.config_yaml_file):
+            self.get_configurations_from_yaml(
+                self.config.config_yaml_file, yaml_db_dir_override
+            )
         else:
-            print("File not found: " + self.config.configuration_yaml_file)
+            print("File not found: " + self.config.config_yaml_file)
             raise FileNotFoundError(
-                "No configuration yaml was found at " + self.config.configuration_yaml_file + " "
+                "No configuration yaml was found at "
+                + self.config.config_yaml_file
+                + " "
                 "if you are using a custom config file, check the path is correct"
             )
 
         # Check whether a .screen output file already exists.
-        if os.path.exists(self.output_screen_file):
-            raise RuntimeError(
-                f"Screen output {self.output_screen_file} already exists. Aborting."
+        if os.path.exists(self.output_screen_file) and not (
+            self.config.force or self.config.resume
+        ):
+            print(
+                f"Screen output {self.output_screen_file} already exists. \n"
+                "Either use a different output location, or use --force or --resume to override. "
+                "\nAborting Screen."
             )
+            sys.exit(1)
 
     def setup(self) -> bool:
         """
@@ -109,34 +124,38 @@ class ScreenIOParameters:
         return True
 
     def get_configurations_from_yaml(
-            self,
-            config_filepath : str,
-            base_path_defaut_override : str = None
-        ):
-        """ 
-        Read the contents of a YAML file, to see 
+        self, config_filepath: str, base_path_defaut_override: str = None
+    ):
+        """
+        Read the contents of a YAML file, to see
         if it contains information to override configuration.
         TODO: Candidate for future yaml/json io refactor in future.
         """
         config = None
         try:
-            with open(config_filepath, 'r', encoding="utf-8") as file:
+            with open(config_filepath, "r", encoding="utf-8") as file:
                 config = yaml.safe_load(file)
         except ParserError as e:
-            print(f"A configuration.yaml file was found ({config_filepath}) "
-                   "but was invalid as a yaml file:\n",e)
+            print(
+                f"A configuration.yaml file was found ({config_filepath}) "
+                "but was invalid as a yaml file:\n",
+                e,
+            )
             return {}
 
         # Override the protein search tool with the one set by the config file.
         if config["databases"]["regulated_protein"]["protein_search_tool"]:
-            self.config.protein_search_tool = config["databases"]["regulated_protein"]["protein_search_tool"]
+            self.config.protein_search_tool = config["databases"]["regulated_protein"][
+                "protein_search_tool"
+            ]
 
         # Extract base paths for substitution
         base_paths = {}
         try:
-            base_paths = config['base_paths']
+            base_paths = config["base_paths"]
             if base_path_defaut_override:
                 base_paths["default"] = base_path_defaut_override
+
             # Function to recursively replace placeholders
             def recursive_format(d, base_paths):
                 if isinstance(d, dict):

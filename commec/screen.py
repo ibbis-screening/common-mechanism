@@ -113,7 +113,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         action="store_true",
         help="Skip nucleotide search (regulated pathogens will only be identified based on protein hits)",
     )
-    parallel_group = parser.add_argument_group('Parallelization')
+    parallel_group = parser.add_argument_group('Parallelisation')
     parallel_group.add_argument(
         "-t",
         "--threads",

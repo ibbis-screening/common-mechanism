@@ -22,7 +22,7 @@ from commec.config.json_io import (
     ScreenData,
     HitDescription,
     CommecScreenStep,
-    CommecRecomendation,
+    CommecRecommendation,
     CommecScreenStepRecommendation,
     MatchRange,
     compare
@@ -66,10 +66,10 @@ def update_taxonomic_data_from_database(
 
     if step == CommecScreenStep.TAXONOMY_AA:
         for query in data.queries:
-            query.recommendation.protein_taxonomy_screen = CommecRecomendation.PASS
+            query.recommendation.protein_taxonomy_screen = CommecRecommendation.PASS
     if step == CommecScreenStep.TAXONOMY_NT:
         for query in data.queries:
-            query.recommendation.nucleotide_taxonomy_screen = CommecRecomendation.PASS
+            query.recommendation.nucleotide_taxonomy_screen = CommecRecommendation.PASS
 
     if not search_handle.has_hits(search_handle.out_file):
         logging.info("\t...no hits\n")
@@ -156,7 +156,7 @@ def update_taxonomic_data_from_database(
                     # TODO: maybe? should also confirm same query end???
                     n_total += len(blast2["regulated"][blast2['q. start'] == region['q. start']])
 
-                recommendation : CommecRecomendation = CommecRecomendation.FLAG
+                recommendation : CommecRecommendation = CommecRecommendation.FLAG
 
                 # Example of how we might make decisions regarding the percent regulation from this step...
                 # TODO: if all hits are in the same genus n_reg > 0, and n_total > n_reg, WARN

@@ -127,7 +127,7 @@ def update_taxonomic_data_from_database(
                     )
                     match_ranges.append(match_range)
 
-                    domain = region['superkingdom'].iloc[0]
+                    domain = region['superkingdom']
                     if domain == "Viruses":
                         n_regulated_virus += 1
                     if domain == "Bacteria":
@@ -207,9 +207,9 @@ def update_taxonomic_data_from_database(
                     )
                 )
 
-            query_write.recommendation.regulated_bacteria_hits += n_regulated_bacteria
-            query_write.recommendation.regulated_virus_hits += n_regulated_virus
-            query_write.recommendation.regulated_eukaryote_hits += n_regulated_eukaryote
+            #query_write.recommendation.regulated_bacteria_hits += n_regulated_bacteria
+            #query_write.recommendation.regulated_virus_hits += n_regulated_virus
+            #query_write.recommendation.regulated_eukaryote_hits += n_regulated_eukaryote
 
 def main():
     parser = argparse.ArgumentParser()

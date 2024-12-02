@@ -310,9 +310,13 @@ class ScreenData:
 
 def encode_screen_data_to_json(input_screendata: ScreenData, output_json_filepath: string = "output.json") -> None:
     ''' Converts a ScreenData class object into a JSON file at the given filepath.'''
-    with open(output_json_filepath, "w", encoding="utf-8") as json_file:
-        json.dump(asdict(input_screendata), json_file, indent=4)
-
+    try:
+        with open(output_json_filepath, "w", encoding="utf-8") as json_file:
+            json.dump(asdict(input_screendata), json_file, indent=4)
+    except TypeError as e:
+        print("Error outputting JSON:", e)
+        print(input_screendata)
+        
 def encode_dict_to_screen_data(input_dict : dict) -> ScreenData:
     ''' Converts a dictionary into a ScreenData object,
     any keys within the dictionary not part of the ScreenData format are lost.

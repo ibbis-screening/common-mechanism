@@ -146,8 +146,9 @@ def update_taxonomic_data_from_database(
                     # Collect unique species from both regulated and non-regulated
                     reg_species = []
                     reg_species.extend(regulated["species"].unique())
-                    reg_taxids.extend(regulated["subject tax ids"].unique())
-                    non_reg_taxids.extend(non_regulated["subject tax ids"].unique())
+                    # JSON serialization requires int, not np.int64, hence the map()
+                    reg_taxids.extend(map(str, regulated["subject tax ids"].unique()))
+                    non_reg_taxids.extend(map(str, non_regulated["subject tax ids"].unique()))
 
                     # Consider converting to Sets, and then back to lists, if the unique() is having issues.
 
@@ -173,11 +174,11 @@ def update_taxonomic_data_from_database(
                             query.recommendation.nucleotide_taxonomy_screen,
                             recommendation)
                         
-                regulation_dict = {"number_of_regulated_taxids" : n_reg,
-                                   "number_of_unregulated_taxids" : n_total - n_reg,
-                                   "regulated_eukaryotes": n_regulated_eukaryote,
-                                   "regulated_bacteria": n_regulated_bacteria,
-                                   "regulated_viruses": n_regulated_virus,
+                regulation_dict = {"number_of_regulated_taxids" : str(n_reg),
+                                   "number_of_unregulated_taxids" : str(n_total - n_reg),
+                                   "regulated_eukaryotes": str(n_regulated_eukaryote),
+                                   "regulated_bacteria": str(n_regulated_bacteria),
+                                   "regulated_viruses": str(n_regulated_virus),
                                    "regulated_taxids": reg_taxids,
                                    "non_regulated_taxids" : non_reg_taxids,
                                    "regulated_species" : reg_species}

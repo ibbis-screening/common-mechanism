@@ -65,25 +65,23 @@ class ScreenIOParameters:
         # Query
         self.query: Query = Query(args.fasta_file)
 
-        # Parse user input paths to local databases:
+        # Parse paths to input databases (may be from CLI or YAML configuration file)
         self.db_dir = args.database_dir
         self.yaml_configuration = {}
+
         if os.path.exists(self.config.config_yaml_file):
             self.get_configurations_from_yaml(self.config.config_yaml_file, self.db_dir)
         else:
-            print("File not found: " + self.config.config_yaml_file)
             raise FileNotFoundError(
-                "No configuration yaml was found at "
+                "No configuration yaml was found. If using a custom file, check the path is correct: "
                 + self.config.config_yaml_file
-                + " "
-                "if you are using a custom config file, check the path is correct"
             )
 
         # Check whether a .screen output file already exists.
         if os.path.exists(self.output_screen_file) and not (
             self.config.force or self.config.resume
         ):
-            print(
+            logging.info(
                 f"Screen output {self.output_screen_file} already exists. \n"
                 "Either use a different output location, or use --force or --resume to override. "
                 "\nAborting Screen."

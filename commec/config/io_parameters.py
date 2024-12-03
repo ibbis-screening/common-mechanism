@@ -73,7 +73,7 @@ class ScreenIOParameters:
             self.get_configurations_from_yaml(self.config.config_yaml_file, self.db_dir)
         else:
             raise FileNotFoundError(
-                "No configuration yaml was found. If using a custom file, check the path is correct: "
+                "No configuration yaml found. If using a custom file, check the path is correct: "
                 + self.config.config_yaml_file
             )
 
@@ -118,38 +118,53 @@ class ScreenIOParameters:
         return True
 
     def get_configurations_from_yaml(
-        self, config_filepath: str, db_dir_override: str = None
+        self, config_filepath: str | os.PathLike, db_dir_override: str | os.PathLike = None
     ):
         """
-        Read the contents of a YAML file, to see
-        if it contains information to override configuration.
-        TODO: Candidate for future yaml/json io refactor in future.
+        Read the contents of YAML file configuration.
+
+        The YAML file is expected to contain a 'base_paths' key that is referenced in string
+        substitutions, so that base paths do not need to be defined more than once. For example:
+
+            base_paths:
+                default: path/to/databases/
+            databases:
+                regulated_nt:
+                    path: '{default}nt_blast/nt'
         """
-        config_from_yaml = None
         try:
             with open(config_filepath, "r", encoding="utf-8") as file:
                 config_from_yaml = yaml.safe_load(file)
         except ParserError as e:
-            print(
-                f"A configuration.yaml file was found ({config_filepath}) "
-                "but was invalid as a yaml file:\n",
-                e,
-            )
-            return {}
+            raise ValueError(
+                f"Invalid YAML syntax in configuration file: {config_filepath}"
+            ) from e
 
         # Extract base paths for substitution
-        base_paths = {}
+        missing_sections = {"base_paths", "databases"} - set(config_from_yaml.keys())
+        if missing_sections:
+            raise ValueError(
+                f"Configuration missing required sections: {missing_sections}"
+            )
+
         try:
             base_paths = config_from_yaml["base_paths"]
-            if db_dir_override:
+            if db_dir_override is not None:
                 base_paths["default"] = db_dir_override
 
-            # Function to recursively replace placeholders
             def recursive_format(d, base_paths):
+                """
+                Recursively apply string formatting to read paths from nested yaml config dicts.
+                """
                 if isinstance(d, dict):
                     return {k: recursive_format(v, base_paths) for k, v in d.items()}
                 if isinstance(d, str):
-                    return d.format(**base_paths)
+                    try:
+                        return d.format(**base_paths)
+                    except KeyError as e:
+                        raise ValueError(
+                            f"Unknown base path key referenced in path: {d}"
+                        ) from e
                 return d
 
             config_from_yaml = recursive_format(config_from_yaml, base_paths)

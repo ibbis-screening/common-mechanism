@@ -81,7 +81,8 @@ class ScreenIOParameters:
         if os.path.exists(self.output_screen_file) and not (
             self.config.force or self.config.resume
         ):
-            logging.info(
+            # Print statement must be used as logging not yet instantiated
+            print(
                 f"Screen output {self.output_screen_file} already exists. \n"
                 "Either use a different output location, or use --force or --resume to override. "
                 "\nAborting Screen."
@@ -90,7 +91,7 @@ class ScreenIOParameters:
 
     def setup(self) -> bool:
         """
-        Post-instantiation additonal setup. i.e. setup require output logs.
+        Additional setup once the class has been instantiated (i.e. that requires logs).
         """
         # Sanity checks on thread input.
         if self.config.threads > multiprocessing.cpu_count():

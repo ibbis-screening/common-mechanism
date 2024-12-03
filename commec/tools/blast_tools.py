@@ -32,7 +32,7 @@ class BlastHandler(SearchHandler):
         """
         if not os.path.isdir(self.db_directory):
             raise DatabaseValidationError(
-                f"Mandatory screening directory {self.db_directory} not found."
+                f"Mandatory screening directory not found: {self.db_directory}"
             )
 
         # Search for files of provided prefix.
@@ -42,7 +42,9 @@ class BlastHandler(SearchHandler):
         )
         files = glob.glob(search_file)
         if len(files) == 0:
-            raise DatabaseValidationError(f"Mandatory screening files with {filename}* not found.")
+            raise DatabaseValidationError(
+                f"Mandatory screening files not found. No files matched search: {filename}*"
+            )
 
 
 def _split_by_tax_id(blast: pd.DataFrame, taxids_col_name="subject tax ids"):

@@ -32,7 +32,7 @@ class BlastHandler(SearchHandler):
         """
         if not os.path.isdir(self.db_directory):
             raise DatabaseValidationError(
-                f"Mandatory screening directory not found: {self.db_directory}."
+                f"Mandatory screening database directory not found: {self.db_directory}."
                 " Screening directory can be set via --databases option or --config yaml."
             )
 
@@ -45,6 +45,7 @@ class BlastHandler(SearchHandler):
         if len(files) == 0:
             raise DatabaseValidationError(
                 f"Mandatory screening files not found. No files matched search: {filename}*"
+                " File location can be set via --databases option or --config yaml."
             )
 
 

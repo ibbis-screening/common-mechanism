@@ -139,12 +139,6 @@ class ScreenIOParameters:
             )
             return {}
 
-        # Override the protein search tool with the one set by the config file.
-        if config_from_yaml["databases"]["regulated_protein"]["protein_search_tool"]:
-            self.config.protein_search_tool = config_from_yaml["databases"]["regulated_protein"][
-                "protein_search_tool"
-            ]
-
         # Extract base paths for substitution
         base_paths = {}
         try:
@@ -165,7 +159,6 @@ class ScreenIOParameters:
             pass
 
         self.yaml_configuration = config_from_yaml
-        return
 
     @staticmethod
     def get_output_prefix(input_file, prefix_arg=""):

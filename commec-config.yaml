@@ -17,4 +17,3 @@ databases:
       path: '{default}nr_blast/nr'
     diamond:
       path: '{default}nr_dmnd/nr.dmnd'
-    protein_search_tool: blastx

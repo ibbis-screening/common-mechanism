@@ -17,6 +17,8 @@ import tarfile
 import yaml
 from yaml.parser import ParserError
 
+from commec.config.constants import DEFAULT_CONFIG_YAML_PATH
+
 DESCRIPTION = """Helper script for downloading the databases
  required for running the Common Mechanism Screen"""
 
@@ -619,8 +621,9 @@ class CliSetup:
 
             os.remove(filename_zipped)
 
-        # We update the default path of the configuration file to point to the newly installed databases.
-        self.update_default_base_path("commec-config.yaml",self.database_directory)
+        # Default config file installed with commec package should by point to the newly
+        # installed databases
+        self.update_default_db_base_path(DEFAULT_CONFIG_YAML_PATH, self.database_directory)
 
         print(
             "\n\nThe common mechanism setup has completed!"
@@ -687,10 +690,10 @@ class CliSetup:
             f" {C_F_BLUE}*-------------------*{C_RESET}",
         )
 
-    def update_default_base_path(self, config_file: str, new_path: str) -> None:
+    def update_default_db_base_path(self, config_file: str, new_path: str) -> None:
         """
-        Updates the default yaml-config file with a default that matches the path
-        where the databases were installed. Courtesy for the user.
+        Update the ['basepaths']['default'] path in the configuration yaml file to match the path
+        where the databases were installed.
         """
         try:
             with open(config_file, 'r', encoding = "utf-8") as file:
@@ -701,8 +704,8 @@ class CliSetup:
                 config_data['base_paths']['default'] = new_path
             else:
                 # For some reason this didn't exist, so lets just silently make it, and throw a warning.
-                print(f"{C_F_ORANGE}Warning, base paths weren't defined in the default configuration file "
-                      "(commec-config.yaml), the correct data will be added, however we recommend you double "
+                print(f"{C_F_ORANGE}WARNING: base paths weren't defined in the default configuration file "
+                      f"{config_file}, the correct data will be added, however we recommend you double "
                       "check that the default config yaml is correct. {C_RESET}")
                 config_data['base_paths'] = {'default' : new_path}
 

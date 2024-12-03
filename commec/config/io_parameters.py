@@ -18,6 +18,7 @@ import yaml
 from yaml.parser import ParserError
 
 from commec.config.query import Query
+from commec.config.constants import DEFAULT_CONFIG_YAML_PATH
 
 
 @dataclass
@@ -33,7 +34,7 @@ class ScreenConfig:
     skip_nt_search: bool = False
     do_cleanup: bool = False
     diamond_jobs: Optional[int] = None
-    config_yaml_file: str | os.PathLike = "commec-config.yaml"
+    config_yaml_file: str | os.PathLike = DEFAULT_CONFIG_YAML_PATH
     force: bool = False
     resume: bool = False
 

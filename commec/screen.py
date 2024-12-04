@@ -23,7 +23,9 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -d DATABASE_DIR, --databases DATABASE_DIR
-                        Path to directory containing reference databases
+                        Path to directory containing reference databases (e.g. taxonomy, protein, HMM)
+  -y CONFIG_YAML, --config CONFIG_YAML
+                        Configuration for screen run in YAML format, including custom database paths
 
 Screen run logic:
   -f, --fast            Run in fast mode and skip protein and nucleotide homology search
@@ -32,20 +34,20 @@ Screen run logic:
   -n, --skip-nt         Skip nucleotide search (regulated pathogens will only be identified based on
                         protein hits)
 
-Parallelization:
+Parallelisation:
   -t THREADS, --threads THREADS
                         Number of CPU threads to use. Passed to search tools.
   -j DIAMOND_JOBS, --diamond-jobs DIAMOND_JOBS
-                        Diamond-only: number of runs to do in parallel
+                        Diamond-only: number of runs to do in parallel on split Diamond databases
 
 Output file handling:
   -o OUTPUT_PREFIX, --output OUTPUT_PREFIX
                         Prefix for output files. Can be a string (interpreted as output basename) or
-                        a directory (in which case the output file names will be determined from the
-                        input FASTA)
-  -c, --cleanup         Delete intermediate output files for this Screen run
-  -F, --force           Overwrite any pre-existing output for this Screen run
-  -R, --resume          Re-use any pre-existing output for this Screen run
+                        a directory (files will be output there, names determined from input FASTA)
+  -c, --cleanup         Delete intermediate output files for run
+  -F, --force           Overwrite any pre-existing output for run (cannot be used with --resume)
+  -R, --resume          Re-use any pre-existing output run (cannot be used with --force)
+
 """
 import argparse
 import datetime
@@ -79,10 +81,17 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--databases",
         dest="database_dir",
         type=directory_arg,
-        required=True,
+        default=None,
         help="Path to directory containing reference databases (e.g. taxonomy, protein, HMM)",
     )
-    screen_logic_group = parser.add_argument_group('Screen run logic')
+    parser.add_argument(
+        "-y",
+        "--config",
+        dest="config_yaml",
+        default=default_config.config_yaml_file,
+        help="Configuration for screen run in YAML format, including custom database paths",
+    )
+    screen_logic_group = parser.add_argument_group("Screen run logic")
     screen_logic_group.add_argument(
         "-f",
         "--fast",
@@ -105,7 +114,7 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         action="store_true",
         help="Skip nucleotide search (regulated pathogens will only be identified based on protein hits)",
     )
-    parallel_group = parser.add_argument_group('Parallelization')
+    parallel_group = parser.add_argument_group("Parallelisation")
     parallel_group.add_argument(
         "-t",
         "--threads",
@@ -120,16 +129,16 @@ def add_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         dest="diamond_jobs",
         type=int,
         default=default_config.diamond_jobs,
-        help="Diamond-only: number of runs to do in parallel",
+        help="Diamond-only: number of runs to do in parallel on split Diamond databases",
     )
-    output_handling_group = parser.add_argument_group('Output file handling')
+    output_handling_group = parser.add_argument_group("Output file handling")
     output_exclusive_group = output_handling_group.add_mutually_exclusive_group()
     output_handling_group.add_argument(
         "-o",
         "--output",
         dest="output_prefix",
         help="Prefix for output files. Can be a string (interpreted as output basename) or a"
-        + " directory (in which case the output file names will be determined from the input FASTA)",
+        + " directory (files will be output there, names will be determined from input FASTA)",
     )
     output_handling_group.add_argument(
         "-c",
@@ -348,8 +357,8 @@ class Screen:
         )
 
         if coords.shape[0] == 0:
-                logging.info("\t...no regulated regions to clear\n")
-                return
+            logging.info("\t...no regulated regions to clear\n")
+            return
 
         logging.debug("\t...checking benign scan results")
 

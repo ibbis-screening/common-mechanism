@@ -14,7 +14,11 @@ from dataclasses import dataclass
 from typing import Optional
 import multiprocessing
 
+import yaml
+from yaml.parser import ParserError
+
 from commec.config.query import Query
+from commec.config.constants import DEFAULT_CONFIG_YAML_PATH
 
 
 @dataclass
@@ -30,24 +34,28 @@ class ScreenConfig:
     skip_nt_search: bool = False
     do_cleanup: bool = False
     diamond_jobs: Optional[int] = None
+    config_yaml_file: str | os.PathLike = DEFAULT_CONFIG_YAML_PATH
     force: bool = False
     resume: bool = False
+
 
 class ScreenIOParameters:
     """
     Container for input settings constructed from arguments to `screen`.
     """
+
     def __init__(self, args: argparse.ArgumentParser):
         # Inputs
         self.config: ScreenConfig = ScreenConfig(
-            args.threads,
-            args.protein_search_tool,
-            args.fast_mode,
-            args.skip_nt_search,
-            args.cleanup,
-            args.diamond_jobs,
-            args.force,
-            args.resume,
+            threads=args.threads,
+            protein_search_tool=args.protein_search_tool,
+            in_fast_mode=args.fast_mode,
+            skip_nt_search=args.skip_nt_search,
+            do_cleanup=args.cleanup,
+            diamond_jobs=args.diamond_jobs,
+            config_yaml_file=args.config_yaml.strip(),
+            force=args.force,
+            resume=args.resume,
         )
 
         # Outputs
@@ -58,20 +66,33 @@ class ScreenIOParameters:
         # Query
         self.query: Query = Query(args.fasta_file)
 
-        # Storage of user input, used by screen_tools.
+        # Parse paths to input databases (may be from CLI or YAML configuration file)
         self.db_dir = args.database_dir
+        self.yaml_configuration = {}
+
+        if os.path.exists(self.config.config_yaml_file):
+            self.get_configurations_from_yaml(self.config.config_yaml_file, self.db_dir)
+        else:
+            raise FileNotFoundError(
+                "No configuration yaml found. If using a custom file, check the path is correct: "
+                + self.config.config_yaml_file
+            )
 
         # Check whether a .screen output file already exists.
-        if os.path.exists(self.output_screen_file) and not (self.config.force or self.config.resume):
-            print(f"Screen output {self.output_screen_file} already exists. \n"
-                  "Either use a different output location, or use --force or --resume to override. "
-                  "\nAborting Screen.")
+        if os.path.exists(self.output_screen_file) and not (
+            self.config.force or self.config.resume
+        ):
+            # Print statement must be used as logging not yet instantiated
+            print(
+                f"Screen output {self.output_screen_file} already exists. \n"
+                "Either use a different output location, or use --force or --resume to override. "
+                "\nAborting Screen."
+            )
             sys.exit(1)
-
 
     def setup(self) -> bool:
         """
-        Post-instantiation additonal setup. i.e. setup require output logs.
+        Additional setup once the class has been instantiated (i.e. that requires logs).
         """
         # Sanity checks on thread input.
         if self.config.threads > multiprocessing.cpu_count():
@@ -97,6 +118,62 @@ class ScreenIOParameters:
 
         self.query.setup(self.output_prefix)
         return True
+
+    def get_configurations_from_yaml(
+        self, config_filepath: str | os.PathLike, db_dir_override: str | os.PathLike = None
+    ):
+        """
+        Read the contents of YAML file configuration.
+
+        The YAML file is expected to contain a 'base_paths' key that is referenced in string
+        substitutions, so that base paths do not need to be defined more than once. For example:
+
+            base_paths:
+                default: path/to/databases/
+            databases:
+                regulated_nt:
+                    path: '{default}nt_blast/nt'
+        """
+        try:
+            with open(config_filepath, "r", encoding="utf-8") as file:
+                config_from_yaml = yaml.safe_load(file)
+        except ParserError as e:
+            raise ValueError(
+                f"Invalid YAML syntax in configuration file: {config_filepath}"
+            ) from e
+
+        # Extract base paths for substitution
+        missing_sections = {"base_paths", "databases"} - set(config_from_yaml.keys())
+        if missing_sections:
+            raise ValueError(
+                f"Configuration missing required sections: {missing_sections}"
+            )
+
+        try:
+            base_paths = config_from_yaml["base_paths"]
+            if db_dir_override is not None:
+                base_paths["default"] = db_dir_override
+
+            def recursive_format(d, base_paths):
+                """
+                Recursively apply string formatting to read paths from nested yaml config dicts.
+                """
+                if isinstance(d, dict):
+                    return {k: recursive_format(v, base_paths) for k, v in d.items()}
+                if isinstance(d, str):
+                    try:
+                        return d.format(**base_paths)
+                    except KeyError as e:
+                        raise ValueError(
+                            f"Unknown base path key referenced in path: {d}"
+                        ) from e
+                return d
+
+            config_from_yaml = recursive_format(config_from_yaml, base_paths)
+        except TypeError:
+            pass
+
+        self.yaml_configuration = config_from_yaml
 
     @staticmethod
     def get_output_prefix(input_file, prefix_arg=""):

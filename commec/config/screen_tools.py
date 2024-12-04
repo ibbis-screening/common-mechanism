@@ -6,7 +6,6 @@ Container for search handlers used throughout the Commec screen workflow.
 Sets and alters defaults based on input parameters.
 """
 
-import os
 import logging
 from typing import Union
 from commec.config.io_parameters import ScreenIOParameters
@@ -29,8 +28,10 @@ class ScreenTools:
         self.benign_blastn: BlastNHandler = None
         self.benign_cmscan: CmscanHandler = None
 
+        config_file = params.yaml_configuration
+
         self.biorisk_hmm = HmmerHandler(
-            os.path.join(params.db_dir, "biorisk_db/biorisk.hmm"),
+            config_file["databases"]["biorisk_hmm"]["path"],
             params.query.aa_path,
             f"{params.output_prefix}.biorisk.hmmscan",
             threads=params.config.threads,
@@ -40,7 +41,7 @@ class ScreenTools:
         if params.should_do_protein_screening:
             if params.config.protein_search_tool == "blastx":
                 self.regulated_protein = BlastXHandler(
-                    os.path.join(params.db_dir, "nr_blast/nr"),
+                    config_file["databases"]["regulated_protein"]["blast"]["path"],
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.blastx",
                     threads=params.config.threads,
@@ -48,7 +49,7 @@ class ScreenTools:
                 )
             elif params.config.protein_search_tool in ("nr.dmnd", "diamond"):
                 self.regulated_protein = DiamondHandler(
-                    os.path.join(params.db_dir, "nr_dmnd/nr.dmnd"),
+                    config_file["databases"]["regulated_protein"]["diamond"]["path"],
                     input_file=params.query.nt_path,
                     out_file=f"{params.output_prefix}.nr.dmnd",
                     threads=params.config.threads,
@@ -65,7 +66,7 @@ class ScreenTools:
 
         if params.should_do_nucleotide_screening:
             self.regulated_nt = BlastNHandler(
-                os.path.join(params.db_dir, "nt_blast/nt"),
+                config_file["databases"]["regulated_nt"]["path"],
                 input_file=f"{params.output_prefix}.noncoding.fasta",
                 out_file=f"{params.output_prefix}.nt.blastn",
                 threads=params.config.threads,
@@ -74,21 +75,21 @@ class ScreenTools:
 
         if params.should_do_benign_screening:
             self.benign_hmm = HmmerHandler(
-                os.path.join(params.db_dir, "benign_db/benign.hmm"),
+                config_file["databases"]["benign"]["hmm"]["path"],
                 input_file=params.query.aa_path,
                 out_file=f"{params.output_prefix}.benign.hmmscan",
                 threads=params.config.threads,
                 force=params.config.force,
             )
             self.benign_blastn = BlastNHandler(
-                os.path.join(params.db_dir, "benign_db/benign.fasta"),
+                config_file["databases"]["benign"]["fasta"]["path"],
                 input_file=params.query.nt_path,
                 out_file=f"{params.output_prefix}.benign.blastn",
                 threads=params.config.threads,
                 force=params.config.force,
             )
             self.benign_cmscan = CmscanHandler(
-                os.path.join(params.db_dir, "benign_db/benign.cm"),
+                config_file["databases"]["benign"]["cm"]["path"],
                 input_file=params.query.nt_path,
                 out_file=f"{params.output_prefix}.benign.cmscan",
                 threads=params.config.threads,

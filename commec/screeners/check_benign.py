@@ -53,7 +53,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
         print(hmmer)
         hmmer = hmmer[hmmer["evalue"] < 1e-20]
         for flagged_hit in flagged_hits:
-            for region in flagged_hits.ranges:
+            for region in flagged_hit.ranges:
                 # look at only the hmmer hits that overlap with it
                 htrim =_trim_to_region(hmmer, region)
                 if htrim.shape[0] > 0:
@@ -97,8 +97,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                                 {"domain" : [domain]},
                             )
                         )
-
-                        flagged_hit.recommendation.outcome = CommecRecommendation.CLEARED
+                        flagged_hit.recommendation.outcome = flagged_hit.recommendation.outcome.clear()
 
     # RNA HITS
     # for each set of hits, need to pull out the coordinates covered by benign entries
@@ -107,7 +106,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
     else:
         cmscan = benign_rna_handle.read_output()
         for flagged_hit in flagged_hits:
-            for region in flagged_hits.ranges:
+            for region in flagged_hit.ranges:
                 # look at only the hmmer hits that overlap with it
                 htrim =_trim_to_region(cmscan, region)
                 if htrim.shape[0] > 0:
@@ -152,7 +151,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                                 {"coverage": htrim["coverage"][row]}
                             )
                             )
-                            flagged_hit.recommendation.outcome = CommecRecommendation.CLEARED
+                            flagged_hit.recommendation.outcome = flagged_hit.recommendation.outcome.clear()
 
 
     # SYNBIO HITS
@@ -163,10 +162,11 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
         blastn = benign_synbio_handle.read_output()  # synbio parts
         blastn = get_top_hits(blastn)
         for flagged_hit in flagged_hits:
-            for region in flagged_hits.ranges: 
+            for region in flagged_hit.ranges: 
                 htrim = _trim_to_region(blastn, region)
                 if any(htrim["q. coverage"] > 0.80):
                     htrim = htrim[htrim["q. coverage"] > 0.80]
+                    htrim = htrim.drop_duplicates()
                     htrim = htrim.reset_index(drop=True)
 
                     #TODO: Consider only iterating over the unique subject titles for htrim at this stage.
@@ -200,21 +200,18 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                                 match_ranges
                             )
                         )
-                        flagged_hit.recommendation.outcome = CommecRecommendation.CLEARED
+                        flagged_hit.recommendation.outcome = flagged_hit.recommendation.outcome.clear()
 
     # Calculate the Benign Screen outcomes for each query.
     for query in data.queries:
         # By default we are fine.
         query.recommendation.benign_screen = CommecRecommendation.PASS
         # If any hits are still warnings, or flags, propagate that.
-        for hit in query.hits:
+        for flagged_hit in flagged_hits:
             query.recommendation.benign_screen = compare(
-                hit.recommendation.outcome,
+                flagged_hit.recommendation.outcome,
                 query.recommendation.benign_screen
                 )
-            
-
-
 
 def _trim_to_coords(data : pd.DataFrame, coords, region):
     datatrim = data[

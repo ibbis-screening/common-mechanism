@@ -60,7 +60,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                     htrim = htrim.assign(coverage=abs(htrim["q. start"] - htrim["q. end"]))
                     if any(htrim["query length"] - htrim["coverage"] < 50):
                         htrim = htrim[htrim["coverage"] > 0.80]
-                        htrim = htrim.reset_index(drop=True)
+                        htrim = htrim.drop_duplicates().reset_index(drop=True)
                         # for row in range(htrim.shape[0]):
 
                         top_hit = htrim.iloc[0]
@@ -116,7 +116,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                     )
                     if any(htrim["coverage"] < 50):
                         htrim = htrim[htrim["coverage"] < 50]
-                        htrim = htrim.reset_index(drop=True)
+                        htrim = htrim.drop_duplicates().reset_index(drop=True)
 
                         #TODO: Consider only iterating over the unique subject titles for htrim at this stage.
                         for row in range(htrim.shape[0]):
@@ -166,8 +166,7 @@ def update_benign_data_from_database(benign_protein_handle : HmmerHandler,
                 htrim = _trim_to_region(blastn, region)
                 if any(htrim["q. coverage"] > 0.80):
                     htrim = htrim[htrim["q. coverage"] > 0.80]
-                    htrim = htrim.drop_duplicates()
-                    htrim = htrim.reset_index(drop=True)
+                    htrim = htrim.drop_duplicates().reset_index(drop=True)
 
                     #TODO: Consider only iterating over the unique subject titles for htrim at this stage.
                     for row in range(htrim.shape[0]):

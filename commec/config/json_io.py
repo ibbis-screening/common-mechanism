@@ -96,7 +96,7 @@ class CommecRecommendation(StrEnum):
             CommecRecommendation.ERROR: 7,
         }
         return order[self]
-    
+
     def clear(self):
         """ Convert a WARN or FLAG into its cleared counterpart, and return that. """
         if self == CommecRecommendation.WARN:

@@ -15,7 +15,7 @@ from Bio.SeqRecord import SeqRecord
 from commec.tools.blast_tools import get_high_identity_matches
 from commec.tools.search_handler import SearchHandler
 from commec.config.io_parameters import ScreenIOParameters
-from commec.config.query import Query, non_coding_region
+from commec.config.query import Query
 
 
 def get_ranges_with_no_hits(blast_df):

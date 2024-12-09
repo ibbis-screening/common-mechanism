@@ -397,7 +397,6 @@ class Screen:
             self.database_tools.benign_cmscan,
             self.database_tools.benign_blastn,
             self.screen_data,
-            coords,
             benign_desc
         )
 

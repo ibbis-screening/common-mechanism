@@ -96,6 +96,7 @@ def update_layout(fig, query_to_draw : QueryData, stacks):
     figure_base_height = 180
     figure_stack_height = 30
 
+    fig.update_layout(showlegend=False)
     # Update layout to display X-axis on top and hide Y-axis labels for specified subplot
     fig.update_layout({
         # General layout properties
@@ -159,11 +160,11 @@ def generate_outcome_string(query : QueryData, hit : HitDescription) -> str:
             
             domain_string = " across multiple domains."
             if n_regulated_bacteria > 0 and n_regulated_viruses == 0 and n_regulated_eukaryotes == 0:
-                domain_string = " bacteria."
+                domain_string = " bacteria"
             elif n_regulated_eukaryotes > 0 and n_regulated_viruses == 0:
-                domain_string = " eukaryotes."
+                domain_string = " eukaryotes"
             elif n_regulated_viruses > 0:
-                domain_string = " viruses."
+                domain_string = " viruses"
 
             total_hits : int = len(regulated_taxids) + len(non_regulated_taxids)
             peptide_type = "protein" if "Protein" in hit.recommendation.from_step else "nucleotides"
@@ -171,9 +172,9 @@ def generate_outcome_string(query : QueryData, hit : HitDescription) -> str:
             if len(non_regulated_taxids) > 0:
                 output_string += "Mix of regulated and non-regulated" + domain_string
             else:
-                output_string += "Best match to regulated" + domain_string
+                output_string += "Best match to regulated" + domain_string + "."
 
-            output_string += str(total_hits) + " best match hits to " if total_hits > 1 else " best hit to "
+            output_string += str(total_hits) + " Best match hits to " if total_hits > 1 else " Best hit to "
             output_string += peptide_type + " found in " + str(len(regulated_species)) + " species, with regulated pathogen taxId in "
             output_string += "lineage " if len(regulated_species) == 1 else "lineages "
 

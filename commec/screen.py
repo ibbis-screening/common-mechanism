@@ -56,7 +56,10 @@ from commec.config.screen_tools import ScreenTools
 
 from commec.screeners.check_biorisk import check_biorisk, update_biorisk_data_from_database
 from commec.screeners.check_benign import check_for_benign, update_benign_data_from_database
-from commec.screeners.check_reg_path import check_for_regulated_pathogens, update_taxonomic_data_from_database
+from commec.screeners.check_reg_path import (
+    check_for_regulated_pathogens,
+    update_taxonomic_data_from_database
+)
 from commec.tools.fetch_nc_bits import fetch_noncoding_regions
 
 from commec.config.json_io import (
@@ -327,7 +330,9 @@ class Screen:
         fetch_noncoding_regions(
             self.database_tools.regulated_protein.out_file, self.params.query.nt_path
         )
+
         noncoding_fasta = f"{self.params.output_prefix}.noncoding.fasta"
+
 
         if not os.path.isfile(noncoding_fasta):
             logging.debug(

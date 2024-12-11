@@ -4,7 +4,6 @@ into a visual HTML representation of the Commec output. Which can be embedded in
 any other HTML document as appropriate.
 """
 
-import os
 import textwrap
 import argparse
 import plotly.graph_objects as go

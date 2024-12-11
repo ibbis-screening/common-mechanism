@@ -115,7 +115,8 @@ def update_taxonomic_data_from_database(
             regulated_hits = unique_query_data['subject acc.'][unique_query_data["regulated"]].unique()
 
             for hit in regulated_hits:
-                regulated_hit_data : pd.DataFrame = unique_query_data[unique_query_data['subject acc.'] == hit]
+                regulated_hit_data : pd.DataFrame = unique_query_data[unique_query_data["subject acc."] == hit]
+                regulated_hit_data = regulated_hit_data[regulated_hit_data["regulated"] == True]
                 hit_description = regulated_hit_data['subject title'].values[0]
                 #n_reg = 0
                 #n_total = 0
@@ -173,12 +174,14 @@ def update_taxonomic_data_from_database(
 
                 recommendation : CommecRecommendation = CommecRecommendation.FLAG
 
-                # TODO: Currently, we recapitulate old behaviour, howveer in the future:
+                # TODO: Currently, we recapitulate old behaviour,
+                # # " no top hit exclusive to a regulated pathogen: PASS" 
+                #  however in the future:
                 # if all hits are in the same genus n_reg > 0, and n_total > n_reg, WARN, or other logic.
                 # the point is, this is where you do it.
 
                 if len(non_reg_taxids) > 0:
-                    recommendation = CommecRecommendation.WARN
+                    recommendation = CommecRecommendation.PASS
 
                 # Update the query level recommendation of this step.
                 if step == CommecScreenStep.TAXONOMY_AA:

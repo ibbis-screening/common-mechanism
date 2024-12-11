@@ -28,7 +28,6 @@ import os
 from dataclasses import dataclass, asdict, fields, field, is_dataclass
 from typing import Dict, Type, get_origin, Any, get_args, List, Iterator, Tuple
 from enum import StrEnum
-import pandas as pd
 from commec.tools.search_handler import SearchToolVersion
 
 # Seperate versioning for the output JSON.
@@ -141,7 +140,11 @@ class MatchRange:
         return abs(self.query_start - self.query_end)
 
     def __hash__(self):
-        return hash((self.e_value, self.match_start, self.match_end, self.query_start, self.query_end))
+        return hash((self.e_value,
+                     self.match_start,
+                     self.match_end,
+                     self.query_start,
+                     self.query_end))
 
     def __eq__(self, other):
         if not isinstance(other, MatchRange):
@@ -253,7 +256,8 @@ class QueryData:
         for new_region in new_hit.ranges:
             is_unique_region = True
             for existing_region in existing_hit.ranges:
-                if new_region.query_start == existing_region.query_start and new_region.query_end == existing_region.query_end:
+                if (new_region.query_start == existing_region.query_start and 
+                    new_region.query_end == existing_region.query_end):
                     is_unique_region = False
             if is_unique_region:
                 is_updated = True

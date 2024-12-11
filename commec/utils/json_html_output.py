@@ -99,7 +99,8 @@ def update_layout(fig, query_to_draw : QueryData, stacks):
     fig.update_layout({
         # General layout properties
         'height': figure_base_height + (figure_stack_height * stacks),
-        'title': f"{query_to_draw.recommendation.commec_recommendation} : {query_to_draw.query}  ({query_to_draw.length} b.p.)",
+        'title': f"{query_to_draw.recommendation.commec_recommendation} :"
+                 f" {query_to_draw.query}  ({query_to_draw.length} b.p.)",
         'barmode': 'overlay',
         'template': 'plotly_white',
         'plot_bgcolor': 'rgba(0,0,0,0)',  # Transparent plot area
@@ -175,7 +176,7 @@ def generate_outcome_string(query : QueryData, hit : HitDescription) -> str:
             else:
                 output_string += "Best match to regulated" + domain_string + ".<br>"
 
-            output_string += str(total_hits) + " Best match hits to " if total_hits > 1 else " Best hit to "
+            output_string += str(total_hits) + " Best match hits to " if total_hits > 1 else "Best hit to "
             output_string += peptide_type + " found in " + str(len(regulated_species)) + " species, with regulated pathogen taxId in "
             output_string += "lineage " if len(regulated_species) == 1 else "lineages "
 

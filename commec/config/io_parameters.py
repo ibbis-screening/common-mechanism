@@ -181,7 +181,8 @@ class ScreenIOParameters:
         """
         Returns a prefix that can be used for all output files.
         - If no prefix was given, use the input filename.
-        - If a directory was given, use the input filename as file prefix within that directory.
+        - If a directory was given, use the input filename 
+            as file prefix within that directory.
         """
         if not prefix_arg:
             return os.path.splitext(input_file)[0]

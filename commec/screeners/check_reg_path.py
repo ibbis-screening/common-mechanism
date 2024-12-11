@@ -164,6 +164,7 @@ def update_taxonomic_data_from_database(
                 reg_species = list(set(reg_species))
                 reg_taxids = list(set(reg_taxids))
                 non_reg_taxids = list(set(non_reg_taxids))
+                match_ranges = list(set(match_ranges))
 
                 # Update the query level recommendation of this step.
                 if step == CommecScreenStep.TAXONOMY_AA:
@@ -280,6 +281,7 @@ def check_for_regulated_pathogens(input_file: str, input_database_dir: str, n_th
         return 0
 
     blast = read_blast(input_file)
+    print(blast)
     blast = get_taxonomic_labels(blast, reg_taxids, vax_taxids, input_database_dir + "/taxonomy/", n_threads)
     blast = blast[blast["species"] != ""]  # ignore submissions made above the species level
 

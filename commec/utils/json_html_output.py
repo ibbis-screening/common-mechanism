@@ -198,7 +198,7 @@ def draw_query_to_plot(fig : go.Figure, query_to_draw : QueryData):
     graph_data = [
         {"label": query_to_draw.query[:25], 
          "label_verbose": query_to_draw.query, 
-         "outcome" : query_to_draw.recommendation.commec_recommendation, 
+         "outcome" : f"Commec Recommendation for this query: {query_to_draw.recommendation.commec_recommendation}",
          "outcome_verbose":"",
          "start": 0, "stop": query_to_draw.length, 
          "color" : CommecPalette.DK_BLUE, 

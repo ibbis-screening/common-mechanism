@@ -248,7 +248,7 @@ def draw_query_to_plot(fig : go.Figure, query_to_draw : QueryData):
 
     df['hovertext'] = df.apply(lambda bar_data: 
                                f"{bar_data["outcome"]}<br>"
-                               f"bases ({bar_data['start']}-{bar_data['stop']})<br>"
+                               f"bases {bar_data['start']}-{bar_data['stop']}<br>"
                                f"{bar_data['label_verbose']}<br>"
                                f"{bar_data["outcome_verbose"]}", axis=1)
 

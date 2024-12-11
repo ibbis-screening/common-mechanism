@@ -108,11 +108,9 @@ def update_taxonomic_data_from_database(
                 logging.debug("Query during %s could not be found! [%s]", str(step), query)
                 continue
 
-
-
             unique_query_data : pd.DataFrame = top_hits[top_hits['query acc.'] == query]
             unique_query_data.dropna(subset = ['species'])
-            regulated_hits = unique_query_data['subject acc.'][unique_query_data["regulated"]].unique()
+            regulated_hits = unique_query_data[unique_query_data["regulated"] == True]['subject acc.'].unique()
 
             for hit in regulated_hits:
                 regulated_hit_data : pd.DataFrame = unique_query_data[unique_query_data["subject acc."] == hit]
@@ -185,15 +183,13 @@ def update_taxonomic_data_from_database(
 
                 # Update the query level recommendation of this step.
                 if step == CommecScreenStep.TAXONOMY_AA:
-                    for query in data.queries:
-                        query.recommendation.protein_taxonomy_screen = compare(
-                            query.recommendation.protein_taxonomy_screen,
-                            recommendation)
+                    query_write.recommendation.protein_taxonomy_screen = compare(
+                        query_write.recommendation.protein_taxonomy_screen,
+                        recommendation)
                 if step == CommecScreenStep.TAXONOMY_NT:
-                    for query in data.queries:
-                        query.recommendation.nucleotide_taxonomy_screen = compare(
-                            query.recommendation.nucleotide_taxonomy_screen,
-                            recommendation)
+                    query_write.recommendation.nucleotide_taxonomy_screen = compare(
+                        query_write.recommendation.nucleotide_taxonomy_screen,
+                        recommendation)
                         
                 regulation_dict = {"number_of_regulated_taxids" : str(len(reg_taxids)),
                                    "number_of_unregulated_taxids" : str(len(non_reg_taxids)),

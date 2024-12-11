@@ -190,7 +190,6 @@ class CommecRecommendationContainer:
         TODO: Consider the value of iterating over all HitDescriptions (provided as input)
         and updating things with stricter logic.
         """
-
         if self.benign_screen in {CommecRecommendation.CLEARED_FLAG,
                                   CommecRecommendation.CLEARED_WARN,
                                   CommecRecommendation.PASS}:

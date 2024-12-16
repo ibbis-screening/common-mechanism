@@ -153,6 +153,8 @@ class ScreenIOParameters:
             base_paths = config_from_yaml["base_paths"]
             if db_dir_override is not None:
                 base_paths["default"] = db_dir_override
+            else:
+                self.db_dir = base_paths["default"]
 
             def recursive_format(d, base_paths):
                 """
